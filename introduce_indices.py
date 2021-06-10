@@ -11,7 +11,7 @@ import os
 
 if __name__ == '__main__':
     # List files in directory
-    reads_directory = '/home/mario/Projects/project_2/databases/natural_flappie_r941_native_ap/reads'
+    reads_directory = '$HOME/project_2/databases/natural_flappie_r941_native_ap/reads'
     filenames = os.listdir(reads_directory)
     # Rename files with the indices
     for idx, filename in enumerate(filenames):
