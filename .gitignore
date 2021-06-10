@@ -127,3 +127,15 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+qualimap/
+.Rhistory
+.vscode/
+acinetobacter_data/
+chiron_reproduction.ipynb
+databases/
+flappie/
+initial_exercise.ipynb
+marios_data/
+output.bam
+speech_recognition_tutorial.ipynb
+thomas_data/
