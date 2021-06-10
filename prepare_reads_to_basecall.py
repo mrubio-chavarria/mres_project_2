@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Pass as argument the prospective number of jobs
     n_jobs = sys.argv[1]
     # List files in directory
-    reads_directory = sys.argv[1]
+    reads_directory = sys.argv[2]
     filenames = os.listdir(reads_directory)
     # Rename files with the indices
     for idx, filename in enumerate(filenames):
