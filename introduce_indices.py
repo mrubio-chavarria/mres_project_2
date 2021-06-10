@@ -12,7 +12,7 @@ import sys
 
 if __name__ == '__main__':
     # List files in directory
-    reads_directory = sys.argv[0]
+    reads_directory = sys.argv[1]
     filenames = os.listdir(reads_directory)
     # Rename files with the indices
     for idx, filename in enumerate(filenames):
