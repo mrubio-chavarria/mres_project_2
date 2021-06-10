@@ -27,7 +27,7 @@ if __name__ == '__main__':
     # Group the files in folder based on the
     # number of jobs
     filenames = list(sorted(os.listdir(reads_directory), key=lambda x: int(x.split('_')[0])))
-    group_length = int(round(len(filenames) / n_jobs))
+    group_length = int(round(len(filenames) / int(n_jobs)))
     groups = [filenames[i:i + group_length] 
         if i != (len(filenames) - group_length - 1) else filenames[i::]
         for i in range(0, len(filenames) - group_length, group_length)]
