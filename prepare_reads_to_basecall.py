@@ -9,6 +9,7 @@ The code below is to prepare the files for basecalling.
 import os
 import sys
 import shutil
+from pathlib import Path
 
 
 if __name__ == '__main__':
@@ -43,6 +44,8 @@ if __name__ == '__main__':
                 reads_directory + '/' + str(i) + '/' + file
             )
             # Create the fastq files
-            with open(basecalled_reads_directory + '/' + str(i) + '.fq', 'w') as file:
+            file = Path(basecalled_reads_directory + '/' + str(i) + '.fq')
+            file.touch(exist_ok=True)
+            with open(file, 'w') as file:
                 file.write('')
     
