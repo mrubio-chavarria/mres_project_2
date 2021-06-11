@@ -4,7 +4,7 @@
 #PBS -J 0-13
 
 # Load modules
-module load parallel
+module load parallel/default
 
 # Set the current working directory
 cd "$(dirname "$0")"
