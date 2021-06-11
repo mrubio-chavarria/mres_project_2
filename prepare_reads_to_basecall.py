@@ -43,5 +43,6 @@ if __name__ == '__main__':
                 reads_directory + '/' + str(i) + '/' + file
             )
             # Create the fastq files
-            open(basecalled_reads_directory + '/' + str(i) + '.fq', 'a').close()
+            with open(basecalled_reads_directory + '/' + str(i) + '.fq', 'w') as file:
+                file.write('')
     
