@@ -3,6 +3,8 @@
 #PBS -l walltime=04:00:00
 #PBS -J 0-13
 
+# Load modules
+module load parallel
 
 # Set the current working directory
 cd "$(dirname "$0")"
