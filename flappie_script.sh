@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -l select=1:ncpus=12:mem=2gb
 #PBS -l walltime=03:00:00
-#PBS -J 0-13
+#PBS -J 13
 
 
 # Set the current working directory
