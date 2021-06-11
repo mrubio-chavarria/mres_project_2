@@ -34,9 +34,14 @@ if __name__ == '__main__':
     # Create folders to store the files renamed
     [os.mkdir(reads_directory + '/' + str(i)) for i in range(n_jobs)]
     # Move the files by group
+    basecalled_reads_directory = '/'.join(reads_directory.split('/')[0:-1]) + '/' + 'basecalled_reads'
     for i in range(n_jobs):
         for file in groups[i]:
+            # Move reads to directories
             shutil.move(
                 reads_directory + '/' + file,
                 reads_directory + '/' + str(i) + '/' + file
             )
+            # Create the fastq files
+            open(basecalled_reads_directory + '/' + str(i) + '.fq', 'a').close()
+    
