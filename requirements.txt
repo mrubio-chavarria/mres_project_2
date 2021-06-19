@@ -101,49 +101,49 @@ pyfaidx=0.5.9.5=pyh3252c3a_0
 # pyparsing=2.4.7=pypi_0
 python=3.6.13=hffdb5ce_0_cpython
 python_abi=3.6=1_cp36m
-pytorch=1.8.0=cpu_py36h2d15a6b_1
+# pytorch=1.8.0=cpu_py36h2d15a6b_1
 pytz=2021.1=pyhd8ed1ab_0
-r-assertthat=0.2.1=r36h6115d3f_2
-r-base=3.6.3=hbcea092_8
-r-cli=2.5.0=r36hc72bb7e_0
-r-colorspace=2.0_1=r36hcfec24a_0
-r-crayon=1.4.1=r36hc72bb7e_0
-r-digest=0.6.27=r36h03ef668_0
-r-ellipsis=0.3.2=r36hcfec24a_0
-r-fansi=0.4.0=r36h96ca727_0
-r-farver=2.1.0=r36h03ef668_0
-r-ggplot2=3.1.1=r36h6115d3f_0
-r-glue=1.4.2=r36hcfec24a_0
-r-gridextra=2.3=r36h6115d3f_1003
-r-gtable=0.3.0=r36h6115d3f_3
-r-labeling=0.4.2=r36h142f84f_0
-r-lattice=0.20_44=r36hcfec24a_0
-r-lazyeval=0.2.2=r36hcfec24a_2
-r-lifecycle=1.0.0=r36hc72bb7e_0
-r-magrittr=2.0.1=r36hcfec24a_1
-r-mass=7.3_54=r36hcfec24a_0
-r-matrix=1.2_17=r36h96ca727_0
-r-mgcv=1.8_28=r36h96ca727_0
-r-munsell=0.5.0=r36h6115d3f_1003
-r-nlme=3.1_152=r36h859d828_0
-r-pillar=1.6.1=r36hc72bb7e_0
-r-pkgconfig=2.0.3=r36h6115d3f_1
-r-plyr=1.8.6=r36h0357c0b_1
-r-r6=2.5.0=r36hc72bb7e_0
-r-rcolorbrewer=1.1_2=r36h6115d3f_1003
-r-rcpp=1.0.6=r36h03ef668_0
-r-reshape2=1.4.4=r36h0357c0b_1
-r-rlang=0.4.11=r36hcfec24a_0
-r-scales=1.1.1=r36h6115d3f_0
-r-stringi=1.6.2=r36hcabe038_0
-r-stringr=1.4.0=r36h6115d3f_2
-r-tibble=3.1.2=r36hcfec24a_0
-r-utf8=1.2.1=r36hcfec24a_0
-r-vctrs=0.3.8=r36hcfec24a_1
-r-viridislite=0.4.0=r36hc72bb7e_0
-r-withr=2.4.2=r36hc72bb7e_0
-readline=8.1=h27cfd23_0
-rpy2=3.4.5=py36r36h4d9540e_0
+# r-assertthat=0.2.1=r36h6115d3f_2
+# r-base=3.6.3=hbcea092_8
+# r-cli=2.5.0=r36hc72bb7e_0
+# r-colorspace=2.0_1=r36hcfec24a_0
+# r-crayon=1.4.1=r36hc72bb7e_0
+# r-digest=0.6.27=r36h03ef668_0
+# r-ellipsis=0.3.2=r36hcfec24a_0
+# r-fansi=0.4.0=r36h96ca727_0
+# r-farver=2.1.0=r36h03ef668_0
+# r-ggplot2=3.1.1=r36h6115d3f_0
+# r-glue=1.4.2=r36hcfec24a_0
+# r-gridextra=2.3=r36h6115d3f_1003
+# r-gtable=0.3.0=r36h6115d3f_3
+# r-labeling=0.4.2=r36h142f84f_0
+# r-lattice=0.20_44=r36hcfec24a_0
+# r-lazyeval=0.2.2=r36hcfec24a_2
+# r-lifecycle=1.0.0=r36hc72bb7e_0
+# r-magrittr=2.0.1=r36hcfec24a_1
+# r-mass=7.3_54=r36hcfec24a_0
+# r-matrix=1.2_17=r36h96ca727_0
+# r-mgcv=1.8_28=r36h96ca727_0
+# r-munsell=0.5.0=r36h6115d3f_1003
+# r-nlme=3.1_152=r36h859d828_0
+# r-pillar=1.6.1=r36hc72bb7e_0
+# r-pkgconfig=2.0.3=r36h6115d3f_1
+# r-plyr=1.8.6=r36h0357c0b_1
+# r-r6=2.5.0=r36hc72bb7e_0
+# r-rcolorbrewer=1.1_2=r36h6115d3f_1003
+# r-rcpp=1.0.6=r36h03ef668_0
+# r-reshape2=1.4.4=r36h0357c0b_1
+# r-rlang=0.4.11=r36hcfec24a_0
+# r-scales=1.1.1=r36h6115d3f_0
+# r-stringi=1.6.2=r36hcabe038_0
+# r-stringr=1.4.0=r36h6115d3f_2
+# r-tibble=3.1.2=r36hcfec24a_0
+# r-utf8=1.2.1=r36hcfec24a_0
+# r-vctrs=0.3.8=r36hcfec24a_1
+# r-viridislite=0.4.0=r36hc72bb7e_0
+# r-withr=2.4.2=r36hc72bb7e_0
+# readline=8.1=h27cfd23_0
+# rpy2=3.4.5=py36r36h4d9540e_0
 scipy=1.5.3=py36h9e8f40b_0
 sed=4.8=he412f7d_0
 setuptools=49.6.0=py36h5fab9bb_3
