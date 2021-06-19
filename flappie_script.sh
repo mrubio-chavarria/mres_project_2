@@ -5,6 +5,7 @@
 
 # Load modules
 module load parallel/default
+module load anaconda3/personal
 
 # Set the current working directory
 cd "$(dirname "$0")"

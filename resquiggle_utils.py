@@ -1,4 +1,4 @@
-#!/venv/bin python
+#!/home/mario/anaconda3/envs/project2_venv/bin python
 
 """
 DESCRIPTION:

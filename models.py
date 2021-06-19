@@ -1,4 +1,4 @@
-#!/venv/bin python
+#!/home/mario/anaconda3/envs/project2_venv/bin python
 
 """
 DESCRIPTION:
@@ -163,18 +163,23 @@ class ResidualBlockIII(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, stride=1, dropout=0.8):
         """
         DESCRIPTION:
+        Class constructor.
+        :param in_channels: [int] number of channels (dimensions) in the input
+        object.
+        :param out_channels: [int] number of channels in the output object.
         """
         super().__init__()
         # First block
         self.layer_norm1 = nn.LayerNorm(in_channels)
         self.GELU1 = nn.GELU()
         self.dropout1 = nn.Dropout(dropout)
-        self.cnn1 = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding=kernel_size//2)
+        # Left padding because of the signal causality
+        self.cnn1 = nn.Conv1d(in_channels, out_channels, kernel_size, stride, padding=(kernel_size - 1)//2)
         # Second block
         self.layer_norm2 = nn.LayerNorm(out_channels)
         self.GELU2 = nn.GELU()
         self.dropout2 = nn.Dropout(dropout)
-        self.cnn2 = nn.Conv1d(out_channels, out_channels, kernel_size, stride, padding=kernel_size//2)
+        self.cnn2 = nn.Conv1d(out_channels, out_channels, kernel_size, stride, padding=(kernel_size - 1)//2)
 
     def forward(self, input_sequence):
         """
@@ -315,7 +320,7 @@ class TCN_module(nn.Module):
     TCN module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, in_channels, out_channels=256,  kernel_size=3, dropout_proportion=0.8):
+    def __init__(self, n_layers, in_channels, out_channels=256,  kernel_size=3, dropout=0.8):
         """
         DESCRIPTION:
         Class constructor.
@@ -325,8 +330,7 @@ class TCN_module(nn.Module):
         :param dilation_base: [int] base (b) in the formula to compute the dilation
         based on the layer.
         :param kernel_size: [int] the number of elements considered in the kernel.
-        :param dropout_proportion: [float] the proportion of neurons to perform the
-        dropout.
+        :param dropout: [float] the proportion of neurons to perform the dropout.
         :param optional: [bool] parameter to describe the optional convolution in the residual block.
         """
         super().__init__()
@@ -336,11 +340,11 @@ class TCN_module(nn.Module):
         for i in range(n_layers):
             if i == 0:
                 blocks.append(
-                    ResidualBlockIII(in_channels, out_channels, kernel_size)
+                    ResidualBlockIII(in_channels, out_channels, kernel_size, dropout=dropout)
                 )
             else:
                 blocks.append(
-                    ResidualBlockIII(out_channels, out_channels, kernel_size)
+                    ResidualBlockIII(out_channels, out_channels, kernel_size, dropout=dropout)
                 )
         self.model = nn.Sequential(*blocks)
     
@@ -361,7 +365,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, sequence_length, input_size, batch_size, hidden_size, output_size, dropout_proportion=0.2, bidirectional=False):
+    def __init__(self, n_layers, sequence_length, input_size, batch_size, hidden_size, output_size, dropout=0.2, bidirectional=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -371,7 +375,7 @@ class LSTM_module(nn.Module):
         :param batch_size: [int] number of items per batch.
         :param hidden_size: [int] features in the hidden space.
         :param output_size: [int] size of the predicted vector.
-        :param dropout_proportion: [float] proportion of dropout neurons.
+        :param dropout: [float] proportion of dropout neurons.
         :param bidirectional: [bool] variable to indicate if the LSTM layers
         are bidirectional. 
         """
@@ -383,7 +387,7 @@ class LSTM_module(nn.Module):
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.sequence_length = sequence_length
-        self.dropout_proportion = dropout_proportion
+        self.dropout_proportion = dropout
         self.bidirectional = bidirectional
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
@@ -420,7 +424,7 @@ class ClassifierGELU(nn.Module):
     Model to assign the probabilities of every base for a given signal.
     """
     # Methods
-    def __init__(self, initial_size, hidden_size, output_size, dropout_proportion=0.2):
+    def __init__(self, initial_size, hidden_size, output_size, sequence_length, batch_size, dropout=0.2):
         """
         DESCRIPTION:
         Class constructor.
@@ -428,17 +432,21 @@ class ClassifierGELU(nn.Module):
         :param hidden_size: [int] dimensionality of the hidden space.
         :param output_size: [int] output dimensionality. Number of
         classes.
-        :param dropout_proportion: [float] proportion of dropout neurons.
+        :param sequence_length: [int] number of elements in the input sequence.
+        :param batch_size: [int] number of elements per batch.
+        :param dropout: [float] proportion of dropout neurons.
         """
         super().__init__()
         self.initial_size = initial_size
         self.hidden_size = hidden_size
         self.output_size = output_size
-        self.dropout_proportion = dropout_proportion
+        self.sequence_length = sequence_length
+        self.batch_size = batch_size
+        self.dropout = dropout
         self.model = nn.Sequential(
             nn.Linear(self.initial_size, self.hidden_size),
             nn.GELU(),
-            nn.Dropout(self.dropout_proportion),
+            nn.Dropout(self.dropout),
             nn.Linear(self.hidden_size, self.output_size),
             nn.LogSoftmax(dim=2)
         )
@@ -447,9 +455,9 @@ class ClassifierGELU(nn.Module):
         """
         DDESCRIPTION:
         Forward pass.
-        :param input_sequence: [torch.Tensor] 
+        :param input_sequence: [torch.Tensor] the sequence to feed the model.
         """
-        output = self.model(input_sequence.view(64, 311, -1))
+        output = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
         return output
 
 

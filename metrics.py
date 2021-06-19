@@ -1,3 +1,4 @@
+#!/home/mario/anaconda3/envs/project2_venv/bin python
 
 # Libraries
 import numpy as np
