@@ -86,19 +86,19 @@ mkl-service=2.3.0=py36he8ac12f_0
 ncurses=6.2=he6710b0_1
 ninja=1.10.2=hff7bd54_1
 numpy=1.19.5=py36h2aa4a07_1
-ont-fast5-api=3.3.0=pypi_0
+# ont-fast5-api=3.3.0=pypi_0
 ont-tombo=1.5.1=py36r36hb3f55d8_0
 openssl=1.1.1k=h7f98852_0
-packaging=20.9=pypi_0
+# packaging=20.9=pypi_0
 pango=1.48.5=hb8ff022_0
 pcre=8.45=h9c3ff4c_0
 pip=21.1.2=pyhd8ed1ab_0
 pixman=0.40.0=h36c2ea0_0
-progressbar33=2.4=pypi_0
+# progressbar33=2.4=pypi_0
 pthread-stubs=0.4=h36c2ea0_1001
 pycparser=2.20=py_2
 pyfaidx=0.5.9.5=pyh3252c3a_0
-pyparsing=2.4.7=pypi_0
+# pyparsing=2.4.7=pypi_0
 python=3.6.13=hffdb5ce_0_cpython
 python_abi=3.6=1_cp36m
 pytorch=1.8.0=cpu_py36h2d15a6b_1
