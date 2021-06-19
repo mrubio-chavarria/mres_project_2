@@ -75,7 +75,8 @@ def train(model, loss_function, sequence_length, optimiser, scheduler):
     :param loss_function: [nn.Module] the function to compute the loss.
     :param sequence_length: [int] the length of every sequence, constant parameter.
     :param optimiser: [torch.optim] the optimiser to descend in the gradient.
-    :param scheduler: [torch.optim.lr_scheduler] scheduler for dynamic learnin rate.
+    :param scheduler: [torch.optim.lr_scheduler] scheduler to control the adaptive 
+    learning rate.
     """
     model.train()
     sequences_lengths = tuple([sequence_length] * batch_size)
@@ -103,6 +104,7 @@ def train(model, loss_function, sequence_length, optimiser, scheduler):
             loss.backward()
             # Gradient step
             optimiser.step()
+            scheduler.step()
             # Decode output
             output_sequences = list(decoder(output, target_segments))
             error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
@@ -110,7 +112,7 @@ def train(model, loss_function, sequence_length, optimiser, scheduler):
             # Show progress
             print('-----------------------------------------------------------------------------------------------')
             print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-            print(f'Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning_rate: {scheduler.get_last_lr()}')
+            print(f'Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
 
 
 if __name__ == "__main__":
@@ -175,15 +177,15 @@ if __name__ == "__main__":
 
     # Train the model
     # Parameters
-    epochs = 3
+    epochs = 1
     loss_function = nn.CTCLoss(blank=0).to(device)
     learning_rate = 1E-3
     max_learning_rate = 1E-1
     optimiser = torch.optim.AdamW(model.parameters(), lr=learning_rate)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
         max_lr=max_learning_rate,
-        steps_per_epoch=int(len(train_data)),
         epochs=epochs,
+        steps_per_epoch=int(len(train_data)),
         anneal_strategy='linear')
     # Training
     train(model, loss_function, sequence_length, optimiser, scheduler)
