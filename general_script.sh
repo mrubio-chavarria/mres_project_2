@@ -12,4 +12,4 @@ conda config --add channels conda-forge bioconda
 
 conda install pytorch=1.8 --yes 
 
-pip3 install ont-fast5-api
+yes | pip3 install ont-fast5-api
