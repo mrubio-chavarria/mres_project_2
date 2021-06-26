@@ -113,24 +113,26 @@ class ResidualBlockII(nn.Module):
     been directly taken from Chiron.
     """
     # Methods
-    def __init__(self, in_channels, out_channels=256, kernel_size=3, dropout_proportion=0.8):
+    def __init__(self, in_channels, out_channels=256, kernel_size=3):
         """
         DESCRIPTION:
         Class constructor.
         :param in_channels: [int] number of input channels of the initial signal.
-        :param dropout_proportion: [float] the proportion of neurons to perform the
-        dropout.
+        :param out_channels: [int] number of output channels after filtering.
+        :param kernel_size: [int] number of elements in the one-dimensional kernel.
         """        
         super().__init__()
         # Main block section
-        self.model = nn.Sequential(
+        self.left_branch = nn.Sequential(
             nn.Conv1d(in_channels, out_channels, 1),
             nn.BatchNorm1d(num_features=out_channels),
             nn.ReLU(),
-            nn.Conv1d(out_channels, out_channels, kernel_size),
-            nn.ConstantPad1d((kernel_size - 1, 0), 0),
+            nn.Conv1d(out_channels, out_channels, kernel_size, padding=(kernel_size - 1) // 2),
+            # nn.ConstantPad1d((kernel_size - 1, 0), 0),
             nn.BatchNorm1d(num_features=out_channels),
-            nn.ReLU()
+            nn.ReLU(),
+            nn.Conv1d(out_channels, out_channels, 1),
+            nn.BatchNorm1d(num_features=out_channels)
         )
         # Right branch
         self.right_branch = nn.Sequential(
@@ -147,7 +149,7 @@ class ResidualBlockII(nn.Module):
         going to base the prediction.
         :return: [torch.Tensor] the predicted value.
         """
-        left_branch = self.model(input_sequence)
+        left_branch = self.left_branch(input_sequence)
         right_branch = self.right_branch(input_sequence)
         output = left_branch + right_branch
         output = self.final_ReLU(output)
@@ -206,6 +208,10 @@ class ResidualBlockIII(nn.Module):
         output = self.GELU2(output.view(*dims))
         output = self.dropout2(output)
         output = self.cnn2(output)
+        # Correct shortcut dimension
+        if output.shape != shortcut.shape:
+            optional_filter = nn.Conv1d(shortcut.shape[1], output.shape[1], kernel_size=1)
+            shortcut = optional_filter(shortcut)
         output += shortcut
         return output
 
@@ -313,20 +319,19 @@ class ResNet(nn.Module):
         return x.view(64, 512, 311)
 
 
-
 class TCN_module(nn.Module):
     """
     DESCRIPTION:
     TCN module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, in_channels, out_channels=256,  kernel_size=3, dropout=0.8):
+    def __init__(self, n_layers, in_channels, out_channels,  kernel_size=3, dropout=0.8):
         """
         DESCRIPTION:
         Class constructor.
         :param n_layers: [int] number of layers in which the model is built.
         :param in_channels: [int] number of input channels of the initial signal.
-        :param out_channels: [int] number of filters executed in the convolution.
+        :param out_channels: [list] number of filters executed in the convolution per layer.
         :param dilation_base: [int] base (b) in the formula to compute the dilation
         based on the layer.
         :param kernel_size: [int] the number of elements considered in the kernel.
@@ -340,11 +345,11 @@ class TCN_module(nn.Module):
         for i in range(n_layers):
             if i == 0:
                 blocks.append(
-                    ResidualBlockIII(in_channels, out_channels, kernel_size, dropout=dropout)
+                    ResidualBlockII(in_channels, out_channels, kernel_size)
                 )
             else:
                 blocks.append(
-                    ResidualBlockIII(out_channels, out_channels, kernel_size, dropout=dropout)
+                    ResidualBlockII(out_channels, out_channels, kernel_size)
                 )
         self.model = nn.Sequential(*blocks)
     
@@ -428,6 +433,7 @@ class ClassifierGELU(nn.Module):
         """
         DESCRIPTION:
         Class constructor.
+        Important, the softmax is already implemented in the cost function.
         :param initial_size: [int] input dimensionality.
         :param hidden_size: [int] dimensionality of the hidden space.
         :param output_size: [int] output dimensionality. Number of
@@ -447,8 +453,7 @@ class ClassifierGELU(nn.Module):
             nn.Linear(self.initial_size, self.hidden_size),
             nn.GELU(),
             nn.Dropout(self.dropout),
-            nn.Linear(self.hidden_size, self.output_size),
-            nn.LogSoftmax(dim=2)
+            nn.Linear(self.hidden_size, self.output_size)
         )
     
     def forward(self, input_sequence):
