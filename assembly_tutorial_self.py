@@ -405,7 +405,7 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, n_epochs, criterion, optimiser, scheduler):
+def train(model, train_data, test_data, n_epochs, criterion, optimiser, scheduler, rank=None):
     """"""
     for epoch in range(n_epochs):
         model.train()
@@ -424,9 +424,14 @@ def train(model, train_data, test_data, n_epochs, criterion, optimiser, schedule
             optimiser.step()
             scheduler.step()
             # Print progress
-            print('Train Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
-                epoch+1, batch_idx+1, len(train_data),
-                100. * (batch_idx+1) / len(train_data), loss.item()))
+            if rank is None:
+                print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
+                    epoch+1, batch_idx+1, len(train_data),
+                    100. * (batch_idx+1) / len(train_data), loss.item()))
+            else:
+                print('Process: {} Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
+                    rank+1, epoch+1, batch_idx+1, len(train_data),
+                    100. * (batch_idx+1) / len(train_data), loss.item()))
         print('Epoch completed. Evaluating result...')
         test(model, test_data, criterion)
 
@@ -480,12 +485,12 @@ if __name__ == '__main__':
         "dropout": 0.1,
         "learning_rate": 1E-3,
         "batch_size": 20,
-        "n_epochs": 2,
+        "n_epochs": 1,
         "kernel_size": 3,
         "n_kernels": 3,
         "n_conv_layers": 3,
         "multiprocessing": True,
-        "n_processes": 4
+        "n_processes": sys.argv[1]
     }
 
     # Import datasets
@@ -502,11 +507,11 @@ if __name__ == '__main__':
                                 shuffle=True,
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-    train_data = list(limit_dataset(train_loader, 10))
-    test_data = train_data[9::]
-    train_data = train_data[:9]
-    # train_data = train_loader
-    # test_data = test_loader
+    # train_data = list(limit_dataset(train_loader, 10))
+    # test_data = train_data[9::]
+    # train_data = train_data[:9]
+    train_data = train_loader
+    test_data = test_loader
 
     # Create model
     model = Network(parameters['in_channels'],
@@ -530,7 +535,7 @@ if __name__ == '__main__':
         model.share_memory()
         processes = []
         for rank in range(parameters['n_processes']):
-            process = mp.Process(target=train, args=(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler))
+            process = mp.Process(target=train, args=(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, rank))
             process.start()
             processes.append(process)
         for process in processes:
