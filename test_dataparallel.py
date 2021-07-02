@@ -62,3 +62,10 @@ if __name__ == "__main__":
         output = model(input)
         print("Outside: input size", input.size(),
             "output_size", output.size())
+    
+    # Save the model
+    # # When locally
+    # path = "/home/mario/Projects/project_2/saved_models/model.pickle"
+    # When HPC
+    path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
+    torch.save(model.module.state_dict(), path)
