@@ -33,20 +33,20 @@ class RandomDataset(Dataset):
 
 
 if __name__ == "__main__":
-    device = torch.device("cuda:0")
+    # device = torch.device("cuda:0")
     
-    # Parameters and DataLoaders
-    input_size = 5
-    output_size = 2
-    batch_size = 30
-    data_size = 100
+    # # Parameters and DataLoaders
+    # input_size = 5
+    # output_size = 2
+    # batch_size = 30
+    # data_size = 100
 
-    rand_loader = DataLoader(dataset=RandomDataset(input_size, data_size),
-                         batch_size=batch_size, shuffle=True)
+    # rand_loader = DataLoader(dataset=RandomDataset(input_size, data_size),
+    #                      batch_size=batch_size, shuffle=True)
     
-    model = Model(input_size, output_size)
+    # model = Model(input_size, output_size)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # if torch.cuda.device_count() > 1:
     #     print("Let's use", torch.cuda.device_count(), "GPUs!")
