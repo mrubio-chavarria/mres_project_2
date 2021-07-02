@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+import sys
 
 
 class Model(nn.Module):
@@ -55,7 +56,7 @@ if __name__ == "__main__":
     # else:
     #     print('No GPU detected')
 
-    print('HOLA')
+    print(sys.argv[1])
 
     # model.to(device)
 
