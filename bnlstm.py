@@ -1,3 +1,5 @@
+#!/home/mario/anaconda3/envs/project2_venv/bin python
+
 import torch
 from torch import nn
 from torch.nn import init
