@@ -4,4 +4,6 @@
 
 module load anaconda3/personal
 
+source activate project2_venv
+
 python3 $HOME/project_2/test_dataparallel.py
