@@ -11,6 +11,8 @@ import torch.nn.functional as F
 import torchaudio
 import numpy as np
 import torch.multiprocessing as mp
+from pytictoc import TicToc 
+
 
 
 # Classes
@@ -405,7 +407,7 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, n_epochs, criterion, optimiser, scheduler, rank=None):
+def train(model, train_data, test_data, n_epochs, criterion, optimiser, scheduler, device, rank=None):
     """"""
     for epoch in range(n_epochs):
         model.train()
@@ -414,7 +416,11 @@ def train(model, train_data, test_data, n_epochs, criterion, optimiser, schedule
             # Load data
             spectrograms, labels, input_lengths, label_lengths = _data
             # Compute model output
+            spectrograms = spectrograms.to(device)
             output = model(spectrograms)  # (batch, time, n_class)
+            # Correct for DataParallel output
+            if torch.cuda.is_available():
+                output = torch.cat(output, dim=0)
             output = F.log_softmax(output, dim=2)
             output = output.transpose(0, 1) # (time, batch, n_class)
             # Compute loss
@@ -424,14 +430,9 @@ def train(model, train_data, test_data, n_epochs, criterion, optimiser, schedule
             optimiser.step()
             scheduler.step()
             # Print progress
-            if rank is None:
-                print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
-                    epoch+1, batch_idx+1, len(train_data),
-                    100. * (batch_idx+1) / len(train_data), loss.item()))
-            else:
-                print('Process: {} Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
-                    rank+1, epoch+1, batch_idx+1, len(train_data),
-                    100. * (batch_idx+1) / len(train_data), loss.item()))
+            print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
+                epoch+1, batch_idx+1, len(train_data),
+                100. * (batch_idx+1) / len(train_data), loss.item()))
         print('Epoch completed. Evaluating result...')
         test(model, test_data, criterion)
 
@@ -478,7 +479,7 @@ if __name__ == '__main__':
         "in_channels": 1,
         "n_cnn_layers": 3,
         "n_rnn_layers": 2,
-        "rnn_dim": 512,
+        "rnn_dim": 256, # 512,
         "n_classes": 29,
         "n_features": 128,
         "stride":2,
@@ -487,15 +488,17 @@ if __name__ == '__main__':
         "batch_size": 20,
         "n_epochs": 1,
         "kernel_size": 3,
-        "n_kernels": 3,
-        "n_conv_layers": 3,
-        "multiprocessing": True,
-        "n_processes": int(sys.argv[1])
+        "n_kernels": 3
     }
 
     # Import datasets
+    # # When local
+    # train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
+    # test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+
+    # When HPC
     train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
-    test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="test-clean", download=True)
+    test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
     # Load data
     train_loader = data.DataLoader(dataset=train_dataset,
@@ -506,21 +509,24 @@ if __name__ == '__main__':
                                 batch_size=parameters['batch_size'],
                                 shuffle=True,
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
-
-    # train_data = list(limit_dataset(train_loader, 10))
-    # test_data = train_data[9::]
-    # train_data = train_data[:9]
     train_data = train_loader
     test_data = test_loader
+
+    # Find device
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Create model
     model = Network(parameters['in_channels'],
                     parameters['kernel_size'],
-                    parameters['n_conv_layers'],
+                    parameters['n_cnn_layers'],
                     parameters['n_rnn_layers'],
                     parameters['n_kernels'],
                     parameters['n_features'],
                     parameters['n_classes'])
+
+    # Assuming DataParallel
+    model = nn.DataParallel(model)
+    model.to(device)
 
     # Training
     # Parameters   
@@ -530,17 +536,9 @@ if __name__ == '__main__':
                                             steps_per_epoch=int(len(train_loader)),
                                             epochs=parameters['n_epochs'],
                                             anneal_strategy='linear')
-    # Training
-    if parameters['multiprocessing']:
-        model.share_memory()
-        processes = []
-        for rank in range(parameters['n_processes']):
-            process = mp.Process(target=train, args=(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, rank))
-            process.start()
-            processes.append(process)
-        for process in processes:
-            process.join()
-    else:
-        train(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler)
-
-    print()
+    # Execute training
+    print('Initialise training')
+    t = TicToc()
+    t.tic()
+    train(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, device)
+    t.toc('Training time: ')
