@@ -11,7 +11,6 @@ import torch.nn.functional as F
 import torchaudio
 import numpy as np
 import torch.multiprocessing as mp
-from pytictoc import TicToc 
 
 
 
@@ -492,13 +491,13 @@ if __name__ == '__main__':
     }
 
     # Import datasets
-    # # When local
-    # train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
-    # test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+    # When local
+    train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
+    test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
-    # When HPC
-    train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
-    test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+    # # When HPC
+    # train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
+    # test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
     # Load data
     train_loader = data.DataLoader(dataset=train_dataset,
@@ -523,7 +522,10 @@ if __name__ == '__main__':
                     parameters['n_kernels'],
                     parameters['n_features'],
                     parameters['n_classes'])
-
+    
+    # # Load previous model if required
+    # model.load_state_dict(torch.load("/home/mario/Projects/project_2/saved_models/model.pickle", map_location=device))
+    
     # Assuming DataParallel
     model = nn.DataParallel(model)
     model.to(device)
@@ -538,7 +540,12 @@ if __name__ == '__main__':
                                             anneal_strategy='linear')
     # Execute training
     print('Initialise training')
-    t = TicToc()
-    t.tic()
     train(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, device)
-    t.toc('Training time: ')
+
+    # Save the model
+    # # When locally
+    # path = "/home/mario/Projects/project_2/saved_models/model.pickle"
+    # When HPC
+    path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
+    torch.save(model.module.state_dict(), path)
+
