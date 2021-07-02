@@ -487,8 +487,8 @@ if __name__ == '__main__':
     }
 
     # Import datasets
-    train_dataset = torchaudio.datasets.LIBRISPEECH("./librispeech_data", url="train-clean-100", download=True)
-    test_dataset = torchaudio.datasets.LIBRISPEECH("./librispeech_data", url="test-clean", download=True)
+    train_dataset = torchaudio.datasets.LIBRISPEECH("$HOME/project_2/librispeech_data", url="train-clean-100", download=True)
+    test_dataset = torchaudio.datasets.LIBRISPEECH("$HOME/project_2/librispeech_data", url="test-clean", download=True)
 
     # Load data
     train_loader = data.DataLoader(dataset=train_dataset,
