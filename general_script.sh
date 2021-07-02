@@ -4,4 +4,4 @@
 
 module load anaconda3/personal
 
-python3 $HOME/project_2/assembly_tutorial_self.py
+python3 $HOME/project_2/assembly_tutorial_self.py nproc

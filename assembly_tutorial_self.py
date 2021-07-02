@@ -490,7 +490,7 @@ if __name__ == '__main__':
         "n_kernels": 3,
         "n_conv_layers": 3,
         "multiprocessing": True,
-        "n_processes": sys.argv[1]
+        "n_processes": int(sys.argv[1])
     }
 
     # Import datasets
