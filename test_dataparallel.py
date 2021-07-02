@@ -51,7 +51,7 @@ if __name__ == "__main__":
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
-        model = nn.DataParallel(model)
+        # model = nn.DataParallel(model)
     else:
         print('No GPU detected')
 
