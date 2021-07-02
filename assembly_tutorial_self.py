@@ -2,6 +2,7 @@
 
 # Libraries
 import os
+import sys
 import torch
 import torch.nn as nn
 import torch.utils.data as data
@@ -10,6 +11,7 @@ import torch.nn.functional as F
 import torchaudio
 import numpy as np
 import torch.multiprocessing as mp
+
 
 # Classes
 class TextTransform:
@@ -482,7 +484,7 @@ if __name__ == '__main__':
         "kernel_size": 3,
         "n_kernels": 3,
         "n_conv_layers": 3,
-        "multiprocessing": False,
+        "multiprocessing": True,
         "n_processes": 4
     }
 
