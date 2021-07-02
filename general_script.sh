@@ -4,4 +4,4 @@
 
 module load anaconda3/personal
 
-python3 assembly_tutorial_self.py
+python3 $PWD/assembly_tutorial_self.py
