@@ -34,27 +34,6 @@ class RandomDataset(Dataset):
 
 
 if __name__ == "__main__":
-    # device = torch.device("cuda:0")
-    
-    # # Parameters and DataLoaders
-    # input_size = 5
-    # output_size = 2
-    # batch_size = 30
-    # data_size = 100
-
-    # rand_loader = DataLoader(dataset=RandomDataset(input_size, data_size),
-    #                      batch_size=batch_size, shuffle=True)
-    
-    # model = Model(input_size, output_size)
-
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    # if torch.cuda.device_count() > 1:
-    #     print("Let's use", torch.cuda.device_count(), "GPUs!")
-    #     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
-    #     # model = nn.DataParallel(model)
-    # else:
-    #     print('No GPU detected')
 
     print(torch.cuda.device_count())
     print(torch.cuda.current_device())
@@ -64,18 +43,46 @@ if __name__ == "__main__":
 
     print(type(sys.argv))
     print(sys.argv)
+    print('PREVIO')
+    print('---------------------------')
+    print('SCRIPT')
 
-    # model.to(device)
+    # Read available devices
+    available_gpus = sorted([int(device_id) for device_id in sys.argv[1].split(',')])
 
-    # for data in rand_loader:
-    #     input = data.to(device)
-    #     output = model(input)
-    #     print("Outside: input size", input.size(),
-    #         "output_size", output.size())
+    device = torch.device(f"cuda:{available_gpus[0]}")
     
-    # # Save the model
-    # # # When locally
-    # # path = "/home/mario/Projects/project_2/saved_models/model.pickle"
-    # # When HPC
-    # path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
-    # torch.save(model.module.state_dict(), path)
+    # Parameters and DataLoaders
+    input_size = 5
+    output_size = 2
+    batch_size = 30
+    data_size = 100
+
+    rand_loader = DataLoader(dataset=RandomDataset(input_size, data_size),
+                         batch_size=batch_size, shuffle=True)
+    
+    model = Model(input_size, output_size)
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+        model = nn.DataParallel(model, device_ids=available_gpus)
+    else:
+        print('No GPU detected')
+
+    model.to(device)
+
+    for data in rand_loader:
+        input = data.to(device)
+        output = model(input)
+        print("Outside: input size", input.size(),
+            "output_size", output.size())
+    
+    # Save the model
+    # # When locally
+    # path = "/home/mario/Projects/project_2/saved_models/model.pickle"
+    # When HPC
+    path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
+    torch.save(model.module.state_dict(), path)
