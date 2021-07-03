@@ -63,12 +63,7 @@ if __name__ == "__main__":
     
     for data in rand_loader:
         input = data.to(device)
-        print('IMPORTANT')
-        print(input.shape)
         output = model(input)
-        print(type(output))
-        print(output.shape)
-        break
         print("Outside: input size", input.size(),
             "output_size", output.size())
     
