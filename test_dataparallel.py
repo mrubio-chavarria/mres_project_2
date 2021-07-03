@@ -63,8 +63,9 @@ if __name__ == "__main__":
     
     model = Model(input_size, output_size)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    print('AVAILABLE GPUS')
     print(available_gpus)
 
     if torch.cuda.device_count() > 1:
