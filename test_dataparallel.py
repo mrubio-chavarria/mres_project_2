@@ -71,12 +71,13 @@ if __name__ == "__main__":
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
-        model = nn.DataParallel(model, device_ids=available_gpus)
+        model = nn.DataParallel(model, device_ids=available_gpus[1:])
     else:
         print('No GPU detected')
 
     model.to(device)
 
+    print('IDs_ assigned')
     
     for data in rand_loader:
         input = data.to(device)
