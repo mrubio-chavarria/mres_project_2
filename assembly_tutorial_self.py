@@ -515,6 +515,9 @@ if __name__ == '__main__':
     train_data = train_loader
     test_data = test_loader
 
+    # DELETE 
+    train_data = limit_dataset(train_data, 60)
+
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
