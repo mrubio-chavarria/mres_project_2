@@ -65,6 +65,8 @@ if __name__ == "__main__":
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+    print(available_gpus)
+
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
@@ -74,7 +76,7 @@ if __name__ == "__main__":
 
     model.to(device)
 
-    print(available_gpus)
+    
     for data in rand_loader:
         input = data.to(device)
         output = model(input)
