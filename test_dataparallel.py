@@ -59,6 +59,9 @@ if __name__ == "__main__":
     print(type(sys.argv[1]))
     print(sys.argv[1])
 
+    print(type(sys.argv))
+    print(sys.argv)
+
     # model.to(device)
 
     # for data in rand_loader:
