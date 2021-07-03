@@ -36,21 +36,7 @@ class RandomDataset(Dataset):
 
 if __name__ == "__main__":
 
-    print(torch.cuda.device_count())
-    print(torch.cuda.current_device())
-
-    print(type(sys.argv[1]))
-    print(sys.argv[1])
-
-    print(type(sys.argv))
-    print(sys.argv)
-    print('PREVIO')
-    print('---------------------------')
-    print('SCRIPT')
-
-    # Read available devices
-    #available_gpus = [int(device_id) for device_id in sys.argv[1].split(',')]
-    
+    # Assign the available devices
     os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 
     # Parameters and DataLoaders
