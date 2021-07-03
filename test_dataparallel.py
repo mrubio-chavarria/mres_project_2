@@ -48,7 +48,7 @@ if __name__ == "__main__":
     print('SCRIPT')
 
     # Read available devices
-    available_gpus = sorted([int(device_id) for device_id in sys.argv[1].split(',')])
+    available_gpus = [int(device_id) for device_id in sys.argv[1].split(',')]
 
     device = torch.device(f"cuda:{available_gpus[0]}")
     
@@ -74,6 +74,7 @@ if __name__ == "__main__":
 
     model.to(device)
 
+    print(available_gpus)
     for data in rand_loader:
         input = data.to(device)
         output = model(input)
