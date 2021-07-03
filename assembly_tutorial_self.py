@@ -551,7 +551,7 @@ if __name__ == '__main__':
         path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
         torch.save(model.module.state_dict(), path)
     else:
-        # When locally
+        # When local
         path = "/home/mario/Projects/project_2/saved_models/model.pickle"
     
 

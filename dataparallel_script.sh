@@ -6,4 +6,4 @@ module load anaconda3/personal
 
 source activate project2_venv
 
-python3 $HOME/project_2/test_dataparallel.py $CUDA_VISIBLE_DEVICES
+python3 $HOME/project_2/assembly_tutorial_self.py $CUDA_VISIBLE_DEVICES
