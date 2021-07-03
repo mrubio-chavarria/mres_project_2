@@ -56,6 +56,9 @@ if __name__ == "__main__":
     # else:
     #     print('No GPU detected')
 
+    print(torch.cuda.device_count())
+    print(torch.cuda.current_device())
+
     print(type(sys.argv[1]))
     print(sys.argv[1])
 
