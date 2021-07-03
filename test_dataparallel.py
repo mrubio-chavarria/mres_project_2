@@ -36,7 +36,7 @@ class RandomDataset(Dataset):
 
 if __name__ == "__main__":
 
-    # Assign the available devices
+    # Set available devices 
     os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
 
     # Parameters and DataLoaders
@@ -51,7 +51,6 @@ if __name__ == "__main__":
     model = Model(input_size, output_size)
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    
 
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")

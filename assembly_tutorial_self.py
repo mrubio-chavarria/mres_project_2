@@ -464,6 +464,9 @@ def test(model, test_loader, criterion):
 
 if __name__ == '__main__':
 
+    # Set available devices 
+    os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
+
     # Transformations to use in the data
     train_audio_transforms = nn.Sequential(
         torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_mels=128),
@@ -491,13 +494,16 @@ if __name__ == '__main__':
     }
 
     # Import datasets
-    # When local
-    train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
-    test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+    if torch.cuda.device_count() > 1:
+        # When HPC
+        train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
+        test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+    else:
+        # When local
+        train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
+        test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
-    # # When HPC
-    # train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
-    # test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+        
 
     # Load data
     train_loader = data.DataLoader(dataset=train_dataset,
@@ -511,7 +517,7 @@ if __name__ == '__main__':
     train_data = train_loader
     test_data = test_loader
 
-    # Find device
+    # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     # Create model
@@ -523,10 +529,7 @@ if __name__ == '__main__':
                     parameters['n_features'],
                     parameters['n_classes'])
     
-    # # Load previous model if required
-    # model.load_state_dict(torch.load("/home/mario/Projects/project_2/saved_models/model.pickle", map_location=device))
-    
-    # Assuming DataParallel
+    # Set DataParallel
     model = nn.DataParallel(model)
     model.to(device)
 
@@ -543,9 +546,12 @@ if __name__ == '__main__':
     train(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, device)
 
     # Save the model
-    # # When locally
-    # path = "/home/mario/Projects/project_2/saved_models/model.pickle"
-    # When HPC
-    path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
-    torch.save(model.module.state_dict(), path)
+    if torch.cuda.device_count() > 1:
+        # When HPC
+        path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
+        torch.save(model.module.state_dict(), path)
+    else:
+        # When locally
+        path = "/home/mario/Projects/project_2/saved_models/model.pickle"
+    
 
