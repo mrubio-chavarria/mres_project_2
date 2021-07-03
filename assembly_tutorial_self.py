@@ -497,7 +497,7 @@ if __name__ == '__main__':
     if torch.cuda.device_count() > 1:
         # When HPC
         train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
-        test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
+        test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="test-clean", download=True)
     else:
         # When local
         train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
