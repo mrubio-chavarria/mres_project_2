@@ -418,8 +418,6 @@ def train(model, train_data, test_data, n_epochs, criterion, optimiser, schedule
             spectrograms = spectrograms.to(device)
             output = model(spectrograms)  # (batch, time, n_class)
             # Correct for DataParallel output
-            if torch.cuda.is_available():
-                output = torch.cat(output, dim=0)
             output = F.log_softmax(output, dim=2)
             output = output.transpose(0, 1) # (time, batch, n_class)
             # Compute loss
