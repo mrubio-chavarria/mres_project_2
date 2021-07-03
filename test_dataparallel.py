@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import sys
+import os
 
 
 class Model(nn.Module):
@@ -48,10 +49,12 @@ if __name__ == "__main__":
     print('SCRIPT')
 
     # Read available devices
-    available_gpus = [int(device_id) for device_id in sys.argv[1].split(',')]
+    #available_gpus = [int(device_id) for device_id in sys.argv[1].split(',')]
 
-    device = torch.device(f"cuda:{available_gpus[0]}")
+    device = torch.device(f"cuda:0")
     
+    os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
+
     # Parameters and DataLoaders
     input_size = 5
     output_size = 2
@@ -64,20 +67,16 @@ if __name__ == "__main__":
     model = Model(input_size, output_size)
 
     #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-    print('AVAILABLE GPUS')
-    print(available_gpus)
+    
 
     if torch.cuda.device_count() > 1:
         print("Let's use", torch.cuda.device_count(), "GPUs!")
         # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
-        model = nn.DataParallel(model, device_ids=available_gpus[1:])
+        model = nn.DataParallel(model)
     else:
         print('No GPU detected')
 
     model.to(device)
-
-    print('IDs_ assigned')
     
     for data in rand_loader:
         input = data.to(device)
