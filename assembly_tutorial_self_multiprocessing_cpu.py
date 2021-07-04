@@ -523,14 +523,14 @@ if __name__ == '__main__':
                                 shuffle=True,
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-    test_data = test_loader
-
-    # Reduce dataset size
-    train_data = list(limit_dataset(train_loader, 60))
-    test_data = list(limit_dataset(test_loader, 6))
+    # # Reduce dataset size
+    # train_data = list(limit_dataset(train_loader, 60))
+    # test_data = list(limit_dataset(test_loader, 6))
+    train_data = train_loader
+    test_data = train_loader
 
     device = torch.device('cpu')
-    print(f'Model training in {mp.cpu_count()} CPUs' )
+    print(f'Model training in {n_processes} CPUs' )
 
     # Create model
     model = Network(parameters['in_channels'],
