@@ -171,21 +171,23 @@ class Decoder(nn.Module):
 class Network(nn.Module):
     """
     """
-    def __init__(self, in_channels, kernel_size, n_conv_layers, n_rnn_layers, n_kernels, n_features, n_classes):
+    def __init__(self, in_channels, kernel_size, n_conv_layers, n_rnn_layers, rnn_dim, n_kernels, n_features, n_classes, dropout):
         """"""
         super().__init__()
         n_features = n_features // 2  # Reduce the features because stride==2 in the first convolution
         self.initial_cnn = nn.Conv2d(in_channels, n_kernels, kernel_size, 2, padding=(3 - 1) // 2)
-        self.cnn_module = CNN_module(n_conv_layers, n_kernels, n_kernels, kernel_size, 1, 0.8, n_features)
+        self.cnn_module = CNN_module(n_conv_layers, n_kernels, n_kernels, kernel_size, 1, dropout, n_features)
         total_features = int(n_features * n_kernels)
-        self.rnn_module = RNN_module(total_features, 2 * total_features, n_rnn_layers, 0.8, False)
-        self.decoder = Decoder(total_features, n_classes, 0.8)
+        self.fully_connected = nn.Linear(total_features, rnn_dim)
+        self.rnn_module = RNN_module(rnn_dim, 2 * rnn_dim, n_rnn_layers, dropout, True)
+        self.decoder = Decoder(total_features, n_classes, dropout)
 
     def forward(self, x):
         output = self.initial_cnn(x)
         output = self.cnn_module(output)
         sizes = output.shape
         output = output.view(sizes[0], sizes[3], sizes[1] * sizes[2])
+        output = self.fully_connected(output)
         output = self.rnn_module(output)
         output = self.decoder(output)
         return output
@@ -498,12 +500,12 @@ if __name__ == '__main__':
         "batch_size": 20,
         "n_epochs": 5,
         "kernel_size": 3,
-        "n_kernels": 2
+        "n_kernels": 32
     }
 
     # Multiprocessing settings
     n_processes = 32
-    in_hpc = True
+    in_hpc = False
 
     # Import datasets
     if in_hpc:
@@ -523,9 +525,11 @@ if __name__ == '__main__':
                     parameters['kernel_size'],
                     parameters['n_cnn_layers'],
                     parameters['n_rnn_layers'],
+                    parameters['rnn_dim'],
                     parameters['n_kernels'],
                     parameters['n_features'],
-                    parameters['n_classes'])
+                    parameters['n_classes'],
+                    parameters['dropout'])
 
     model.to(device)
     model.share_memory()    
