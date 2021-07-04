@@ -586,7 +586,7 @@ if __name__ == '__main__':
     # Parameters for training
     parameters = {
         "in_channels": 1,
-        "n_cnn_layers": 3,
+        "n_cnn_layers": 1,
         "n_rnn_layers": 5,
         "rnn_dim": 512, # 512,
         "n_classes": 29,
@@ -597,7 +597,7 @@ if __name__ == '__main__':
         "batch_size": 20,
         "n_epochs": 4,
         "kernel_size": 3,
-        "n_kernels": 16
+        "n_kernels": 3
     }
 
     # Multiprocessing settings
