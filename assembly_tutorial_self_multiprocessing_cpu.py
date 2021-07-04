@@ -409,11 +409,9 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, parameters, device, rank='GPU'):
+def train(model, train_data, parameters, device, sampler, rank='GPU'):
     """"""
-
     print(f'Training in process {rank} launched')
-
     # Create training parameters
     optimiser = optim.SGD(model.parameters(), parameters['learning_rate'])
     criterion = nn.CTCLoss(blank=28)
@@ -424,6 +422,7 @@ def train(model, train_data, parameters, device, rank='GPU'):
     # Launch training
     for epoch in range(parameters['n_epochs']):
         model.train()
+        sampler.set_epoch(epoch)
         for batch_idx, _data in enumerate(train_data):
             model.zero_grad()
             # Load data
@@ -497,14 +496,14 @@ if __name__ == '__main__':
         "dropout": 0.1,
         "learning_rate": 5E-4,
         "batch_size": 20,
-        "n_epochs": 10,
+        "n_epochs": 1,
         "kernel_size": 3,
         "n_kernels": 2
     }
 
     # Multiprocessing settings
     n_processes = 32
-    in_hpc = False
+    in_hpc = True
 
     # Import datasets
     if in_hpc:
@@ -561,7 +560,7 @@ if __name__ == '__main__':
                                 batch_size=parameters['batch_size'],
                                 collate_fn=lambda x: data_processing(x, train_audio_transforms))
 
-        process = mp.Process(target=train, args=(model, train_data, parameters, device, rank))
+        process = mp.Process(target=train, args=(model, train_data, parameters, device, sampler, rank))
         process.start()
         processes.append(process)
     for process in processes:
