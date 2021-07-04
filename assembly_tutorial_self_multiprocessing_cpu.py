@@ -13,7 +13,7 @@ import torch.nn.functional as F
 import torchaudio
 import numpy as np
 import torch.multiprocessing as mp
-
+from torch.utils.data.distributed import DistributedSampler
 
 
 # Classes
@@ -409,13 +409,16 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, parameters, device, rank='GPU'):
+def train(model, train_data, parameters, device, rank='GPU'):
     """"""
+
+    print(f'Training in process {rank} launched')
+
     # Create training parameters
     optimiser = optim.SGD(model.parameters(), parameters['learning_rate'])
     criterion = nn.CTCLoss(blank=28)
     scheduler = optim.lr_scheduler.OneCycleLR(optimiser, max_lr=parameters['learning_rate'], 
-                                            steps_per_epoch=int(len(train_loader)),
+                                            steps_per_epoch=int(len(train_data)),
                                             epochs=parameters['n_epochs'],
                                             anneal_strategy='linear')
     # Launch training
@@ -441,8 +444,8 @@ def train(model, train_data, test_data, parameters, device, rank='GPU'):
             print('Process: {} Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
                 rank, epoch+1, batch_idx+1, len(train_data),
                 100. * (batch_idx+1) / len(train_data), loss.item()))
-        print('Epoch completed. Evaluating result...')
-        test(model, test_data, criterion, device)
+        # print('Epoch completed. Evaluating result...')
+        # test(model, test_data, criterion, device)
 
 
 def test(model, test_loader, criterion, device):
@@ -501,7 +504,7 @@ if __name__ == '__main__':
 
     # Multiprocessing settings
     n_processes = 32
-    in_hpc = True
+    in_hpc = False
 
     # Import datasets
     if in_hpc:
@@ -513,21 +516,21 @@ if __name__ == '__main__':
         train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
         test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
-    # Load data
-    train_loader = data.DataLoader(dataset=train_dataset,
-                                batch_size=parameters['batch_size'],
-                                shuffle=True,
-                                collate_fn=lambda x: data_processing(x, train_audio_transforms))
-    test_loader = data.DataLoader(dataset=test_dataset,
-                                batch_size=parameters['batch_size'],
-                                shuffle=True,
-                                collate_fn=lambda x: data_processing(x, valid_audio_transforms))
+    # # Load data DELETE
+    # train_loader = data.DataLoader(dataset=train_dataset,
+    #                             batch_size=parameters['batch_size'],
+    #                             shuffle=True,
+    #                             collate_fn=lambda x: data_processing(x, train_audio_transforms))
+    # test_loader = data.DataLoader(dataset=test_dataset,
+    #                             batch_size=parameters['batch_size'],
+    #                             shuffle=True,
+    #                             collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-    # # Reduce dataset size
-    # train_data = list(limit_dataset(train_loader, 60))
-    # test_data = list(limit_dataset(test_loader, 6))
-    train_data = train_loader
-    test_data = train_loader
+    # # # Reduce dataset size
+    # # train_data = list(limit_dataset(train_loader, 60))
+    # # test_data = list(limit_dataset(test_loader, 6))
+    # train_data = train_loader  # DELETE
+    # test_data = train_loader  # DELETE
 
     device = torch.device('cpu')
     print(f'Model training in {n_processes} CPUs' )
@@ -544,11 +547,21 @@ if __name__ == '__main__':
     model.to(device)
     model.share_memory()    
 
+    print('Model: ')
+    print(model)
     # Training
     # Execute training
     processes = []
+    print('Launching processes')
     for rank in range(n_processes):
-        process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
+        # Load data
+        sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
+        train_data = data.DataLoader(dataset=train_dataset,
+                                sampler=sampler,
+                                batch_size=parameters['batch_size'],
+                                collate_fn=lambda x: data_processing(x, train_audio_transforms))
+
+        process = mp.Process(target=train, args=(model, train_data, parameters, device, rank))
         process.start()
         processes.append(process)
     for process in processes:
