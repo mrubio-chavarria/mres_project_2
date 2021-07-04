@@ -597,7 +597,7 @@ if __name__ == '__main__':
         "batch_size": 20,
         "n_epochs": 4,
         "kernel_size": 3,
-        "n_kernels": 32
+        "n_kernels": 16
     }
 
     # Multiprocessing settings
