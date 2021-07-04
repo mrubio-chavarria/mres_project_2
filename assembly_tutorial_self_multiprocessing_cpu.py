@@ -500,7 +500,8 @@ if __name__ == '__main__':
     }
 
     # Import datasets
-    if torch.cuda.device_count() > 1:
+    in_hpc = mp.cpu_count() > 8
+    if in_hpc:
         # When HPC
         train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
         test_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="test-clean", download=True)
@@ -551,8 +552,6 @@ if __name__ == '__main__':
         process.join()
 
     # Save the model
-    in_hpc = mp.cpu_count() > 8
-    print(mp.cpu_count())
     if in_hpc:
         # When HPC
         path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
