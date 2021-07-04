@@ -602,7 +602,7 @@ if __name__ == '__main__':
     }
 
     # Multiprocessing settings
-    n_processes = 16
+    n_processes = 32
     in_hpc = True
 
     # Import datasets
@@ -619,23 +619,23 @@ if __name__ == '__main__':
     print(f'Model training in {n_processes} CPUs' )
 
     # Create model
-    # model = Network(parameters['in_channels'],
-    #                 parameters['kernel_size'],
-    #                 parameters['n_cnn_layers'],
-    #                 parameters['n_rnn_layers'],
-    #                 parameters['rnn_dim'],
-    #                 parameters['n_kernels'],
-    #                 parameters['n_features'],
-    #                 parameters['n_classes'],
-    #                 parameters['dropout'])
+    model = Network(parameters['in_channels'],
+                    parameters['kernel_size'],
+                    parameters['n_cnn_layers'],
+                    parameters['n_rnn_layers'],
+                    parameters['rnn_dim'],
+                    parameters['n_kernels'],
+                    parameters['n_features'],
+                    parameters['n_classes'],
+                    parameters['dropout'])
 
-    model = SpeechRecognitionModel(parameters['n_cnn_layers'], # n_cnn_layers,
-                                parameters['n_rnn_layers'], # n_rnn_layers,
-                                parameters['rnn_dim'], # rnn_dim,
-                                parameters['n_classes'], # n_class,
-                                parameters['n_features'], #n_feats,
-                                stride=2,
-                                dropout=0.1)
+    # model = SpeechRecognitionModel(parameters['n_cnn_layers'], # n_cnn_layers,
+    #                             parameters['n_rnn_layers'], # n_rnn_layers,
+    #                             parameters['rnn_dim'], # rnn_dim,
+    #                             parameters['n_classes'], # n_class,
+    #                             parameters['n_features'], #n_feats,
+    #                             stride=2,
+    #                             dropout=0.1)
 
     model.to(device)
     model.share_memory()    
