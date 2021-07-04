@@ -8,4 +8,4 @@ module load anaconda3/personal
 source activate project2_venv
 
 # Launch script
-python3 $HOME/project_2/assembly_tutorial_self_multiprocessing_cpu.pyqstat
+python3 $HOME/project_2/assembly_tutorial_self_multiprocessing_cpu.py
