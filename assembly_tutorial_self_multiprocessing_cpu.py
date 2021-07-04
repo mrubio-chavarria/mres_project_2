@@ -550,7 +550,7 @@ if __name__ == '__main__':
                                 batch_size=parameters['batch_size'],
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-        process = mp.Process(target=train, args=(model, train_data, parameters, device, train_sampler, rank))
+        process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, train_sampler, rank))
         process.start()
         processes.append(process)
     for process in processes:
