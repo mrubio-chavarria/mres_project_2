@@ -499,8 +499,11 @@ if __name__ == '__main__':
         "n_kernels": 2
     }
 
+    # Multiprocessing settings
+    n_processes = 32
+    in_hpc = True
+
     # Import datasets
-    in_hpc = mp.cpu_count() > 8
     if in_hpc:
         # When HPC
         train_dataset = torchaudio.datasets.LIBRISPEECH("/rds/general/user/mr820/home/project_2/librispeech_data", url="train-clean-100", download=True)
@@ -544,7 +547,7 @@ if __name__ == '__main__':
     # Training
     # Execute training
     processes = []
-    for rank in mp.cpu_count():
+    for rank in range(n_processes):
         process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
         process.start()
         processes.append(process)
