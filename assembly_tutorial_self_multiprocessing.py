@@ -5,6 +5,7 @@ import multiprocessing
 import os
 import sys
 import torch
+from torch import cuda
 import torch.nn as nn
 import torch.utils.data as data
 import torch.optim as optim
@@ -188,6 +189,7 @@ class Network(nn.Module):
         output = self.rnn_module(output)
         output = self.decoder(output)
         return output
+
 
 
 def limit_dataset(dataloader, limit):
@@ -407,7 +409,7 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, parameters, device, rank=None):
+def train(model, train_data, test_data, parameters, device, rank='GPU'):
     """"""
     # Create training parameters
     optimiser = optim.SGD(model.parameters(), parameters['learning_rate'])
@@ -424,7 +426,7 @@ def train(model, train_data, test_data, parameters, device, rank=None):
             # Load data
             spectrograms, labels, input_lengths, label_lengths = _data
             # Compute model output
-            spectrograms = spectrograms.to(device)
+            spectrograms, labels = spectrograms.to(device), labels.to(device)
             output = model(spectrograms)  # (batch, time, n_class)
             # Correct for DataParallel output
             output = F.log_softmax(output, dim=2)
@@ -436,21 +438,21 @@ def train(model, train_data, test_data, parameters, device, rank=None):
             optimiser.step()
             scheduler.step()
             # Print progress
-            print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
-                epoch+1, batch_idx+1, len(train_data),
+            print('Process: {} Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
+                rank, epoch+1, batch_idx+1, len(train_data),
                 100. * (batch_idx+1) / len(train_data), loss.item()))
-        # print('Epoch completed. Evaluating result...')
-        # test(model, test_data, criterion)
+        print('Epoch completed. Evaluating result...')
+        test(model, test_data, criterion, device)
 
 
-def test(model, test_loader, criterion):
+def test(model, test_loader, criterion, device):
     model.eval()
     test_loss = 0
     test_cer, test_wer = [], []
     with torch.no_grad():
         for i, _data in enumerate(test_loader):
             spectrograms, labels, input_lengths, label_lengths = _data 
-
+            spectrograms, labels = spectrograms.to(device), labels.to(device)
             output = model(spectrograms)  # (batch, time, n_class)
             output = F.log_softmax(output, dim=2)
             output = output.transpose(0, 1) # (time, batch, n_class)
@@ -507,8 +509,6 @@ if __name__ == '__main__':
         train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
         test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
-        
-
     # Load data
     train_loader = data.DataLoader(dataset=train_dataset,
                                 batch_size=parameters['batch_size'],
@@ -518,14 +518,21 @@ if __name__ == '__main__':
                                 batch_size=parameters['batch_size'],
                                 shuffle=True,
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
-    train_data = train_loader
+
     test_data = test_loader
 
-    # DELETE 
-    train_data = list(limit_dataset(train_data, 60))
+    # Reduce dataset size
+    train_data = list(limit_dataset(train_loader, 60))
+    test_data = list(limit_dataset(test_loader, 6))
 
-    # Set device
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    cuda_available = sys.argv[1] == 'YES'
+    if cuda_available:
+        os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[2]
+        device = torch.device('cuda')
+        print(f'Model training in {len(sys.argv[2].split(","))} GPUs' )
+    else: 
+        device = torch.device('cpu')
+        print(f'Model training in {mp.cpu_count()} CPUs' )
 
     # Create model
     model = Network(parameters['in_channels'],
@@ -535,27 +542,30 @@ if __name__ == '__main__':
                     parameters['n_kernels'],
                     parameters['n_features'],
                     parameters['n_classes'])
-    model.to(device)
-    model.share_memory()
+
+    if cuda_available:
+        model = nn.DataParallel(model)
+        model.to(device)
+    else:
+        model.to(device)
+        model.share_memory()    
 
     # Training
     # Execute training
-    n_processes = 4
-    multiprocessing = False
-    print('Initialise training')
-    if multiprocessing:
-        processes = []
-        for rank in range(n_processes):
-            p = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
-    else:
+    if cuda_available:
         train(model, train_data, test_data, parameters, device)
+    else:
+        processes = []
+        for rank in mp.cpu_count():
+            process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
+            process.start()
+            processes.append(process)
+        for process in processes:
+            process.join()
 
     # Save the model
-    if torch.cuda.device_count() > 1:
+    in_hpc = mp.cpu_count() > 8
+    if in_hpc:
         # When HPC
         path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
         torch.save(model.module.state_dict(), path)
