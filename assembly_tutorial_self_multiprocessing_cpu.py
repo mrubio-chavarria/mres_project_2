@@ -180,7 +180,7 @@ class Network(nn.Module):
         total_features = int(n_features * n_kernels)
         self.fully_connected = nn.Linear(total_features, rnn_dim)
         self.rnn_module = RNN_module(rnn_dim, 2 * rnn_dim, n_rnn_layers, dropout, True)
-        self.decoder = Decoder(total_features, n_classes, dropout)
+        self.decoder = Decoder(2 * rnn_dim, n_classes, dropout)
 
     def forward(self, x):
         output = self.initial_cnn(x)
@@ -411,7 +411,7 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, parameters, device, sampler, rank='GPU'):
+def train(model, train_data, test_data, parameters, device, sampler=None, rank='GPU'):
     """"""
     print(f'Training in process {rank} launched')
     # Create training parameters
@@ -424,7 +424,8 @@ def train(model, train_data, test_data, parameters, device, sampler, rank='GPU')
     # Launch training
     for epoch in range(parameters['n_epochs']):
         model.train()
-        sampler.set_epoch(epoch)
+        if sampler is not None:
+            sampler.set_epoch(epoch)
         for batch_idx, _data in enumerate(train_data):
             model.zero_grad()
             # Load data
@@ -598,12 +599,13 @@ if __name__ == '__main__':
         "batch_size": 20,
         "n_epochs": 4,
         "kernel_size": 3,
-        "n_kernels": 8
+        "n_kernels": 16
     }
 
     # Multiprocessing settings
-    n_processes = 16
-    in_hpc = True
+    n_processes = 1
+    in_hpc = False
+    
 
     # Import datasets
     if in_hpc:
@@ -646,25 +648,39 @@ if __name__ == '__main__':
     # Execute training
     processes = []
     print('Launching processes')
-    for rank in range(n_processes):
-        # Load train data
-        train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
+    if n_processes > 1:
+        for rank in range(n_processes):
+            # Load train data
+            train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
+            train_data = data.DataLoader(dataset=train_dataset,
+                                    sampler=train_sampler,
+                                    batch_size=parameters['batch_size'],
+                                    collate_fn=lambda x: data_processing(x, train_audio_transforms))
+            # Load test data
+            test_sampler = DistributedSampler(test_dataset, num_replicas=n_processes, rank=rank)
+            test_data = data.DataLoader(dataset=test_dataset,
+                                    sampler=test_sampler,
+                                    batch_size=parameters['batch_size'],
+                                    collate_fn=lambda x: data_processing(x, valid_audio_transforms))
+
+            process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, train_sampler, rank))
+            process.start()
+            processes.append(process)
+        for process in processes:
+            process.join()
+    else:
+        
         train_data = data.DataLoader(dataset=train_dataset,
-                                sampler=train_sampler,
+                                shuffle=True,
                                 batch_size=parameters['batch_size'],
                                 collate_fn=lambda x: data_processing(x, train_audio_transforms))
         # Load test data
-        test_sampler = DistributedSampler(test_dataset, num_replicas=n_processes, rank=rank)
         test_data = data.DataLoader(dataset=test_dataset,
-                                sampler=test_sampler,
+                                shuffle=True,
                                 batch_size=parameters['batch_size'],
                                 collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-        process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, train_sampler, rank))
-        process.start()
-        processes.append(process)
-    for process in processes:
-        process.join()
+        train(model, train_data, test_data, parameters, device)
 
     # # Save the model
     # if in_hpc:
