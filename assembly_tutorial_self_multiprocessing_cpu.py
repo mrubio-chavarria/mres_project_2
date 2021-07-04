@@ -539,15 +539,16 @@ class SpeechRecognitionModel(nn.Module):
     
     def __init__(self, n_cnn_layers, n_rnn_layers, rnn_dim, n_class, n_feats, stride=2, dropout=0.1):
         super(SpeechRecognitionModel, self).__init__()
+        kernel_size = 16
         n_feats = n_feats//2
-        self.cnn = nn.Conv2d(1, 32, 3, stride=stride, padding=3//2)  # cnn for extracting heirachal features
+        self.cnn = nn.Conv2d(1, kernel_size, 3, stride=stride, padding=3//2)  # cnn for extracting heirachal features
 
         # n residual cnn layers with filter size of 32
         self.rescnn_layers = nn.Sequential(*[
-            ResidualCNN(32, 32, kernel=3, stride=1, dropout=dropout, n_feats=n_feats) 
+            ResidualCNN(kernel_size, kernel_size, kernel=3, stride=1, dropout=dropout, n_feats=n_feats) 
             for _ in range(n_cnn_layers)
         ])
-        self.fully_connected = nn.Linear(n_feats*32, rnn_dim)
+        self.fully_connected = nn.Linear(n_feats*kernel_size, rnn_dim)
         self.birnn_layers = nn.Sequential(*[
             BidirectionalGRU(rnn_dim=rnn_dim if i==0 else rnn_dim*2,
                              hidden_size=rnn_dim, dropout=dropout, batch_first=i==0)
