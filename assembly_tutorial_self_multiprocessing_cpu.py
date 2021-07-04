@@ -544,15 +544,15 @@ if __name__ == '__main__':
     model.to(device)
     model.share_memory()    
 
-    # # Training
-    # # Execute training
-    # processes = []
-    # for rank in range(n_processes):
-    #     process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
-    #     process.start()
-    #     processes.append(process)
-    # for process in processes:
-    #     process.join()
+    # Training
+    # Execute training
+    processes = []
+    for rank in range(n_processes):
+        process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
+        process.start()
+        processes.append(process)
+    for process in processes:
+        process.join()
 
     # # Save the model
     # if in_hpc:
