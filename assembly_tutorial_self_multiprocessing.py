@@ -1,6 +1,7 @@
 #!/home/mario/anaconda3/envs/project2_venv/bin python
 
 # Libraries
+import multiprocessing
 import os
 import sys
 import torch
@@ -406,9 +407,17 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, n_epochs, criterion, optimiser, scheduler, device, rank=None):
+def train(model, train_data, test_data, parameters, device, rank=None):
     """"""
-    for epoch in range(n_epochs):
+    # Create training parameters
+    optimiser = optim.SGD(model.parameters(), parameters['learning_rate'])
+    criterion = nn.CTCLoss(blank=28)
+    scheduler = optim.lr_scheduler.OneCycleLR(optimiser, max_lr=parameters['learning_rate'], 
+                                            steps_per_epoch=int(len(train_loader)),
+                                            epochs=parameters['n_epochs'],
+                                            anneal_strategy='linear')
+    # Launch training
+    for epoch in range(parameters['n_epochs']):
         model.train()
         for batch_idx, _data in enumerate(train_data):
             model.zero_grad()
@@ -430,8 +439,8 @@ def train(model, train_data, test_data, n_epochs, criterion, optimiser, schedule
             print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
                 epoch+1, batch_idx+1, len(train_data),
                 100. * (batch_idx+1) / len(train_data), loss.item()))
-        print('Epoch completed. Evaluating result...')
-        test(model, test_data, criterion)
+        # print('Epoch completed. Evaluating result...')
+        # test(model, test_data, criterion)
 
 
 def test(model, test_loader, criterion):
@@ -462,9 +471,6 @@ def test(model, test_loader, criterion):
 
 if __name__ == '__main__':
 
-    # Set available devices 
-    os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
-
     # Transformations to use in the data
     train_audio_transforms = nn.Sequential(
         torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_mels=128),
@@ -478,17 +484,17 @@ if __name__ == '__main__':
     parameters = {
         "in_channels": 1,
         "n_cnn_layers": 3,
-        "n_rnn_layers": 2,
-        "rnn_dim": 256, # 512,
+        "n_rnn_layers": 5,
+        "rnn_dim": 512, # 512,
         "n_classes": 29,
         "n_features": 128,
         "stride":2,
         "dropout": 0.1,
-        "learning_rate": 1E-3,
+        "learning_rate": 5E-4,
         "batch_size": 20,
-        "n_epochs": 1,
+        "n_epochs": 10,
         "kernel_size": 3,
-        "n_kernels": 3
+        "n_kernels": 2
     }
 
     # Import datasets
@@ -516,7 +522,7 @@ if __name__ == '__main__':
     test_data = test_loader
 
     # DELETE 
-    train_data = limit_dataset(train_data, 60)
+    train_data = list(limit_dataset(train_data, 60))
 
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -529,22 +535,24 @@ if __name__ == '__main__':
                     parameters['n_kernels'],
                     parameters['n_features'],
                     parameters['n_classes'])
-    
-    # Set DataParallel
-    model = nn.DataParallel(model)
     model.to(device)
+    model.share_memory()
 
     # Training
-    # Parameters   
-    optimiser = optim.AdamW(model.parameters(), parameters['learning_rate'])
-    criterion = nn.CTCLoss(blank=28)
-    scheduler = optim.lr_scheduler.OneCycleLR(optimiser, max_lr=parameters['learning_rate'], 
-                                            steps_per_epoch=int(len(train_loader)),
-                                            epochs=parameters['n_epochs'],
-                                            anneal_strategy='linear')
     # Execute training
+    n_processes = 4
+    multiprocessing = False
     print('Initialise training')
-    train(model, train_data, test_data, parameters['n_epochs'], criterion, optimiser, scheduler, device)
+    if multiprocessing:
+        processes = []
+        for rank in range(n_processes):
+            p = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
+            p.start()
+            processes.append(p)
+        for p in processes:
+            p.join()
+    else:
+        train(model, train_data, test_data, parameters, device)
 
     # Save the model
     if torch.cuda.device_count() > 1:
