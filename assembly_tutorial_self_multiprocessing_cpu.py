@@ -542,7 +542,7 @@ if __name__ == '__main__':
                     parameters['n_classes'])
 
     model.to(device)
-    # model.share_memory()    
+    model.share_memory()    
 
     # # Training
     # # Execute training
