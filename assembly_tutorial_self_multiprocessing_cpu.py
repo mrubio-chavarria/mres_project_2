@@ -552,6 +552,7 @@ if __name__ == '__main__':
 
     # Save the model
     in_hpc = mp.cpu_count() > 8
+    print(mp.cpu_count())
     if in_hpc:
         # When HPC
         path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
