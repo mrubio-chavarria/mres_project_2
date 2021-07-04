@@ -542,25 +542,25 @@ if __name__ == '__main__':
                     parameters['n_classes'])
 
     model.to(device)
-    model.share_memory()    
+    # model.share_memory()    
 
-    # Training
-    # Execute training
-    processes = []
-    for rank in range(n_processes):
-        process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
-        process.start()
-        processes.append(process)
-    for process in processes:
-        process.join()
+    # # Training
+    # # Execute training
+    # processes = []
+    # for rank in range(n_processes):
+    #     process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, rank))
+    #     process.start()
+    #     processes.append(process)
+    # for process in processes:
+    #     process.join()
 
-    # Save the model
-    if in_hpc:
-        # When HPC
-        path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
-        torch.save(model.module.state_dict(), path)
-    else:
-        # When local
-        path = "/home/mario/Projects/project_2/saved_models/model.pickle"
+    # # Save the model
+    # if in_hpc:
+    #     # When HPC
+    #     path = "/rds/general/user/mr820/home/project_2/saved_models/model.pickle"
+    #     torch.save(model.module.state_dict(), path)
+    # else:
+    #     # When local
+    #     path = "/home/mario/Projects/project_2/saved_models/model.pickle"
     
 
