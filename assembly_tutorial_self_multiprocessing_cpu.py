@@ -507,8 +507,8 @@ if __name__ == '__main__':
     }
 
     # Multiprocessing settings
-    n_processes = 1
-    in_hpc = False
+    n_processes = 16
+    in_hpc = True
     
 
     # Import datasets
