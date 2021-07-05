@@ -343,23 +343,5 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias_ih, bias_hh, batch_n
     return h_t, c_t
 
 
-# if __name__ == '__main__':
-#     # Parameters
-#     sequence_length = 3
-#     batch_size = 5
-#     input_size = 1
-#     x = 3 * torch.rand((sequence_length, batch_size, input_size))
-#     hidden_size = 4
-#     bidirectional = True
-#     num_layers = 3
-#     batch_norm = True
-
-#     # Create the reference model
-#     reference_model = nn.LSTM(input_size, hidden_size, num_layers, batch_first=False, bidirectional=bidirectional)
-#     output_ref, (h_n_ref, c_n_ref) = reference_model(x.view(sequence_length, batch_size, input_size))
-
-#     # Create the customised model
-#     model = LSTM(input_size, hidden_size, batch_size, num_layers, method='orthogonal', bidirectional=bidirectional, batch_norm=batch_norm)
-#     output, (h_n, c_n) = model(x.view(sequence_length, batch_size, input_size))
     
 

@@ -8,8 +8,9 @@ The code below gathers the models developed to test
 # Libraries
 import torch
 from torch import nn
-from torch.nn.modules.batchnorm import BatchNorm1d
 from torch.nn import functional as F
+from torch.nn.modules import batchnorm
+from bnlstm import LSTM
 
 
 # Classes
@@ -370,7 +371,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, sequence_length, input_size, batch_size, hidden_size, output_size, dropout=0.2, bidirectional=False):
+    def __init__(self, n_layers, sequence_length, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -379,7 +380,6 @@ class LSTM_module(nn.Module):
         :param input_size: [int] dimensionality of the input space.
         :param batch_size: [int] number of items per batch.
         :param hidden_size: [int] features in the hidden space.
-        :param output_size: [int] size of the predicted vector.
         :param dropout: [float] proportion of dropout neurons.
         :param bidirectional: [bool] variable to indicate if the LSTM layers
         are bidirectional. 
@@ -390,20 +390,19 @@ class LSTM_module(nn.Module):
         self.input_size = input_size
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.output_size = output_size
         self.sequence_length = sequence_length
         self.dropout_proportion = dropout
         self.bidirectional = bidirectional
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        if self.bidirectional:
-            self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-                batch_first=True, bidirectional=True)
-            self.linear = nn.Linear(2*self.hidden_size, self.hidden_size)
-        else:
-            self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-                batch_first=True)
+        # Pytorch's LSTM
+        # self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+        #     batch_first=True, bidirectional=self.bidirectional)
+        # BatchNorm LSTM
+        self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
+            batch_first=True, method='orthogonal', bidirectional=True, 
+            batch_norm=True)
 
     
     def forward(self, input_sequence):
@@ -415,11 +414,8 @@ class LSTM_module(nn.Module):
         :return: [float] predicted value.
         """
         # We do not store the hidden and cell states
-        if self.bidirectional:
-            output, _ = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
-            output = self.linear(output)
-        else:
-            output, _ = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
+        # When bidirectional, the output dim is 2 * hidden dim
+        output, _ = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
         return output
 
 
@@ -429,13 +425,12 @@ class ClassifierGELU(nn.Module):
     Model to assign the probabilities of every base for a given signal.
     """
     # Methods
-    def __init__(self, initial_size, hidden_size, output_size, sequence_length, batch_size, dropout=0.2):
+    def __init__(self, initial_size, output_size, sequence_length, batch_size, dropout=0.2):
         """
         DESCRIPTION:
         Class constructor.
         Important, the softmax is already implemented in the cost function.
         :param initial_size: [int] input dimensionality.
-        :param hidden_size: [int] dimensionality of the hidden space.
         :param output_size: [int] output dimensionality. Number of
         classes.
         :param sequence_length: [int] number of elements in the input sequence.
@@ -444,7 +439,7 @@ class ClassifierGELU(nn.Module):
         """
         super().__init__()
         self.initial_size = initial_size
-        self.hidden_size = hidden_size
+        self.hidden_size = 2 * initial_size
         self.output_size = output_size
         self.sequence_length = sequence_length
         self.batch_size = batch_size
