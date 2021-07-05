@@ -432,8 +432,6 @@ def train(model, train_data, test_data, parameters, device, sampler=None, rank='
             spectrograms, labels, input_lengths, label_lengths = _data
             # Compute model output
             spectrograms, labels = spectrograms.to(device), labels.to(device)
-            print(epoch)
-            print(batch_idx)
             output = model(spectrograms)  # (batch, time, n_class)
             # Correct for DataParallel output
             output = F.log_softmax(output, dim=2)
@@ -480,6 +478,11 @@ def test(model, test_loader, criterion, device):
 
 if __name__ == '__main__':
 
+    if sys.argv[1] is None:
+        raise ValueError('No CUDA found')
+
+    os.environ['CUDA_VISIBLE_DEVICES']  = sys.argv[1]
+
     # Transformations to use in the data
     train_audio_transforms = nn.Sequential(
         torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_mels=128),
@@ -521,8 +524,8 @@ if __name__ == '__main__':
         train_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="train-clean-100", download=True)
         test_dataset = torchaudio.datasets.LIBRISPEECH("/home/mario/Projects/project_2/librispeech_data", url="test-clean", download=True)
 
-    device = torch.device('cpu')
-    print(f'Model training in {n_processes} CPUs' )
+    device = torch.device('cuda')
+    print(f'Model training in {len(sys.argv[1].split(","))} GPUs' )
 
     # Create model
     model = Network(parameters['in_channels'],
@@ -534,49 +537,27 @@ if __name__ == '__main__':
                     parameters['n_features'],
                     parameters['n_classes'],
                     parameters['dropout'])
-
-    model.to(device)
-    model.share_memory()    
+    model = nn.DataParallel(model)
+    model.to(device)    
 
     print('Model: ')
     print(model)
     # Training
     # Execute training
     processes = []
-    print('Launching processes')
-    if n_processes > 1:
-        for rank in range(n_processes):
-            # Load train data
-            train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
-            train_data = data.DataLoader(dataset=train_dataset,
-                                    sampler=train_sampler,
-                                    batch_size=parameters['batch_size'],
-                                    collate_fn=lambda x: data_processing(x, train_audio_transforms))
-            # Load test data
-            test_sampler = DistributedSampler(test_dataset, num_replicas=n_processes, rank=rank)
-            test_data = data.DataLoader(dataset=test_dataset,
-                                    sampler=test_sampler,
-                                    batch_size=parameters['batch_size'],
-                                    collate_fn=lambda x: data_processing(x, valid_audio_transforms))
-
-            process = mp.Process(target=train, args=(model, train_data, test_data, parameters, device, train_sampler, rank))
-            process.start()
-            processes.append(process)
-        for process in processes:
-            process.join()
-    else:
+    print('Launching training')
         
-        train_data = data.DataLoader(dataset=train_dataset,
-                                shuffle=True,
-                                batch_size=parameters['batch_size'],
-                                collate_fn=lambda x: data_processing(x, train_audio_transforms))
-        # Load test data
-        test_data = data.DataLoader(dataset=test_dataset,
-                                shuffle=True,
-                                batch_size=parameters['batch_size'],
-                                collate_fn=lambda x: data_processing(x, valid_audio_transforms))
+    train_data = data.DataLoader(dataset=train_dataset,
+                            shuffle=True,
+                            batch_size=parameters['batch_size'],
+                            collate_fn=lambda x: data_processing(x, train_audio_transforms))
+    # Load test data
+    test_data = data.DataLoader(dataset=test_dataset,
+                            shuffle=True,
+                            batch_size=parameters['batch_size'],
+                            collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-        train(model, train_data, test_data, parameters, device)
+    train(model, train_data, test_data, parameters, device)
 
     # # Save the model
     # if in_hpc:
