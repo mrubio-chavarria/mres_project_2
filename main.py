@@ -11,12 +11,14 @@ sequence.
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
+from torch.utils.data.distributed import DistributedSampler
 from datasets import ONTDataset, reshape2Tensor, collate_text2int_fn
 from models import ResidualBlockIV, TCN_module, LSTM_module, ClassifierGELU, ResNet
 from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
 import os
 from torch import multiprocessing as mp
+from bnlstm import LSTM
 
 
 # Classes
@@ -32,7 +34,7 @@ class Network(nn.Module):
         self.LSTM_parameters = LSTM_parameters
         self.decoder_parameters = decoder_parameters
         self.convolutional_module = TCN_module(**self.TCN_parameters)
-        # self.recurrent_module = LSTM_module(**self.LSTM_parameters)
+        self.recurrent_module = LSTM_module(**self.LSTM_parameters)
         self.decoder = ClassifierGELU(**self.decoder_parameters)
 
     def forward(self, input_sequence):
@@ -43,7 +45,7 @@ class Network(nn.Module):
         Dimensions: [batch_size, input_dimensionality, sequence_length]
         """
         output = self.convolutional_module(input_sequence)
-        # output = self.recurrent_module(output)
+        output = self.recurrent_module(output)
         output = self.decoder(output)
         return output
 
@@ -80,12 +82,14 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, rank=0, **kwargs):
+def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
     """
     DESCRIPTION:
     UPDATE
     A function to launch the model training.
     :param rank: [int] index of the process executing the function.
+    :param sampler: [DistributedSampler] sampler to control batch reordering
+    after eery epoch in the case of multiprocessing.
     """
     # Create optimiser
     if kwargs.get('optimiser', 'SGD') == 'SGD':
@@ -115,8 +119,11 @@ def launch_training(model, train_data, rank=0, **kwargs):
     log_softmax = nn.LogSoftmax(dim=2)
     loss_function = nn.CTCLoss()
     initialisation_loss_function = nn.CrossEntropyLoss()
+    initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
     for epoch in range(kwargs.get('epochs', 30)):
+        if sampler is not None:
+            sampler.set_epoch(epoch)
         for batch_id, batch in enumerate(train_data):
             # Clean gradient
             model.zero_grad()
@@ -131,7 +138,7 @@ def launch_training(model, train_data, rank=0, **kwargs):
             output = model(batch)
             # Loss
             # Set different loss to initialise
-            if epoch == 0:
+            if epoch in initialisation_epochs:
                 # Initialisation
                 # Loss function: CrossEntropy
                 # Create the labels
@@ -175,7 +182,7 @@ def launch_training(model, train_data, rank=0, **kwargs):
                 print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
 
 
-def train(model, train_dataset, algorithm='single', n_free_processes=os.cpu_count() - 1, **kwargs):
+def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -187,6 +194,7 @@ def train(model, train_dataset, algorithm='single', n_free_processes=os.cpu_coun
     """
     # Prepare the model
     model.train()
+    print('Training started')
     # Select training algorithm
     if algorithm == 'single':
         # Prepare the data
@@ -194,24 +202,22 @@ def train(model, train_dataset, algorithm='single', n_free_processes=os.cpu_coun
         # Start training
         launch_training(model, train_data, **kwargs)
     elif algorithm == 'Hogwild':
-        # Prepare the data
-        n_processes = os.cpu_count() - n_free_processes
-        step = int(round(len(train_dataset) / n_processes))
-        train_datasets = [train_dataset[step * i:step * (i + 1)] if i != n_processes - 1 else train_dataset[step * i::] for i in range(n_processes)]
-        train_dataloaders = [
-            DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn) for train_dataset in train_datasets
-        ]
         # Start training
         # We are not setting a blockade per epoch
-        mp.set_start_method('spawn')
         model.share_memory()
         processes = []
-        for i in range(n_processes):
-            p = mp.Process(target=launch_training, args=(model, train_dataloaders[i], i), kwargs=kwargs)
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
+        for rank in range(n_processes):
+            train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
+            train_data = DataLoader(dataset=train_dataset,
+                            sampler=train_sampler,
+                            batch_size=kwargs['batch_size'],
+                            collate_fn=collate_text2int_fn)
+            print(f'Process {rank} launched')
+            process = mp.Process(target=launch_training, args=(model, train_data, rank, train_sampler), kwargs=kwargs)
+            process.start()
+            processes.append(process)
+        for process in processes:
+            process.join()
 
 
 if __name__ == "__main__":
@@ -231,10 +237,10 @@ if __name__ == "__main__":
     
     # Load the train and test datasets
     transform = reshape2Tensor((1, -1))
-    batch_size = 20
+    batch_size = 10
     window_size = 311
     train_folder = "databases/natural_flappie_r941_native_ap_toy/train_reads"
-    max_number_windows = 311
+    max_number_windows = 300
     train_dataset = ONTDataset(train_folder, reference_file, window_size, transform, max_number_windows)
     test_folder = "databases/natural_flappie_r941_native_ap_toy/test_reads"
     test_dataset = ONTDataset(test_folder, reference_file, window_size, transform)
@@ -245,25 +251,24 @@ if __name__ == "__main__":
     # Model
     # Parameters
     TCN_parameters = {
-        'n_layers': 5,
+        'n_layers': 2,
         'in_channels': 1,
-        'out_channels': 256,
+        'out_channels': 10,
         'kernel_size': 3,
-        'dropout': 0.5
+        'dropout': 0.8
     }
     LSTM_parameters = {
-        'n_layers': 2,
+        'n_layers': 1,
         'sequence_length': sequence_length,
         'input_size': TCN_parameters['out_channels'], 
         'batch_size': batch_size, 
-        'hidden_size': 200,
-        'output_size': 50,
+        'hidden_size': 2 * TCN_parameters['out_channels'],
         'dropout': 0.8,
         'bidirectional': True
     }
     decoder_parameters = {
-        'initial_size': TCN_parameters['out_channels'],
-        'hidden_size': 2 * TCN_parameters['out_channels'],
+        'initial_size': 2 * LSTM_parameters['hidden_size'],
+        # The hidden size dim is always twice the initial_size
         'output_size': 5,  # n_classes: blank + 4 bases 
         'sequence_length': sequence_length,
         'batch_size': batch_size,
@@ -275,21 +280,26 @@ if __name__ == "__main__":
     # Train the model
     # Training parameters
     training_parameters = {
-        'algorithm': 'single',
-        'n_free_processes': 5,
-        'epochs': 250,
+        'algorithm': 'Hogwild',
+        'n_processes': 10,
+        'epochs': 1,
+        'n_initialisation_epochs': 1,
         'batch_size': batch_size,
-        'learning_rate': 1E-4,
+        'learning_rate': 5E-4,
         'max_learning_rate': 1E-2,
         'weight_decay': 1,
         'momemtum': 0.9,
         'optimiser': 'RMSprop',
         'sequence_length': sequence_length,
-        # 'scheduler': 'OneCycleLR'
+        'scheduler': 'OneCycleLR',
+        'in_hpc': False
     }
+
+    print('Model: ')
+    print(model)
+
     # Training
     train(model, train_dataset, **training_parameters)
-
 
     # test = list(train_data)[0]
     # output = model(test['signals'])

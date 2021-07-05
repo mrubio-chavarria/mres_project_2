@@ -41,7 +41,7 @@ class reshape2Tensor(object):
 
 class ONTDataset(Dataset):
     # Methods
-    def __init__(self, reads_folder, reference_file, window_size=300, transform=None):
+    def __init__(self, reads_folder, reference_file, window_size=300, transform=None, max_number_windows=None):
         """
         DESCRIPTION:
         Class constructor.
@@ -51,6 +51,8 @@ class ONTDataset(Dataset):
         sequence to compare.
         :param transform: [reshape2Tensor] a transformation to set
         the vector dimensionality.
+        :param max_number_windows: [int] value to artificially reduce the
+        dataset size.
         """
         # Save parameters
         super().__init__()
@@ -61,10 +63,13 @@ class ONTDataset(Dataset):
         # Load windows
         windows = load_windows(self.folder, self.reference, self.window_size)
         # Apply transform if needed
-        if transform:
+        if transform is not None:
             self.windows = [transform(window) for window in windows]
         else:
             self.windows = windows
+        # Reduce the dataset if needed
+        if max_number_windows is not None:
+            self.windows = self.windows[:max_number_windows]
     
     def __len__(self):
         """
@@ -105,7 +110,7 @@ def collate_text2int_fn(batch):
     # Relationship to convert between letters and labels
     relationship = {
         # Base: label
-        '': 0,
+        '$': 0,
         'A': 1,
         'T': 2,
         'G': 3,
@@ -128,7 +133,7 @@ def collate_text2int_fn(batch):
     # Return the results
     return {
         'sequences': sequences,
-        'targets': torch.cat(targets),
+        'targets': torch.cat(targets).type(torch.int8),
         'targets_lengths': tuple(targets_lengths),
         # Float format is important to make the data compatible with 
         # the model parameters
