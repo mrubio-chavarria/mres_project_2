@@ -501,13 +501,13 @@ if __name__ == '__main__':
         "dropout": 0.1,
         "learning_rate": 5E-4,
         "batch_size": 20,
-        "n_epochs": 4,
+        "n_epochs": 1,
         "kernel_size": 3,
         "n_kernels": 2
     }
 
     # Multiprocessing settings
-    n_processes = 16
+    n_processes = 32
     in_hpc = True
     
 
