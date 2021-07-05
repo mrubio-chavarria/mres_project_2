@@ -510,7 +510,6 @@ if __name__ == '__main__':
     }
 
     # Multiprocessing settings
-    n_processes = 16
     in_hpc = True
     
 

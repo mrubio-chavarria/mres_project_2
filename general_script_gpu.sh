@@ -10,4 +10,4 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Launch script
-python3 $HOME/project_2/assembly_tutorial_self_multiprocessing_cpu.py $CUDA_VISIBLE_DEVICES
+python3 $HOME/project_2/assembly_tutorial_self_multiprocessing_gpu.py $CUDA_VISIBLE_DEVICES
