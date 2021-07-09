@@ -83,9 +83,11 @@ if __name__ == "__main__":
         for folder in os.listdir(reads_folder + '/' + 'single') if not folder.endswith('txt') and not folder.endswith('index')]
     single_read_folders = sorted(single_read_folders, key=lambda x: int(x.split('/')[-1]))
     print(list(single_read_folders))
+    print(len(list(single_read_folders)))
     basecalls_folder = workdir + '/' + 'basecalls'
     basecalls_files = sorted(os.listdir(basecalls_folder), key=lambda x: int(x.split('_')[3]))
     print(list(basecalls_files))
+    print(len(list(basecalls_files)))
     file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
