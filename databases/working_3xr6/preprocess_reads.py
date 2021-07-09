@@ -61,12 +61,8 @@ def annotate_basecalls(single_read_folders, basecalls_files, workdir):
 
 if __name__ == "__main__":
     
-    # workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    # n_processes = int(sys.argv[2])
-
-    # DELETE
-    workdir = '/home/mario/Projects/project_2/databases/working_3xr6'
-    n_processes = 2
+    workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    n_processes = int(sys.argv[2])
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # n_processes = 4
@@ -92,6 +88,7 @@ if __name__ == "__main__":
     file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
+    print(group_indeces)
     file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
         for index in group_indeces]
     processes = []
