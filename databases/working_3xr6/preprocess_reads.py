@@ -47,13 +47,25 @@ def filter_reads(read_folders, filtered_reads, q_score_threshold):
             if map_results.mean_q_score >= q_score_threshold:
                 count += 1
                 filtered_reads.append(read_file)
-        
+
+
+def annotate_basecalls(single_read_folders, basecalls_files, workdir):
+    """
+    """
+    #for i in range(len(basecalls_files)):
+    for i in range(len(basecalls_files)):
+        basecall_file = workdir + '/' + 'basecalls' + '/' + basecalls_files[i]
+        command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {single_read_folders[i]} --fastq-filenames {basecall_file} --overwrite'
+        os.system(command)
     
 
 if __name__ == "__main__":
     
     workdir = f'{sys.argv[1]}/databases/working_3xr6'
     n_processes = sys.argv[2]
+    
+    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    # n_process = 4
 
     # Format to multiple to single read files
     print('***************************************************************************************')
@@ -73,13 +85,16 @@ if __name__ == "__main__":
 
     basecalls_folder = workdir + '/' + 'basecalls'
     basecalls_files = sorted(os.listdir(basecalls_folder), key=lambda x: int(x.split('_')[3]))
+    file_pairs = zip(single_read_folders, basecalls_files)
+    group_size = len(file_pairs) // n_processes
+    group_indeces = list(range(0, len(file_pairs), group_size))
+    file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
+        for index in group_indeces]
+    prcesses = []
+    for rank in range(n_processes):
+        process = mp.Process(target=annotate_basecalls, args=(file_groups[rank][0], file_groups[rank][1], workdir))
 
-    for i in range(len(basecalls_files)):
-        basecall_file = workdir + '/' + 'basecalls' + '/' + basecalls_files[i]
-        command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {single_read_folders[i]} --fastq-filenames {basecall_file} --overwrite'
-        os.system(command)
-
-    # # Resquiggle
+    # Resquiggle
     print('***************************************************************************************')
     print('Resquiggle the reads...')
     print('***************************************************************************************')
