@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     basecalls_folder = workdir + '/' + 'basecalls'
     basecalls_files = sorted(os.listdir(basecalls_folder), key=lambda x: int(x.split('_')[3]))
-    file_pairs = zip(single_read_folders, basecalls_files)
+    file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
     file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
