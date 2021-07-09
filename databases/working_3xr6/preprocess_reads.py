@@ -61,19 +61,23 @@ def annotate_basecalls(single_read_folders, basecalls_files, workdir):
 
 if __name__ == "__main__":
     
-    workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    n_processes = int(sys.argv[2])
+    # workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    # n_processes = int(sys.argv[2])
+
+    # DELETE
+    workdir = '/home/mario/Projects/project_2/databases/working_3xr6'
+    n_processes = 2
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    # n_process = 4
+    # n_processes = 4
 
-    # Format to multiple to single read files
+    # # Format to multiple to single read files
     print('***************************************************************************************')
     print('Format reads from multi to single files')
     print('***************************************************************************************')
     reads_folder = workdir + '/' + 'reads'
-    command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
-    os.system(command)
+    # command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
+    # os.system(command)
 
     # Annotate the reads with the basecalls
     print('***************************************************************************************')
@@ -90,9 +94,12 @@ if __name__ == "__main__":
     group_indeces = list(range(0, len(file_pairs), group_size))
     file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
         for index in group_indeces]
-    prcesses = []
+    processes = []
+    print(file_groups)
     for rank in range(n_processes):
         process = mp.Process(target=annotate_basecalls, args=(file_groups[rank][0], file_groups[rank][1], workdir))
+    for process in processes:
+        process.join()
 
     # Resquiggle
     print('***************************************************************************************')
