@@ -52,8 +52,8 @@ def filter_reads(read_folders, filtered_reads, q_score_threshold):
 
 if __name__ == "__main__":
     
-    workdir = '/home/mario/Projects/project_2/databases/working_3xr6'
-    n_processes = sys.argv[1]
+    workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    n_processes = sys.argv[2]
 
     # Format to multiple to single read files
     print('***************************************************************************************')
