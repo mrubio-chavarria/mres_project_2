@@ -140,3 +140,5 @@ speech_recognition_tutorial.ipynb
 thomas_data/
 flappie.zip
 saved_models/
+databases/**/reads
+databases/**/basecalls
