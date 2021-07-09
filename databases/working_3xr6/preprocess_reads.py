@@ -62,7 +62,7 @@ def annotate_basecalls(single_read_folders, basecalls_files, workdir):
 if __name__ == "__main__":
     
     workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    n_processes = sys.argv[2]
+    n_processes = int(sys.argv[2])
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # n_process = 4
