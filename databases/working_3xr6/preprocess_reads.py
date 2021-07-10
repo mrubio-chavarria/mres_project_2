@@ -119,7 +119,7 @@ if __name__ == "__main__":
     processes = []
     for rank in range(n_processes):
         print(f'Process {rank} launched')
-        process = mp.Process(target=annotate_basecalls, args=(file_groups[rank], file_groups[rank], workdir))
+        process = mp.Process(target=annotate_basecalls, args=(file_groups[rank]))
         process.start()
     for process in processes:
         process.join()
@@ -152,7 +152,8 @@ if __name__ == "__main__":
     filtered_reads = manager.list()
     for i in range(n_processes):
         print(f'Process {i} launched')
-        process = mp.Process(target=filter_reads, args=(reads_folders_lists[i], filtered_reads, q_score_threshold))
+        process = mp.Process(target=filter_reads,
+                            args=(single_reads_folder + '/' + reads_folders_lists[i], filtered_reads, q_score_threshold))
         processes.append(process)
         process.start()
     for process in processes:
