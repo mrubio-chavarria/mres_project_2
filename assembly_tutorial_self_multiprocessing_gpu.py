@@ -411,9 +411,9 @@ def GreedyDecoder(output, labels, label_lengths, blank_label=28, collapse_repeat
 	return decodes, targets
 
 
-def train(model, train_data, test_data, parameters, device, sampler=None, rank='GPU'):
+def train(model, train_data, test_data, parameters, device, sampler=None):
     """"""
-    print(f'Training in process {rank} launched')
+    print(f'Training in GPU launched')
     # Create training parameters
     optimiser = optim.SGD(model.parameters(), parameters['learning_rate'])
     criterion = nn.CTCLoss(blank=28)
@@ -443,8 +443,8 @@ def train(model, train_data, test_data, parameters, device, sampler=None, rank='
             optimiser.step()
             scheduler.step()
             # Print progress
-            print('Process: {} Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
-                rank, epoch+1, batch_idx+1, len(train_data),
+            print('Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
+                epoch+1, batch_idx+1, len(train_data),
                 100. * (batch_idx+1) / len(train_data), loss.item()))
         print('Epoch completed. Evaluating result...')
         test(model, test_data, criterion, device)
@@ -543,9 +543,7 @@ if __name__ == '__main__':
     print(model)
     # Training
     # Execute training
-    processes = []
     print('Launching training')
-        
     train_data = data.DataLoader(dataset=train_dataset,
                             shuffle=True,
                             batch_size=parameters['batch_size'],
