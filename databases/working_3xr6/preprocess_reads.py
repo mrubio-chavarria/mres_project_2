@@ -114,7 +114,7 @@ if __name__ == "__main__":
     # single_read_folders = sorted(single_read_folders, key=lambda x: int(x.split('/')[-1]))
     # basecalls_files = sorted(os.listdir(basecalls_folder), key=lambda x: int(x.split('_')[3]))
     # file_pairs = list(zip(single_read_folders, basecalls_files))
-    group_size = len(file_pairs) // n_processes
+    group_size = int(round(len(file_pairs) / n_processes))
     group_indeces = list(range(0, len(file_pairs), group_size))
     file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
         for index in group_indeces]
