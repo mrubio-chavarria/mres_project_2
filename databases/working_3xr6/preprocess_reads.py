@@ -88,7 +88,6 @@ if __name__ == "__main__":
     mapping = [('_'.join(line[0].split('/')[11].split('_')[1::]).replace('.fast5', ''), line[1].replace('\n', '')) 
         for line in mapping]
     reads_mapping = {key: [] for key in set([line[0] for line in mapping])}
-    print(mapping)
     [reads_mapping[line[0]].append(line[1]) for line in mapping]
     folders = os.listdir(single_reads_folder)
     for folder in folders:
@@ -96,7 +95,6 @@ if __name__ == "__main__":
         folder = single_reads_folder + '/' + folder
         reads_in_folder = os.listdir(folder)
         for key in reads_mapping.keys():
-            print(key)
             if reads_mapping[key][0] in reads_in_folder:
                 os.rename(folder, single_reads_folder + '/' + key)
                 break
@@ -121,6 +119,7 @@ if __name__ == "__main__":
     file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
         for index in group_indeces]
     processes = []
+    print(file_groups)
     for rank in range(n_processes):
         process = mp.Process(target=annotate_basecalls, args=(file_groups[rank][0], file_groups[rank][1], workdir))
     for process in processes:
