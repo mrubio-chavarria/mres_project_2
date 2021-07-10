@@ -116,11 +116,8 @@ if __name__ == "__main__":
     # file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
-    file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != file_pairs[group_size * index::] else index 
+    file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != group_indeces[-1] else file_pairs[group_size * index::] 
         for index in group_indeces]
-    print(len(file_pairs))
-    print(group_size)
-    [print(len(group)) for group in file_groups]
     processes = []
     for rank in range(n_processes):
         process = mp.Process(target=annotate_basecalls, args=(file_groups[rank][0], file_groups[rank][1], workdir))
