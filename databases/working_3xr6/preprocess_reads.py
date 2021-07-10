@@ -92,7 +92,7 @@ if __name__ == "__main__":
     [reads_mapping[line[0]].append(line[1]) for line in mapping]
     folders = os.listdir(single_reads_folder)
     for folder in folders:
-        if folder.endswith('txt'): continue
+        if folder.endswith('txt') or folder.endswith('index'): continue
         folder = single_reads_folder + '/' + folder
         reads_in_folder = os.listdir(folder)
         for key in reads_mapping.keys():
