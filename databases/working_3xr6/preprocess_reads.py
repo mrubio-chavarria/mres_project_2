@@ -15,6 +15,7 @@ import mappy
 from tqdm import tqdm
 import multiprocessing as mp
 from multiprocessing import Manager
+import subprocess
 
 
 # Functions
@@ -54,7 +55,8 @@ def annotate_basecalls(*args):
     """
     for pair in args:
         command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {pair[1]} --fastq-filenames {pair[0]} --overwrite'
-        os.system(command)
+        #os.system(command)
+        subprocess.check_call(command, shell=True)
     
 
 def read_code(filename):
@@ -63,11 +65,11 @@ def read_code(filename):
 
 if __name__ == "__main__":
     
-    workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    n_processes = int(sys.argv[2])
+    # workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    # n_processes = int(sys.argv[2])
     
-    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    # n_processes = 4
+    workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    n_processes = 4
 
     # Format to multiple to single read files
     print('***************************************************************************************')
@@ -124,46 +126,46 @@ if __name__ == "__main__":
         process.join()
     print('Annotation completed')
 
-    # Resquiggle
-    print('***************************************************************************************')
-    print('Resquiggle the reads...')
-    print('***************************************************************************************')
-    reference_file = workdir + '/' + 'reference.fasta'
-    for folder in single_reads_folders:
-        print(f'Resquiggling reads in folder: {folder}')
-        folder = single_reads_folder + '/' + folder
-        command = f'tombo resquiggle {folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
-        os.system(command)
-    print('Resquiggling completed')
+    # # Resquiggle
+    # print('***************************************************************************************')
+    # print('Resquiggle the reads...')
+    # print('***************************************************************************************')
+    # reference_file = workdir + '/' + 'reference.fasta'
+    # for folder in single_reads_folders:
+    #     print(f'Resquiggling reads in folder: {folder}')
+    #     folder = single_reads_folder + '/' + folder
+    #     command = f'tombo resquiggle {folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
+    #     os.system(command)
+    # print('Resquiggling completed')
 
-    # Filter files below the q score threshold
-    print('***************************************************************************************')
-    print('Filter the reads')
-    print('***************************************************************************************')
-    q_score_threshold = 20.0
-    filtered_reads = []
-    n_folders_per_read = len(single_reads_folders) // n_processes
-    reads_folders_lists = [single_reads_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
-        if i != (n_processes - 1) else single_reads_folders[n_folders_per_read*i:] 
-        for i in range(n_processes)]
-    processes = []
-    manager = Manager()
-    filtered_reads = manager.list()
-    for i in range(n_processes):
-        print(f'Process {i} launched')
-        process = mp.Process(target=filter_reads,
-                            args=(single_reads_folder + '/' + reads_folders_lists[i], filtered_reads, q_score_threshold))
-        processes.append(process)
-        process.start()
-    for process in processes:
-        process.join()
-    filtered_reads = list(filtered_reads)
-    filtered_reads = '\n'.join(filtered_reads)
-    file = open(workdir + '/' + 'filtered_reads.txt', 'w')
-    file.write(filtered_reads)
-    file.close()
+    # # Filter files below the q score threshold
+    # print('***************************************************************************************')
+    # print('Filter the reads')
+    # print('***************************************************************************************')
+    # q_score_threshold = 20.0
+    # filtered_reads = []
+    # n_folders_per_read = len(single_reads_folders) // n_processes
+    # reads_folders_lists = [single_reads_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
+    #     if i != (n_processes - 1) else single_reads_folders[n_folders_per_read*i:] 
+    #     for i in range(n_processes)]
+    # processes = []
+    # manager = Manager()
+    # filtered_reads = manager.list()
+    # for i in range(n_processes):
+    #     print(f'Process {i} launched')
+    #     process = mp.Process(target=filter_reads,
+    #                         args=(single_reads_folder + '/' + reads_folders_lists[i], filtered_reads, q_score_threshold))
+    #     processes.append(process)
+    #     process.start()
+    # for process in processes:
+    #     process.join()
+    # filtered_reads = list(filtered_reads)
+    # filtered_reads = '\n'.join(filtered_reads)
+    # file = open(workdir + '/' + 'filtered_reads.txt', 'w')
+    # file.write(filtered_reads)
+    # file.close()
 
-    print('PREPROCESS COMPLETED')
+    # print('PREPROCESS COMPLETED')
             
     
 
