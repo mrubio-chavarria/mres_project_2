@@ -49,7 +49,7 @@ def filter_reads(read_folders, filtered_reads, q_score_threshold):
                 filtered_reads.append(read_file)
 
 
-def annotate_basecalls(pairs, workdir):
+def annotate_basecalls(pairs):
     """
     """
     #for i in range(len(basecalls_files)):
@@ -116,8 +116,9 @@ if __name__ == "__main__":
     # file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
-    file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
-        for index in group_indeces]
+    # file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
+    #     for index in group_indeces]
+    file_groups = [process for process in range(n_processes)]
     if len(file_pairs) % n_processes != 0:
        extra_pairs = file_pairs[group_size * n_processes::]
        [file_groups[i].append(extra_pairs[i]) for i in range(len(extra_pairs))]
