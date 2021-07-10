@@ -15,7 +15,7 @@ import mappy
 from tqdm import tqdm
 import multiprocessing as mp
 from multiprocessing import Manager
-import subprocess
+from shutil import move, rmtree
 
 
 # Functions
@@ -54,9 +54,9 @@ def annotate_basecalls(*args):
     """
     """
     for pair in args:
-        command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {pair[1]} --fastq-filenames {pair[0]} --overwrite'
-        #os.system(command)
-        subprocess.check_call(command, shell=True)
+        command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {pair[0]} --fastq-filenames {pair[1]} --overwrite'
+        os.system(command)
+        #subprocess.check_call(command, shell=True)
     
 
 def read_code(filename):
@@ -67,49 +67,33 @@ if __name__ == "__main__":
     
     workdir = f'{sys.argv[1]}/databases/working_3xr6'
     n_processes = int(sys.argv[2])
+    flowcell = sys.argv[3]
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # n_processes = 4
+    # flowcell = 'flowcell3'
 
     # Format to multiple to single read files
     print('***************************************************************************************')
     print('Format reads from multi to single files')
     print('***************************************************************************************')
-    reads_folder = workdir + '/' + 'reads'
-    basecalls_folder = workdir + '/' + 'basecalls'
-    #command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
-    # os.system(command)
-    # Format folder name base on file codes
-    single_reads_folder = workdir + '/reads/single'
-    file = open(single_reads_folder + '/filename_mapping.txt')
-    mapping = file.readlines()
-    file.close()
-    mapping = [line.split('\t') for line in mapping]
-    # When local instead of 11 it should be 9
-    mapping = [('_'.join(line[0].split('/')[11].split('_')[1::]).replace('.fast5', ''), line[1].replace('\n', '')) 
-        for line in mapping]
-    reads_mapping = {key: [] for key in set([line[0] for line in mapping])}
-    [reads_mapping[line[0]].append(line[1]) for line in mapping]
-    folders = os.listdir(single_reads_folder)
-    for folder in folders:
-        if folder.endswith('txt') or folder.endswith('index'): continue
-        folder = single_reads_folder + '/' + folder
-        reads_in_folder = os.listdir(folder)
-        for key in reads_mapping.keys():
-            if reads_mapping[key][0] in reads_in_folder:
-                os.rename(folder, single_reads_folder + '/' + key)
-                break
-    file_pairs = []
-    single_reads_folders = os.listdir(single_reads_folder)
-    for file in os.listdir(basecalls_folder):
-        [file_pairs.append((basecalls_folder + '/' + file,
-                            single_reads_folder + '/' + folder))
-            for folder in single_reads_folders if folder == read_code(file)]
+    reads_folder = workdir + '/' + 'reads' + '/' + flowcell
+    basecalls_folder = workdir + '/' + 'basecalls' + '/' + flowcell
+    command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
+    os.system(command)
+    # Flatten directory structure
+    single_reads_folders = [reads_folder + '/' + 'single' +  '/' + folder 
+        for folder in os.listdir(reads_folder + '/' + 'single') if not folder.endswith('txt')]
+    single_reads_folder = reads_folder + '/' + 'single'
 
     # Annotate the reads with the basecalls
     print('***************************************************************************************')
     print('Annotate the reads')
     print('***************************************************************************************')
+    single_folders = [folder for folder in os.listdir(single_reads_folder) if not folder.endswith('txt')]
+    single_folders = [single_reads_folder + '/' + file for file in sorted(single_folders, key=lambda x: int(x.split('/')[-1]))]
+    fastq_files = [basecalls_folder + '/' + file for file in sorted(os.listdir(basecalls_folder), key=lambda x: int(x[:-6].split('_')[-2]))]
+    file_pairs = list(zip(single_folders, fastq_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
     file_groups = [file_pairs[group_size * i:group_size * (i+1)] if i != n_processes - 1 else file_pairs[group_size * i::] 
@@ -126,46 +110,43 @@ if __name__ == "__main__":
         process.join()
     print('Annotation completed')
 
-    # # Resquiggle
-    # print('***************************************************************************************')
-    # print('Resquiggle the reads...')
-    # print('***************************************************************************************')
-    # reference_file = workdir + '/' + 'reference.fasta'
-    # for folder in single_reads_folders:
-    #     print(f'Resquiggling reads in folder: {folder}')
-    #     folder = single_reads_folder + '/' + folder
-    #     command = f'tombo resquiggle {folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
-    #     os.system(command)
-    # print('Resquiggling completed')
+    # Resquiggle
+    print('***************************************************************************************')
+    print('Resquiggle the reads...')
+    print('***************************************************************************************')
+    reference_file = workdir + '/' + 'reference.fasta'
+    command = f'tombo resquiggle {single_reads_folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
+    #os.system(command)
+    print('Resquiggling completed')
+    print()
+    # Filter files below the q score threshold
+    print('***************************************************************************************')
+    print('Filter the reads')
+    print('***************************************************************************************')
+    q_score_threshold = 20.0
+    filtered_reads = []
+    n_folders_per_read = len(single_folders) // n_processes
+    reads_folders_lists = [single_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
+        if i != (n_processes - 1) else single_folders[n_folders_per_read*i:] 
+        for i in range(n_processes)]
+    processes = []
+    manager = Manager()
+    filtered_reads = manager.list()
+    for i in range(n_processes):
+        print(f'Process {i} launched')
+        process = mp.Process(target=filter_reads,
+                            args=(reads_folders_lists[i], filtered_reads, q_score_threshold))
+        processes.append(process)
+        process.start()
+    for process in processes:
+        process.join()
+    filtered_reads = list(filtered_reads)
+    filtered_reads = '\n'.join(filtered_reads)
+    file = open(workdir + '/' + 'filtered_reads.txt', 'w')
+    file.write(filtered_reads)
+    file.close()
 
-    # # Filter files below the q score threshold
-    # print('***************************************************************************************')
-    # print('Filter the reads')
-    # print('***************************************************************************************')
-    # q_score_threshold = 20.0
-    # filtered_reads = []
-    # n_folders_per_read = len(single_reads_folders) // n_processes
-    # reads_folders_lists = [single_reads_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
-    #     if i != (n_processes - 1) else single_reads_folders[n_folders_per_read*i:] 
-    #     for i in range(n_processes)]
-    # processes = []
-    # manager = Manager()
-    # filtered_reads = manager.list()
-    # for i in range(n_processes):
-    #     print(f'Process {i} launched')
-    #     process = mp.Process(target=filter_reads,
-    #                         args=(single_reads_folder + '/' + reads_folders_lists[i], filtered_reads, q_score_threshold))
-    #     processes.append(process)
-    #     process.start()
-    # for process in processes:
-    #     process.join()
-    # filtered_reads = list(filtered_reads)
-    # filtered_reads = '\n'.join(filtered_reads)
-    # file = open(workdir + '/' + 'filtered_reads.txt', 'w')
-    # file.write(filtered_reads)
-    # file.close()
-
-    # print('PREPROCESS COMPLETED')
+    print('PREPROCESS COMPLETED')
             
     
 
