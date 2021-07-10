@@ -52,7 +52,6 @@ def filter_reads(read_folders, filtered_reads, q_score_threshold):
 def annotate_basecalls(pairs):
     """
     """
-    #for i in range(len(basecalls_files)):
     for pair in pairs:
         command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {pair[1]} --fastq-filenames {pair[0]} --overwrite'
         os.system(command)
@@ -119,6 +118,9 @@ if __name__ == "__main__":
     processes = []
     for rank in range(n_processes):
         print(f'Process {rank} launched')
+        print(file_groups[rank])
+        print((file_groups[rank]))
+        sys.exit("Script stopped")
         process = mp.Process(target=annotate_basecalls, args=(file_groups[rank]))
         process.start()
     for process in processes:
