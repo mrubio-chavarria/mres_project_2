@@ -119,6 +119,8 @@ if __name__ == "__main__":
     file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != group_indeces[-1] else file_pairs[group_size * index::] 
         for index in group_indeces]
     processes = []
+    print(len(file_pairs))
+    print('-------')
     print(group_size)
     print('-------')
     print(group_indeces)
