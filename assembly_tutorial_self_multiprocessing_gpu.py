@@ -506,7 +506,7 @@ if __name__ == '__main__':
         "in_channels": 1,
         "n_cnn_layers": 1,
         "n_rnn_layers": 2,
-        "rnn_dim": 512, # 512,
+        "rnn_dim": 512, 
         "n_classes": 29,
         "n_features": 128,
         "stride":2,
@@ -563,7 +563,7 @@ if __name__ == '__main__':
                             batch_size=parameters['batch_size'],
                             collate_fn=lambda x: data_processing(x, valid_audio_transforms))
 
-    train_data = list(limit_dataset(train_data, 300))
+    train_data = list(limit_dataset(train_data, 100))
 
     train(model, train_data, test_data, parameters, device)
 
