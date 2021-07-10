@@ -476,6 +476,15 @@ def test(model, test_loader, criterion, device):
     print('Test set: Average loss: {:.4f}, Average CER: {:4f} Average WER: {:.4f}\n'.format(test_loss, avg_cer, avg_wer))
 
 
+def limit_dataset(dataloader, limit):
+    i = 0
+    for item in dataloader:
+        if i > limit:
+            break
+        yield item
+        i += 1
+
+
 if __name__ == '__main__':
 
     if sys.argv[1] is None:
@@ -553,6 +562,8 @@ if __name__ == '__main__':
                             shuffle=True,
                             batch_size=parameters['batch_size'],
                             collate_fn=lambda x: data_processing(x, valid_audio_transforms))
+
+    train_data = list(limit_dataset(train_data, 300))
 
     train(model, train_data, test_data, parameters, device)
 
