@@ -109,36 +109,21 @@ if __name__ == "__main__":
     print('***************************************************************************************')
     print('Annotate the reads')
     print('***************************************************************************************')
-    # single_read_folders = [reads_folder + '/' + 'single' + '/' + folder 
-    #     for folder in os.listdir(reads_folder + '/' + 'single') if not folder.endswith('txt') and not folder.endswith('index')]
-    # single_read_folders = sorted(single_read_folders, key=lambda x: int(x.split('/')[-1]))
-    # basecalls_files = sorted(os.listdir(basecalls_folder), key=lambda x: int(x.split('_')[3]))
-    # file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
-    # file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
-    #     for index in group_indeces]
     file_groups = [file_pairs[group_size * i:group_size * (i+1)] if i != n_processes - 1 else file_pairs[group_size * i::] 
         for i in range(n_processes)]
-    print(file_groups)
     if len(file_pairs) % n_processes != 0:
        extra_pairs = file_pairs[group_size * n_processes::]
        [file_groups[i].append(extra_pairs[i]) for i in range(len(extra_pairs))]
     processes = []
-    print(len(file_pairs))
-    print('-------')
-    print(group_size)
-    print('-------')
-    print(group_indeces)
-    print('-------')
-    print(len(file_groups))
-    print('-------')
-    print(file_groups)
-    
     for rank in range(n_processes):
+        print(f'Process {rank} launched')
         process = mp.Process(target=annotate_basecalls, args=(file_groups[rank], file_groups[rank], workdir))
+        process.start()
     for process in processes:
         process.join()
+    print('Annotation completed')
 
     # Resquiggle
     print('***************************************************************************************')
@@ -146,9 +131,11 @@ if __name__ == "__main__":
     print('***************************************************************************************')
     reference_file = workdir + '/' + 'reference.fasta'
     for folder in single_reads_folders:
+        print(f'Resquiggling reads in folder: {folder}')
         folder = single_reads_folder + '/' + folder
         command = f'tombo resquiggle {folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
         os.system(command)
+    print('Resquiggling completed')
 
     # Filter files below the q score threshold
     print('***************************************************************************************')
@@ -164,6 +151,7 @@ if __name__ == "__main__":
     manager = Manager()
     filtered_reads = manager.list()
     for i in range(n_processes):
+        print(f'Process {i} launched')
         process = mp.Process(target=filter_reads, args=(reads_folders_lists[i], filtered_reads, q_score_threshold))
         processes.append(process)
         process.start()
