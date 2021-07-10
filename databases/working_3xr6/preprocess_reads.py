@@ -118,7 +118,9 @@ if __name__ == "__main__":
     group_indeces = list(range(0, len(file_pairs), group_size))
     # file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
     #     for index in group_indeces]
-    file_groups = [process for process in range(n_processes)]
+    file_groups = [file_pairs[group_size * i:group_size * (i+1)] if i != n_processes - 1 else file_pairs[group_size * i::] 
+        for i in range(n_processes)]
+    print(file_groups)
     if len(file_pairs) % n_processes != 0:
        extra_pairs = file_pairs[group_size * n_processes::]
        [file_groups[i].append(extra_pairs[i]) for i in range(len(extra_pairs))]
@@ -134,7 +136,7 @@ if __name__ == "__main__":
     print(file_groups)
     
     for rank in range(n_processes):
-        process = mp.Process(target=annotate_basecalls, args=(file_groups[rank][0], file_groups[rank][1], workdir))
+        process = mp.Process(target=annotate_basecalls, args=(file_groups[rank], file_groups[rank], workdir))
     for process in processes:
         process.join()
 
