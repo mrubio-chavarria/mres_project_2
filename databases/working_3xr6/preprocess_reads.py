@@ -65,8 +65,8 @@ def read_code(filename):
 
 if __name__ == "__main__":
     
-    # workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    # n_processes = int(sys.argv[2])
+    workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    n_processes = int(sys.argv[2])
     
     workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     n_processes = 4
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     print('***************************************************************************************')
     reads_folder = workdir + '/' + 'reads'
     basecalls_folder = workdir + '/' + 'basecalls'
-    command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
+    #command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
     # os.system(command)
     # Format folder name base on file codes
     single_reads_folder = workdir + '/reads/single'
