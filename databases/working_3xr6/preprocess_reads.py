@@ -84,7 +84,8 @@ if __name__ == "__main__":
     mapping = file.readlines()
     file.close()
     mapping = [line.split('\t') for line in mapping]
-    mapping = [('_'.join(line[0].split('/')[9].split('_')[1::]).replace('.fast5', ''), line[1].replace('\n', '')) 
+    # When local instead of 11 it should be 9
+    mapping = [('_'.join(line[0].split('/')[11].split('_')[1::]).replace('.fast5', ''), line[1].replace('\n', '')) 
         for line in mapping]
     reads_mapping = {key: [] for key in set([line[0] for line in mapping])}
     print(mapping)
