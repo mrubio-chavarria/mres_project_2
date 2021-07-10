@@ -64,11 +64,11 @@ def read_code(filename):
 
 if __name__ == "__main__":
     
-    # workdir = f'{sys.argv[1]}/databases/working_3xr6'
-    # n_processes = int(sys.argv[2])
+    workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    n_processes = int(sys.argv[2])
     
-    workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    n_processes = 4
+    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    # n_processes = 4
 
     # Format to multiple to single read files
     print('***************************************************************************************')
