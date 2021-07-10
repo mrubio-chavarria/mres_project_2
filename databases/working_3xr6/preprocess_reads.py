@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # file_pairs = list(zip(single_read_folders, basecalls_files))
     group_size = len(file_pairs) // n_processes
     group_indeces = list(range(0, len(file_pairs), group_size))
-    file_groups = [file_pairs[group_size * index:group_size * (index+1)] if index != group_indeces[-1] else file_pairs[group_size * index::] 
+    file_groups = [file_pairs[index:index+1] if index != group_indeces[-1] else file_pairs[index::] 
         for index in group_indeces]
     processes = []
     print(len(file_pairs))
