@@ -157,6 +157,8 @@ if __name__ == "__main__":
     file = open(workdir + '/' + 'filtered_reads.txt', 'w')
     file.write(filtered_reads)
     file.close()
+
+    print('PREPROCESS COMPLETED')
             
     
 
