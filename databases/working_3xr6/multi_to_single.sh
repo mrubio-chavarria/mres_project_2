@@ -9,8 +9,6 @@ module load anaconda3/personal
 source activate project2_venv
 
 # Convert from multi to single format
-# for flowcell in "flowcell1 flowcell2 flowcell3"
-# do
 flowcell="flowcell$PBS_ARRAY_INDEX"
 reads_folder=$HOME/project_2/databases/working_3xr6/reads/$flowcell
 echo "*****************************************"
@@ -29,4 +27,3 @@ rm multi.fastq
 cat *.fastq > multi.fastq
 echo "Merged file: multi.fastq" 
 echo "Conversion completed"
-# done

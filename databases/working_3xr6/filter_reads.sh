@@ -12,5 +12,5 @@ source activate project2_venv
 cd $HOME/project_2/databases/working_3xr6
 
 # Launch the resquiggling for every folder
-echo nproc
+echo $nproc
 #python3 filter_reads.py $HOME/project_2/databases/working_3xr6 8 flowcell1
