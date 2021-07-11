@@ -1,9 +1,10 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=16:mem=16gb
+#PBS -lselect=1:ncpus=20:mem=20gb
 #PBS -lwalltime=03:00:00
 
-# NOTE: You should choose less processes than folders with 
-# single reads.
+# IMPORTANT
+# - You should choose less processes than folders with single reads.
+# - You need more CPUs than processes to launch.
 
 module load anaconda3/personal
 
