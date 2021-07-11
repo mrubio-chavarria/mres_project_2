@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=16:mem=16
+#PBS -lselect=1:ncpus=16:mem=16gb
 #PBS -lwalltime=03:00:00
 
 # IMPORTANT
@@ -13,4 +13,4 @@ source activate project2_venv
 cd $HOME/project_2/databases/working_3xr6
 
 # Launch the resquiggling for every folder
-python3 filter_reads.py $HOME/project_2/databases/working_3xr6 12 flowcell2
+python3 filter_reads.py $HOME/project_2/databases/working_3xr6 16 flowcell2
