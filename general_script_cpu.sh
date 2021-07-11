@@ -9,4 +9,4 @@ source activate project2_venv
 
 # Launch script
 # python3 $HOME/project_2/assembly_tutorial_self_multiprocessing_cpu.py
-python3 $HOME/project_2/databases/working_3xr6/preprocess_reads.py $HOME/project_2 $nproc flowcell3
+python3 $HOME/project_2/databases/working_3xr6/preprocess_reads.py $HOME/project_2 16 flowcell3
