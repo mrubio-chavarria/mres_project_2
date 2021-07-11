@@ -116,7 +116,7 @@ if __name__ == "__main__":
     print('***************************************************************************************')
     reference_file = workdir + '/' + 'reference.fasta'
     command = f'tombo resquiggle {single_reads_folder} {reference_file} --processes {n_processes} --num-most-common-errors 5 --overwrite'
-    #os.system(command)
+    os.system(command)
     print('Resquiggling completed')
     print()
     # Filter files below the q score threshold
