@@ -8,7 +8,7 @@ module load anaconda3/personal
 source activate project2_venv
 
 # Convert from multi to single format
-flowcell=flowcell2
+flowcell=$1
 reads_folder=$PWD/reads/$flowcell
 
 echo "Convert from multi to single format"
