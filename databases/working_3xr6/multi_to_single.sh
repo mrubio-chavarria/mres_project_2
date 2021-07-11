@@ -9,7 +9,7 @@ source activate project2_venv
 
 # Convert from multi to single format
 flowcell=$1
-reads_folder=$PWD/reads/$flowcell
+reads_folder=$HOME/project_2/databases/working_3xr6/reads/$flowcell
 echo "***********************************"
 echo "Convert from multi to single format"
 echo "***********************************"
