@@ -64,7 +64,7 @@ def read_code(filename):
 
 if __name__ == "__main__":
     
-    workdir = {sys.argv[1]}
+    workdir = sys.argv[1]
     n_processes = int(sys.argv[2])
     flowcell = sys.argv[3]
     
