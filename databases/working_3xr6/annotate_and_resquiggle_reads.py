@@ -65,7 +65,7 @@ def read_code(filename):
 
 if __name__ == "__main__":
     
-    workdir = f'{sys.argv[1]}/databases/working_3xr6'
+    workdir = sys.argv[1]
     n_processes = int(sys.argv[2])
     flowcell = sys.argv[3]
     selected_folder=sys.argv[4]
