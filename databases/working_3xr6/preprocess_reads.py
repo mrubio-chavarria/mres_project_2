@@ -80,7 +80,7 @@ if __name__ == "__main__":
     reads_folder = workdir + '/' + 'reads' + '/' + flowcell
     basecalls_folder = workdir + '/' + 'basecalls' + '/' + flowcell
     command = f'multi_to_single_fast5 --input_path {reads_folder}/multi --save_path {reads_folder}/single'
-    os.system(command)
+    #os.system(command)
     # Flatten directory structure
     single_reads_folders = [reads_folder + '/' + 'single' +  '/' + folder 
         for folder in os.listdir(reads_folder + '/' + 'single') if not folder.endswith('txt')]
