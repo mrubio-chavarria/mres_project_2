@@ -289,8 +289,8 @@ if __name__ == "__main__":
     batch_size = 8
     window_size = 311
     max_windows = 300
-    train_folder = project_dir + '/' + "databases/toy_working_3xr6/reads"
-    test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
+    train_folder = project_dir + '/' + "databases/working_3xr6/reads"
+    # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     #train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
     train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows)
