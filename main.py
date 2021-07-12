@@ -9,6 +9,8 @@ sequence.
 
 # Libraries
 import torch
+import sys
+import os
 from torch.utils.data import DataLoader
 from torch import nn
 import torch.nn.functional as F
@@ -18,10 +20,9 @@ from datasets import Dataset_3xr6, Dataset_3xr6_transformed, RawONTDataset, PreO
 from models import ResidualBlockIV, TCN_module, LSTM_module, ClassifierGELU, ResNet
 from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
-import os
 from torch import multiprocessing as mp
 from bnlstm import LSTM
-from fast_ctc_decode import beam_search, viterbi_search
+
 
 
 # Classes
@@ -255,11 +256,15 @@ if __name__ == "__main__":
     version used (torch==1.9.0+cpu) is CPU.
     """
 
+    # Set cuda devices visible
+    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+
+    # Project directory
     project_dir = '/home/mario/Projects/project_2'
 
     # Set fast5 and reference
     # reads_folder = "databases/synthetic_flappie_r941_native_3xr6/reads"
-    reference_file = "databases/toy_working_3xr6/reference.fasta"
+    reference_file = project_dir + '/' + "databases/working_3xr6/reference.fasta"
 
     # Transforms
     transform = reshape2Tensor((1, -1))
@@ -284,7 +289,7 @@ if __name__ == "__main__":
     window_size = 311
     max_windows = 300
     train_folder = project_dir + '/' + "databases/toy_working_3xr6/reads"
-    test_folder = "databases/natural_flappie_r941_native_ap_toy/test_reads"
+    test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     #train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
     train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows)
