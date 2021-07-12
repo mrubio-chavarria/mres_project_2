@@ -204,6 +204,92 @@ class Dataset_3xr6(Dataset):
         # Reduce the dataset if needed
         if max_number_windows is not None:
             self.windows = self.windows[:max_number_windows]
+        # Add 1 dimensiones because there is one channel
+        [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
+
+    
+    def __len__(self):
+        """
+        DESCRIPTION:
+        The size of the dataset is the number of windows.
+        """
+        return len(self.windows)
+    
+    def __getitem__(self, index):
+        """
+        DESRIPTION:
+        :param index: [int] window position in the array.
+        """
+        return self.windows[index]
+    
+    def __iter__(self):
+        """
+        DESCRIPTION:
+        """
+        return iter(self.windows)
+    
+    def __next__(self):
+        """
+        DESCRIPTION:
+        """
+        return next(iter(self))
+
+
+class Dataset_3xr6_transformed(Dataset):
+    """
+    DESCRIPTION:
+    Version of Dataset_3xr6 with the ability to execute transformation  at the read
+    level.
+    """
+    # Methods
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, transform=None):
+        """
+        DESCRIPTION:
+        Class constructor.
+        :param reads_folder: [str] route to the folder containing the flowcell folders.
+        :param reference_file: [str] the file containing the reference sequence in fasta
+        format.
+        :param window_size: [int] size in which the reads should sliced. 
+        :param max_number_wndows: [int] parameter to artificially decrease the size of 
+        the dataset.
+        :param transform: [nn.Sequential] the transformations to apply at read 
+        level.        
+        """
+        # Helper function
+        def file_hq_filter(file):
+            """
+            DESCRIPTION:
+            A helper function to obtain only those reads with a high-quality alignment.
+            :param file: [str] read filename.
+            :return: [bool] True if the read is of high quality.
+            """
+            return file.startswith('kHQk') and file.endswith('fast5')
+
+        # Save parameters
+        super().__init__()
+        self.reads_folder = reads_folder
+        self.reference = reference_file
+        self.window_size = window_size
+        self.max_number_windows = max_number_windows
+        self.transform = transform
+        # Obtain the high_quality files with the reads
+        self.read_files = []
+        for flowcell in os.listdir(self.reads_folder):
+            flowcell_file = reads_folder + '/' + flowcell + '/' + 'single'
+            folders = [folder for folder in os.listdir(flowcell_file) 
+                if not (folder.endswith('txt') or folder.endswith('index'))]
+            for folder in folders:
+                folder_file = flowcell_file + '/' + folder
+                files = filter(lambda file: file_hq_filter(file), os.listdir(folder_file))
+                files = map(lambda file: folder_file + '/' + file, files)
+                self.read_files.extend(files)
+        # Load windows
+        self.windows = load_windows_with_transform(self.read_files, self.reference, self.window_size, self.transform)
+        # Reduce the dataset if needed
+        if max_number_windows is not None:
+            self.windows = self.windows[:max_number_windows]
+        # Add 1 dimensiones because there is one channel
+        [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
     
     def __len__(self):
         """
@@ -299,10 +385,11 @@ def load_windows(read_files, reference_file, window_size=300):
     return total_windows
 
 
-def load_windows_with_features(reads_folder, reference_file, window_size=300, transform=None):
+def load_windows_with_transform(read_files, reference_file, window_size=300, transform=None):
     """
     DESCRIPTION:
-    COMPLETE
+    Version of the function above but with the option to apply a 
+    transformation at read level.
     :param reads_folder: [str] the folder containing the annotated reads.
     :param reference_file: [str] the fasta file containing te reference
     sequence.
@@ -312,10 +399,8 @@ def load_windows_with_features(reads_folder, reference_file, window_size=300, tr
     :return: [list] windows (dicts) obtained from the folder reads.
     """
     # Read all the files in the folder
-    files = os.listdir(reads_folder)
-    folder_windows = []
-    for file in files:
-        route = reads_folder + '/' + file
+    total_windows = []
+    for route in read_files:
         # Read resquiggle information
         segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file)
         # Window the resquiggle signal
@@ -330,8 +415,8 @@ def load_windows_with_features(reads_folder, reference_file, window_size=300, tr
             # window['signal'] = torch.from_numpy(window['signal'].astype(np.dtype('d'))).view(-1, 1)
             # Delete non-necessary fields
             del window['signal_indeces']
-        folder_windows.extend(file_windows)
-    return folder_windows
+        total_windows.extend(file_windows)
+    return total_windows
 
 
 def text2int(relationship, sequence):
