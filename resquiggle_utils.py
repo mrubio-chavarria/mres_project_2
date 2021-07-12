@@ -101,6 +101,7 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
         for i in range(len(segs[:-1]))]) + '$'
     # Perform the windowing over the signal
     windows = [{
+        'signal_indeces': (i, i+window_size),
         'sequence': seq_signal[2*i:2*(i+window_size)].replace('$', ''),
         'signal': norm_signal[i:i+window_size]} 
         for i in range(0, len(norm_signal), int(round((1 - overlap) * window_size)))]
