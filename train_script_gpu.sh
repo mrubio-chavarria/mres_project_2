@@ -10,4 +10,4 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Launch script
-python3 $HOME/project_2/main.py $CUDA_VISIBLE_DEVICES
+python3 $HOME/project_2/main.py $CUDA_VISIBLE_DEVICES $HOME/project_2

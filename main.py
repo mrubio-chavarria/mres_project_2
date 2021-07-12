@@ -260,7 +260,8 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    project_dir = '/home/mario/Projects/project_2'
+    # project_dir = '/home/mario/Projects/project_2'
+    project_dir = sys.argv[2]
 
     # Set fast5 and reference
     # reads_folder = "databases/synthetic_flappie_r941_native_3xr6/reads"

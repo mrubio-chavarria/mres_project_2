@@ -11,6 +11,7 @@ import h5py
 from ont_fast5_api.fast5_interface import get_fast5_file
 from tombo import tombo_helper, tombo_stats, resquiggle
 import mappy
+import torch
 
 
 # Functions
@@ -88,9 +89,9 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
     A function to window the normalised signal obtained from the function 
     parse_resquiggle. The ndows are returned in the form of a dict to be 
     consistent with downwards pytorch integration.
-    :param segs: [np.ndarray] positions denoting the segments in norm_signal.
+    :param segs: [list] positions denoting the segments in norm_signal.
     :param genome_seq: [str] trimmed sequence after normalise.
-    :param norm_signal: [np.ndarray] trimmed and normalised signal of the fast5
+    :param norm_signal: [torch.FloatTensor] trimmed and normalised signal of the fast5
     file.
     :return: [list] pairs of sequence and signal with 1-to-1 correspondence.
     """
@@ -103,7 +104,7 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
     windows = [{
         'signal_indeces': (i, i+window_size),
         'sequence': seq_signal[2*i:2*(i+window_size)].replace('$', ''),
-        'signal': norm_signal[i:i+window_size]} 
+        'signal': torch.FloatTensor(norm_signal[i:i+window_size])} 
         for i in range(0, len(norm_signal), int(round((1 - overlap) * window_size)))]
     # Collapse the repeated bases for all the windows
     windows = [collapse(window) for window in windows]
