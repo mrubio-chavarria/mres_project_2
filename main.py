@@ -11,14 +11,17 @@ sequence.
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data.distributed import DistributedSampler
-from datasets import ONTDataset, reshape2Tensor, collate_text2int_fn
+import torchaudio
+from datasets import Dataset_3xr6, Dataset_3xr6_transformed, RawONTDataset, PreONTDataset, reshape2Tensor, collate_text2int_fn, text2int
 from models import ResidualBlockIV, TCN_module, LSTM_module, ClassifierGELU, ResNet
 from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
 import os
 from torch import multiprocessing as mp
 from bnlstm import LSTM
+from fast_ctc_decode import beam_search, viterbi_search
 
 
 # Classes
@@ -82,7 +85,7 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
+def launch_training(model, train_data, device, rank=0, sampler=None, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -115,10 +118,11 @@ def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
                                                         epochs=kwargs.get('epochs', 30))
     # Prepare training
     sequence_length, batch_size = kwargs.get('sequence_length'), kwargs.get('batch_size')
-    sequences_lengths = tuple([sequence_length] * batch_size)
-    log_softmax = nn.LogSoftmax(dim=2)
-    loss_function = nn.CTCLoss()
-    initialisation_loss_function = nn.CrossEntropyLoss()
+    # sequences_lengths = tuple([sequence_length] * batch_size)
+    sequences_lengths = tuple([156] * batch_size)
+    log_softmax = nn.LogSoftmax(dim=2).to(device)
+    loss_function = nn.CTCLoss().to(device)
+    initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
     for epoch in range(kwargs.get('epochs', 30)):
@@ -131,14 +135,16 @@ def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
             target_segments = batch['fragments']
             target_sequences = batch['sequences']
             targets_lengths = batch['targets_lengths']
-            batch, target = batch['signals'], batch['targets']
+            batch, target = batch['signals'].to(device), batch['targets'].to(device)
             if batch.shape[0] != batch_size:
                 continue
             # Forward pass
             output = model(batch)
             # Loss
             # Set different loss to initialise
-            if epoch in initialisation_epochs:
+            output_size = output.shape
+            # if epoch in initialisation_epochs:
+            if False:
                 # Initialisation
                 # Loss function: CrossEntropy
                 # Create the labels
@@ -152,13 +158,16 @@ def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
                     total += len(fragments[i])
                 targets = torch.stack([torch.LongTensor(target) for target in new_targets])
                 # Compute the loss
-                loss = initialisation_loss_function(output.view(batch_size, -1, sequence_length), targets)
+                output_size = output.shape
+                output = output.view(output_size[0], output_size[2], output_size[1])
+                loss = initialisation_loss_function(output, targets)
             else:
                 # Regular
                 # Loss function: CTC
                 # Compute the loss
+                output = output.view(output_size[1], output_size[0], output_size[2])
                 loss = loss_function(
-                    log_softmax(output.reshape(sequence_length, batch_size, -1)),
+                    log_softmax(output),
                     target,
                     sequences_lengths,
                     targets_lengths
@@ -170,12 +179,13 @@ def launch_training(model, train_data, rank=0, sampler=None, **kwargs):
             if kwargs.get('scheduler') is not None:
                 scheduler.step()
             # Decode output
-            output_sequences = list(decoder(output, target_segments))
+            output_sequences = list(decoder(output.view(*output_size), target_segments))
             error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
             avg_error = sum(error_rates) / len(error_rates)
             # Show progress
             print('----------------------------------------------------------------------------------------------------------------------')
             print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+            # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
             if kwargs.get('scheduler') is not None:
                 print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
             else:
@@ -192,18 +202,31 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
     trainin, or single-node multi CPU Hogwild.
     :param model: [torch.nn.Module] the model to train.
     """
-    # Prepare the model
-    model.train()
+    # Set device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Training started')
     # Select training algorithm
     if algorithm == 'single':
+        model.to(device)
+        model.train()
         # Prepare the data
         train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
-        launch_training(model, train_data, **kwargs)
+        launch_training(model, train_data, device, **kwargs)
+    elif algorithm == 'DataParallel':
+        # Prepare model and data
+        model = nn.DataParallel(model)
+        model.to(device)
+        model.train()
+        train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
+        # Start training
+        launch_training(model, train_data, device, **kwargs)
+
     elif algorithm == 'Hogwild':
         # Start training
         # We are not setting a blockade per epoch
+        model.to(device)
+        model.train()
         model.share_memory()
         processes = []
         for rank in range(n_processes):
@@ -212,8 +235,9 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
                             sampler=train_sampler,
                             batch_size=kwargs['batch_size'],
                             collate_fn=collate_text2int_fn)
+            
             print(f'Process {rank} launched')
-            process = mp.Process(target=launch_training, args=(model, train_data, rank, train_sampler), kwargs=kwargs)
+            process = mp.Process(target=launch_training, args=(model, train_data, device, rank, train_sampler), kwargs=kwargs)
             process.start()
             processes.append(process)
         for process in processes:
@@ -231,29 +255,50 @@ if __name__ == "__main__":
     version used (torch==1.9.0+cpu) is CPU.
     """
 
+    project_dir = '/home/mario/Projects/project_2'
+
     # Set fast5 and reference
     # reads_folder = "databases/synthetic_flappie_r941_native_3xr6/reads"
-    reference_file = "databases/natural_flappie_r941_native_ap_toy/reference.fasta"
-    
-    # Load the train and test datasets
+    reference_file = "databases/toy_working_3xr6/reference.fasta"
+
+    # Transforms
     transform = reshape2Tensor((1, -1))
-    batch_size = 10
+    # Mel Spectrogram
+    sample_rate = 4000
+    n_fft = 100
+    window_length = n_fft
+    hop_length = 1
+    mel_spectrogram = torchaudio.transforms.MelSpectrogram(
+        sample_rate=sample_rate,
+        n_fft=n_fft,
+        win_length=n_fft,
+        hop_length=hop_length
+    )
+    # Pack the transforms together
+    transform = nn.Sequential(
+        mel_spectrogram
+    )
+
+    # Load the train and test datasets
+    batch_size = 8
     window_size = 311
-    train_folder = "databases/natural_flappie_r941_native_ap_toy/train_reads"
-    max_number_windows = 300
-    train_dataset = ONTDataset(train_folder, reference_file, window_size, transform, max_number_windows)
+    max_windows = 300
+    train_folder = project_dir + '/' + "databases/toy_working_3xr6/reads"
     test_folder = "databases/natural_flappie_r941_native_ap_toy/test_reads"
-    test_dataset = ONTDataset(test_folder, reference_file, window_size, transform)
-    test_data = DataLoader(test_dataset, batch_size=batch_size,
-        shuffle=True, collate_fn=collate_text2int_fn)
-    sequence_length = window_size    
+    
+    #train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
+    train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows)
+
+    train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
+    train_data = list(train_data) 
 
     # Model
     # Parameters
+    sequence_length = window_size
     TCN_parameters = {
-        'n_layers': 2,
+        'n_layers': 1,
         'in_channels': 1,
-        'out_channels': 10,
+        'out_channels': 1,
         'kernel_size': 3,
         'dropout': 0.8
     }
@@ -262,7 +307,7 @@ if __name__ == "__main__":
         'sequence_length': sequence_length,
         'input_size': TCN_parameters['out_channels'], 
         'batch_size': batch_size, 
-        'hidden_size': 2 * TCN_parameters['out_channels'],
+        'hidden_size': 512, # 2 * TCN_parameters['out_channels'],
         'dropout': 0.8,
         'bidirectional': True
     }
@@ -274,14 +319,14 @@ if __name__ == "__main__":
         'batch_size': batch_size,
         'dropout': 0.8
     }
+    
     # Create the model
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
 
-    # Train the model
     # Training parameters
     training_parameters = {
-        'algorithm': 'Hogwild',
-        'n_processes': 10,
+        'algorithm': 'single',
+        'n_processes': 1,
         'epochs': 1,
         'n_initialisation_epochs': 1,
         'batch_size': batch_size,
@@ -292,7 +337,7 @@ if __name__ == "__main__":
         'optimiser': 'RMSprop',
         'sequence_length': sequence_length,
         'scheduler': 'OneCycleLR',
-        'in_hpc': False
+        'in_hpc': True
     }
 
     print('Model: ')
