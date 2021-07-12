@@ -397,12 +397,12 @@ class LSTM_module(nn.Module):
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
         # Pytorch's LSTM
-        # self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-        #     batch_first=True, bidirectional=self.bidirectional)
+        self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+            batch_first=True, bidirectional=self.bidirectional)
         # BatchNorm LSTM
-        self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
-            batch_first=True, method='orthogonal', bidirectional=True, 
-            batch_norm=True)
+        # self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
+        #     batch_first=True, method='orthogonal', bidirectional=True, 
+        #     batch_norm=True)
 
     
     def forward(self, input_sequence):
