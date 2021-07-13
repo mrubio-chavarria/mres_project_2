@@ -328,7 +328,7 @@ if __name__ == "__main__":
 
     # Training parameters
     training_parameters = {
-        'algorithm': 'GPU',
+        'algorithm': 'DataParallel',
         'n_processes': 1,
         'epochs': 1,
         'n_initialisation_epochs': 1,
