@@ -206,8 +206,9 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
     # Set device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Training started')
-    print(f'Algorithm: {algorithm}')
+    print('Algorithm:', algorithm)
     # Select training algorithm
+    return 3
     if algorithm == 'single':
         model.to(device)
         model.train()
