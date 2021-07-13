@@ -68,7 +68,6 @@ if __name__ == "__main__":
     database_dir = sys.argv[1]
     n_processes = int(sys.argv[2])
     flowcell = sys.argv[3]
-    selected_folder=sys.argv[4]
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # selected_folder = '0'
