@@ -295,8 +295,8 @@ if __name__ == "__main__":
     # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     # train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
-    # train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell3')
-    # train_data = list(train_dataset)
+    train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell3')
+    train_data = list(train_dataset)
 
     # # Model
     # # Parameters
