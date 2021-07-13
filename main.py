@@ -327,8 +327,8 @@ if __name__ == "__main__":
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
     output = model(torch.unsqueeze(train_dataset[0]['signal'], dim=0))
     
-    print('Output:'
-    print(output))
+    print('Output:')
+    print(output)
     
 
     # # Training parameters
