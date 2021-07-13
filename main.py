@@ -262,11 +262,11 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    # project_dir = '/home/mario/Projects/project_2'
-    project_dir = sys.argv[2]
+    # database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
+    database_dir = sys.argv[2]
 
     # Set fast5 and reference
-    reference_file = project_dir + '/' + "databases/working_3xr6/reference.fasta"
+    reference_file = database_dir + '/' + 'reference.fasta'
 
     # Transforms
     transform = reshape2Tensor((1, -1))
@@ -290,84 +290,83 @@ if __name__ == "__main__":
     batch_size = 8
     window_size = 311
     max_windows = 300
-    train_folder = project_dir + '/' + "databases/working_3xr6/reads"
+    train_folder = database_dir + '/' + "reads"
     # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     # train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
     train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell3')
 
-    # Model
-    # Parameters
-    sequence_length = window_size
-    TCN_parameters = {
-        'n_layers': 1,
-        'in_channels': 1,
-        'out_channels': 1,
-        'kernel_size': 3,
-        'dropout': 0.8
-    }
-    LSTM_parameters = {
-        'n_layers': 1,
-        'sequence_length': sequence_length,
-        'input_size': TCN_parameters['out_channels'], 
-        'batch_size': batch_size, 
-        'hidden_size': 512, # 2 * TCN_parameters['out_channels'],
-        'dropout': 0.8,
-        'bidirectional': True
-    }
-    decoder_parameters = {
-        'initial_size': 2 * LSTM_parameters['hidden_size'],
-        # The hidden size dim is always twice the initial_size
-        'output_size': 5,  # n_classes: blank + 4 bases 
-        'sequence_length': sequence_length,
-        'batch_size': batch_size,
-        'dropout': 0.8
-    }
+    # # Model
+    # # Parameters
+    # sequence_length = window_size
+    # TCN_parameters = {
+    #     'n_layers': 1,
+    #     'in_channels': 1,
+    #     'out_channels': 1,
+    #     'kernel_size': 3,
+    #     'dropout': 0.8
+    # }
+    # LSTM_parameters = {
+    #     'n_layers': 1,
+    #     'sequence_length': sequence_length,
+    #     'input_size': TCN_parameters['out_channels'], 
+    #     'batch_size': batch_size, 
+    #     'hidden_size': 512, # 2 * TCN_parameters['out_channels'],
+    #     'dropout': 0.8,
+    #     'bidirectional': True
+    # }
+    # decoder_parameters = {
+    #     'initial_size': 2 * LSTM_parameters['hidden_size'],
+    #     # The hidden size dim is always twice the initial_size
+    #     'output_size': 5,  # n_classes: blank + 4 bases 
+    #     'sequence_length': sequence_length,
+    #     'batch_size': batch_size,
+    #     'dropout': 0.8
+    # }
     
-    # Create the model
-    model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
+    # # Create the model
+    # model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
 
-    # Training parameters
-    training_parameters = {
-        'algorithm': 'DataParallel',
-        'n_processes': 1,
-        'epochs': 1,
-        'n_initialisation_epochs': 1,
-        'batch_size': batch_size,
-        'learning_rate': 5E-4,
-        'max_learning_rate': 1E-2,
-        'weight_decay': 1,
-        'momemtum': 0.9,
-        'optimiser': 'RMSprop',
-        'sequence_length': sequence_length,
-        'scheduler': 'OneCycleLR',
-        'in_hpc': True
-    }
+    # # Training parameters
+    # training_parameters = {
+    #     'algorithm': 'DataParallel',
+    #     'n_processes': 1,
+    #     'epochs': 1,
+    #     'n_initialisation_epochs': 1,
+    #     'batch_size': batch_size,
+    #     'learning_rate': 5E-4,
+    #     'max_learning_rate': 1E-2,
+    #     'weight_decay': 1,
+    #     'momemtum': 0.9,
+    #     'optimiser': 'RMSprop',
+    #     'sequence_length': sequence_length,
+    #     'scheduler': 'OneCycleLR',
+    #     'in_hpc': True
+    # }
 
-    print('Model: ')
-    print(model)
+    # print('Model: ')
+    # print(model)
 
-    
-    text_training = f"""
-    Training parameters:
-    - Algorithm: {training_parameters['algorithm']}
-    - N processes: {training_parameters['n_processes']}
-    - Epochs: {training_parameters['epochs']}
-    - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
-    - Batch size: {training_parameters['batch_size']}
-    - Learning rate: {training_parameters['learning_rate']}
-    - Max learning rate: {training_parameters['max_learning_rate']}
-    - Weight decay: {training_parameters['weight_decay']}
-    - Momemtum: {training_parameters['momemtum']}
-    - Optimiser: {training_parameters['optimiser']}
-    - Sequence length: {training_parameters['sequence_length']}
-    - Scheduler: {training_parameters['scheduler']}
-    - In HPC: {training_parameters['in_hpc']}
-    """
-    print(text_training)
+    # text_training = f"""
+    # Training parameters:
+    # - Algorithm: {training_parameters['algorithm']}
+    # - N processes: {training_parameters['n_processes']}
+    # - Epochs: {training_parameters['epochs']}
+    # - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
+    # - Batch size: {training_parameters['batch_size']}
+    # - Learning rate: {training_parameters['learning_rate']}
+    # - Max learning rate: {training_parameters['max_learning_rate']}
+    # - Weight decay: {training_parameters['weight_decay']}
+    # - Momemtum: {training_parameters['momemtum']}
+    # - Optimiser: {training_parameters['optimiser']}
+    # - Sequence length: {training_parameters['sequence_length']}
+    # - Scheduler: {training_parameters['scheduler']}
+    # - In HPC: {training_parameters['in_hpc']}
+    # """
+    # print(text_training)
 
-    # Training
-    train(model, train_dataset, **training_parameters)
+    # # Training
+    # train(model, train_dataset, **training_parameters)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
