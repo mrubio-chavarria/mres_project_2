@@ -161,7 +161,7 @@ class Dataset_3xr6(Dataset):
     Dataset to load and prepare the data in the 3xr6 dataset. 
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None):
         """
         DESCRIPTION:
         Class constructor.
@@ -169,8 +169,9 @@ class Dataset_3xr6(Dataset):
         :param reference_file: [str] the file containing the reference sequence in fasta
         format.
         :param window_size: [int] size in which the reads should sliced. 
-        :max_number_wndows: [int] parameter to artificially decrease the size of the 
-        dataset.        
+        :param max_number_wndows: [int] parameter to artificially decrease the size of the 
+        dataset.
+        :param flowcell: [str] a param to specify if only one flowcell should be analysed.        
         """
         # Helper function
         def file_hq_filter(file):
@@ -190,7 +191,17 @@ class Dataset_3xr6(Dataset):
         self.max_number_windows = max_number_windows
         # Obtain the high_quality files with the reads
         self.read_files = []
-        for flowcell in os.listdir(self.reads_folder):
+        if flowcell is None:
+            for flowcell in os.listdir(self.reads_folder):
+                flowcell_file = reads_folder + '/' + flowcell + '/' + 'single'
+                folders = [folder for folder in os.listdir(flowcell_file) 
+                    if not (folder.endswith('txt') or folder.endswith('index'))]
+                for folder in folders:
+                    folder_file = flowcell_file + '/' + folder
+                    files = filter(lambda file: file_hq_filter(file), os.listdir(folder_file))
+                    files = map(lambda file: folder_file + '/' + file, files)
+                    self.read_files.extend(files)
+        else:
             flowcell_file = reads_folder + '/' + flowcell + '/' + 'single'
             folders = [folder for folder in os.listdir(flowcell_file) 
                 if not (folder.endswith('txt') or folder.endswith('index'))]
