@@ -8,7 +8,7 @@ source activate project2_venv
 
 # Compress dataset
 echo "Compressing dataset"
-cd $HOME/project2/databases
+cd $HOME/project_2/databases
 tar -zcvf flowcell1_single.tar.gz working_3xr6/reads/flowcell1/single
 tar -zcvf flowcell2_single.tar.gz working_3xr6/reads/flowcell2/single
 tar -zcvf flowcell3_single.tar.gz working_3xr6/reads/flowcell3/single
