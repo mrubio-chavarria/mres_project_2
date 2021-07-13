@@ -258,11 +258,11 @@ if __name__ == "__main__":
     """
 
     # Set cuda devices visible
-    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+    # os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    # database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
-    database_dir = sys.argv[2]
+    database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
+    # database_dir = sys.argv[2]
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -286,7 +286,7 @@ if __name__ == "__main__":
     )
 
     # Load the train and test datasets
-    batch_size = 8
+    batch_size = 1
     window_size = 311
     max_windows = 300
     train_folder = database_dir + '/' + "reads"
@@ -325,47 +325,49 @@ if __name__ == "__main__":
     
     # Create the model
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
+    output = model(torch.unsqueeze(train_dataset[0]['signal'], dim=0))
+    
 
-    # Training parameters
-    training_parameters = {
-        'algorithm': 'DataParallel',
-        'n_processes': 1,
-        'epochs': 1,
-        'n_initialisation_epochs': 1,
-        'batch_size': batch_size,
-        'learning_rate': 5E-4,
-        'max_learning_rate': 1E-2,
-        'weight_decay': 1,
-        'momemtum': 0.9,
-        'optimiser': 'RMSprop',
-        'sequence_length': sequence_length,
-        'scheduler': 'OneCycleLR',
-        'in_hpc': True
-    }
+    # # Training parameters
+    # training_parameters = {
+    #     'algorithm': 'DataParallel',
+    #     'n_processes': 1,
+    #     'epochs': 1,
+    #     'n_initialisation_epochs': 1,
+    #     'batch_size': batch_size,
+    #     'learning_rate': 5E-4,
+    #     'max_learning_rate': 1E-2,
+    #     'weight_decay': 1,
+    #     'momemtum': 0.9,
+    #     'optimiser': 'RMSprop',
+    #     'sequence_length': sequence_length,
+    #     'scheduler': 'OneCycleLR',
+    #     'in_hpc': True
+    # }
 
-    print('Model: ')
-    print(model)
+    # print('Model: ')
+    # print(model)
 
-    text_training = f"""
-    Training parameters:
-    - Algorithm: {training_parameters['algorithm']}
-    - N processes: {training_parameters['n_processes']}
-    - Epochs: {training_parameters['epochs']}
-    - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
-    - Batch size: {training_parameters['batch_size']}
-    - Learning rate: {training_parameters['learning_rate']}
-    - Max learning rate: {training_parameters['max_learning_rate']}
-    - Weight decay: {training_parameters['weight_decay']}
-    - Momemtum: {training_parameters['momemtum']}
-    - Optimiser: {training_parameters['optimiser']}
-    - Sequence length: {training_parameters['sequence_length']}
-    - Scheduler: {training_parameters['scheduler']}
-    - In HPC: {training_parameters['in_hpc']}
-    """
-    print(text_training)
+    # text_training = f"""
+    # Training parameters:
+    # - Algorithm: {training_parameters['algorithm']}
+    # - N processes: {training_parameters['n_processes']}
+    # - Epochs: {training_parameters['epochs']}
+    # - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
+    # - Batch size: {training_parameters['batch_size']}
+    # - Learning rate: {training_parameters['learning_rate']}
+    # - Max learning rate: {training_parameters['max_learning_rate']}
+    # - Weight decay: {training_parameters['weight_decay']}
+    # - Momemtum: {training_parameters['momemtum']}
+    # - Optimiser: {training_parameters['optimiser']}
+    # - Sequence length: {training_parameters['sequence_length']}
+    # - Scheduler: {training_parameters['scheduler']}
+    # - In HPC: {training_parameters['in_hpc']}
+    # """
+    # print(text_training)
 
-    # Training
-    train(model, train_dataset, **training_parameters)
+    # # Training
+    # train(model, train_dataset, **training_parameters)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
