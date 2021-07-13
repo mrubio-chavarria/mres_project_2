@@ -218,7 +218,8 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
         launch_training(model, train_data, device, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
-        model = nn.DataParallel(model)
+        device_ids = [int(i) for i in os.environ['CUDA_VISIBLE_DEVICES'].split(',')]
+        model = nn.DataParallel(model, device_ids=device_ids)
         model.to(device)
         model.train()
         train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
