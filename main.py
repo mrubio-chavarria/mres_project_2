@@ -295,9 +295,6 @@ if __name__ == "__main__":
     #train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
     train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows)
 
-    train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
-    train_data = list(train_data) 
-
     # Model
     # Parameters
     sequence_length = window_size
@@ -331,7 +328,7 @@ if __name__ == "__main__":
 
     # Training parameters
     training_parameters = {
-        'algorithm': 'single',
+        'algorithm': 'GPU',
         'n_processes': 1,
         'epochs': 1,
         'n_initialisation_epochs': 1,
@@ -348,6 +345,9 @@ if __name__ == "__main__":
 
     print('Model: ')
     print(model)
+
+    print('Training parameters: ')
+    print(training_parameters)
 
     # Training
     train(model, train_dataset, **training_parameters)
