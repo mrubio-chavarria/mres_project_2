@@ -296,7 +296,7 @@ if __name__ == "__main__":
     
     # train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
     train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell3')
-    train_data = list(train_dataset)
+    #train_data = list(train_dataset)
 
     # # Model
     # # Parameters
