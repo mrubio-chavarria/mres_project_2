@@ -27,7 +27,7 @@ def filter_reads(read_folders, reference_file,  q_score_threshold):
     :param reference_file: [str] route to the reference file to align.
     :param q_score_threshold: [float] the value to filter.
     """
-    label = 'kHQk_'  # Label to distinguish the good reads
+    label = 'Q8_'  # Label to distinguish the good reads
     for reads_folder in read_folders:
         read_files = os.listdir(reads_folder)
         for file in read_files:
