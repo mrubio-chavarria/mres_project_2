@@ -81,7 +81,7 @@ if __name__ == "__main__":
     single_folders = [single_reads_folder + '/' + folder 
         for folder in os.listdir(single_reads_folder) 
         if not (folder.endswith('txt') or folder.endswith('index'))]
-    q_score_threshold = 20.0
+    q_score_threshold = 8.0
     filtered_reads = []
     n_folders_per_process = len(single_folders) // n_processes
     # reads_folders_lists = [single_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
