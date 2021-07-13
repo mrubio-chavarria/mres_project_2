@@ -296,7 +296,7 @@ if __name__ == "__main__":
     # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     #train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
-    #train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell1')
+    train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, 'flowcell1')
 
     # Model
     # Parameters
@@ -349,8 +349,24 @@ if __name__ == "__main__":
     print('Model: ')
     print(model)
 
-    print('Training parameters: ')
-    print(training_parameters)
+    
+    text_training = f"""
+    Training parameters:
+    - Algorithm: {training_parameters['algorithm']}
+    - N processes: {training_parameters['n_processes']}
+    - Epochs: {training_parameters['epochs']}
+    - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
+    - Batch size: {training_parameters['batch_size']}
+    - Learning rate: {training_parameters['learning_rate']}
+    - Max learning rate: {training_parameters['max_learning_rate']}
+    - Weight decay: {training_parameters['weight_decay']}
+    - Momemtum: {training_parameters['momemtum']}
+    - Optimiser: {training_parameters['optimiser']}
+    - Sequence length: {training_parameters['sequence_length']}
+    - Scheduler: {training_parameters['scheduler']}
+    - In HPC: {training_parameters['in_hpc']}
+    """
+    print(text_training)
 
     # Training
     #train(model, train_dataset, **training_parameters)
