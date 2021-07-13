@@ -258,11 +258,11 @@ if __name__ == "__main__":
     """
 
     # Set cuda devices visible
-    # os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
-    # database_dir = sys.argv[2]
+    # database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
+    database_dir = sys.argv[2]
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -326,6 +326,9 @@ if __name__ == "__main__":
     # Create the model
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)
     output = model(torch.unsqueeze(train_dataset[0]['signal'], dim=0))
+    
+    print('Output:'
+    print(output))
     
 
     # # Training parameters
