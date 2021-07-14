@@ -51,7 +51,7 @@ if __name__ == "__main__":
     workdir = sys.argv[1]
     n_jobs = int(sys.argv[2])
     flowcell = sys.argv[3]
-    job_index = sys.argv[4]
+    job_index = int(sys.argv[4])
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # n_processes = 2
