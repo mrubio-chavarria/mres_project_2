@@ -365,7 +365,7 @@ if __name__ == "__main__":
     print(text_training)
 
     # Training
-    train(model, train_dataset, **training_parameters)
+    # train(model, train_dataset, **training_parameters)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
