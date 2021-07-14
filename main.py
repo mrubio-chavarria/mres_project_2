@@ -22,7 +22,7 @@ from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
 from torch import multiprocessing as mp
 from bnlstm import LSTM
-
+from comet_ml import Experiment
 
 
 # Classes
@@ -86,7 +86,7 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, device, rank=0, sampler=None, **kwargs):
+def launch_training(model, train_data, device, experiment, rank=0, sampler=None, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -94,6 +94,7 @@ def launch_training(model, train_data, device, rank=0, sampler=None, **kwargs):
     :param rank: [int] index of the process executing the function.
     :param sampler: [DistributedSampler] sampler to control batch reordering
     after eery epoch in the case of multiprocessing.
+    COMPLETE
     """
     # Create optimiser
     if kwargs.get('optimiser', 'SGD') == 'SGD':
@@ -126,71 +127,77 @@ def launch_training(model, train_data, device, rank=0, sampler=None, **kwargs):
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
-    for epoch in range(kwargs.get('epochs', 30)):
-        if sampler is not None:
-            sampler.set_epoch(epoch)
-        for batch_id, batch in enumerate(train_data):
-            # Clean gradient
-            model.zero_grad()
-            # Move data to device
-            target_segments = batch['fragments']
-            target_sequences = batch['sequences']
-            targets_lengths = batch['targets_lengths']
-            batch, target = batch['signals'].to(device), batch['targets'].to(device)
-            if batch.shape[0] != batch_size:
-                continue
-            # Forward pass
-            output = model(batch)
-            # Loss
-            # Set different loss to initialise
-            output_size = output.shape
-            # if epoch in initialisation_epochs:
-            if False:
-                # Initialisation
-                # Loss function: CrossEntropy
-                # Create the labels
-                fragments = target_segments
-                new_targets = []
-                total = 0
-                new_targets = []
-                for i in range(len(fragments)):
-                    new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
-                    new_targets.append(new_target)
-                    total += len(fragments[i])
-                targets = torch.stack([torch.LongTensor(target) for target in new_targets])
-                # Compute the loss
+    with experiment.train():
+        for epoch in range(kwargs.get('epochs', 30)):
+            if sampler is not None:
+                sampler.set_epoch(epoch)
+            for batch_id, batch in enumerate(train_data):
+                # Clean gradient
+                model.zero_grad()
+                # Move data to device
+                target_segments = batch['fragments']
+                target_sequences = batch['sequences']
+                targets_lengths = batch['targets_lengths']
+                batch, target = batch['signals'].to(device), batch['targets'].to(device)
+                if batch.shape[0] != batch_size:
+                    continue
+                # Forward pass
+                output = model(batch)
+                # Loss
+                # Set different loss to initialise
                 output_size = output.shape
-                output = output.view(output_size[0], output_size[2], output_size[1])
-                loss = initialisation_loss_function(output, targets)
-            else:
-                # Regular
-                # Loss function: CTC
-                # Compute the loss
-                output = output.view(output_size[1], output_size[0], output_size[2])
-                loss = loss_function(
-                    log_softmax(output),
-                    target,
-                    sequences_lengths,
-                    targets_lengths
-                )
-            # Backward pass
-            loss.backward()
-            # Gradient step
-            optimiser.step()
-            if kwargs.get('scheduler') is not None:
-                scheduler.step()
-            # Decode output
-            output_sequences = list(decoder(output.view(*output_size), target_segments))
-            error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
-            avg_error = sum(error_rates) / len(error_rates)
-            # Show progress
-            print('----------------------------------------------------------------------------------------------------------------------')
-            print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-            # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
-            if kwargs.get('scheduler') is not None:
-                print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-            else:
-                print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+                # if epoch in initialisation_epochs:
+                if False:
+                    # Initialisation
+                    # Loss function: CrossEntropy
+                    # Create the labels
+                    fragments = target_segments
+                    new_targets = []
+                    total = 0
+                    new_targets = []
+                    for i in range(len(fragments)):
+                        new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
+                        new_targets.append(new_target)
+                        total += len(fragments[i])
+                    targets = torch.stack([torch.LongTensor(target) for target in new_targets])
+                    # Compute the loss
+                    output_size = output.shape
+                    output = output.view(output_size[0], output_size[2], output_size[1])
+                    loss = initialisation_loss_function(output, targets)
+                else:
+                    # Regular
+                    # Loss function: CTC
+                    # Compute the loss
+                    output = output.view(output_size[1], output_size[0], output_size[2])
+                    loss = loss_function(
+                        log_softmax(output),
+                        target,
+                        sequences_lengths,
+                        targets_lengths
+                    )
+                # Backward pass
+                loss.backward()
+
+                # Gradient step
+                optimiser.step()
+                if kwargs.get('scheduler') is not None:
+                    scheduler.step()
+                # Decode output
+                output_sequences = list(decoder(output.view(*output_size), target_segments))
+                error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
+                avg_error = sum(error_rates) / len(error_rates)
+                # Show progress
+                print('----------------------------------------------------------------------------------------------------------------------')
+                print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+                # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
+                if kwargs.get('scheduler') is not None:
+                    print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
+                else:
+                    print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+            
+            # Record data
+            experiment.log_metric('loss', loss.item(), epoch=epoch)
+            experiment.log_metric('learning_rate', scheduler.get_lr(), epoch=epoch)
 
 
 def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
@@ -203,6 +210,15 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
     trainin, or single-node multi CPU Hogwild.
     :param model: [torch.nn.Module] the model to train.
     """
+    # Set comet
+    experiment_name = "toy-test-1-20210714"
+    experiment = Experiment(
+        api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
+        project_name="project-2",
+        workspace="mrubio-chavarria",
+    )
+    experiment.set_name(experiment_name)
+    experiment.display()
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('Training started')
@@ -214,7 +230,7 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
         # Prepare the data
         train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
-        launch_training(model, train_data, device, **kwargs)
+        launch_training(model, train_data, device, experiment, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
         model = nn.DataParallel(model)
@@ -222,7 +238,7 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
         model.train()
         train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
-        launch_training(model, train_data, device, **kwargs)
+        launch_training(model, train_data, device, experiment, **kwargs)
 
     elif algorithm == 'Hogwild':
         # Start training
@@ -239,11 +255,13 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
                             collate_fn=collate_text2int_fn)
             
             print(f'Process {rank} launched')
-            process = mp.Process(target=launch_training, args=(model, train_data, device, rank, train_sampler), kwargs=kwargs)
+            process = mp.Process(target=launch_training, args=(model, train_data, device, experiment, rank, train_sampler), kwargs=kwargs)
             process.start()
             processes.append(process)
         for process in processes:
             process.join()
+    # Stop recording parameters
+    experiment.end()
 
 
 if __name__ == "__main__":
@@ -261,7 +279,6 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    # database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
     database_dir = sys.argv[2]
 
     # Set fast5 and reference
