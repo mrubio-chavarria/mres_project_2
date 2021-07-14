@@ -257,12 +257,14 @@ if __name__ == "__main__":
     version used (torch==1.9.0+cpu) is CPU.
     """
 
+    # CORRECT FOR CUDA
     # Set cuda devices visible
-    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+    # os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
     # database_dir = '/home/mario/Projects/project_2/databases/working_3xr6'
-    database_dir = sys.argv[2]
+    # database_dir = sys.argv[2]
+    database_dir = sys.argv[1]
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
