@@ -27,8 +27,7 @@ def filter_reads(read_files, reference_file,  q_score_threshold):
     :param q_score_threshold: [float] the value to filter.
     """
     label = f'Q{int(q_score_threshold)}_'  # Label to distinguish the good reads
-    for file in read_files:
-        read_file = reads_folder + '/' + file
+    for read_file in read_files:
         fast5_data = h5py.File(read_file, 'r')
         # Set parameters for resquiggling
         aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
@@ -43,7 +42,9 @@ def filter_reads(read_files, reference_file,  q_score_threshold):
         # Filter reads based on q score for quality
         if map_results.mean_q_score >= q_score_threshold:
             # If it is of good quality, rename the file
-            os.rename(read_file, reads_folder + '/' + label + file)
+            filename = read_file.split('/')[-1]
+            reads_folder = '/'.join(read_file.split('/')[:-1])
+            os.rename(read_file, reads_folder + '/' + label + filename)
 
 
 if __name__ == "__main__":
