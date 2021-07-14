@@ -26,7 +26,7 @@ def filter_reads(read_files, reference_file,  q_score_threshold):
     :param reference_file: [str] route to the reference file to align.
     :param q_score_threshold: [float] the value to filter.
     """
-    label = 'Q20_'  # Label to distinguish the good reads
+    label = f'Q{int(q_score_threshold)}_'  # Label to distinguish the good reads
     for file in read_files:
         read_file = reads_folder + '/' + file
         fast5_data = h5py.File(read_file, 'r')
@@ -46,24 +46,12 @@ def filter_reads(read_files, reference_file,  q_score_threshold):
             os.rename(read_file, reads_folder + '/' + label + file)
 
 
-def annotate_basecalls(*args):
-    """
-    """
-    for pair in args:
-        command = f'tombo preprocess annotate_raw_with_fastqs --fast5-basedir {pair[0]} --fastq-filenames {pair[1]} --overwrite'
-        os.system(command)
-        #subprocess.check_call(command, shell=True)
-    
-
-def read_code(filename):
-    code1, code2 = filename.split('_')[2:4]
-    return code1[0:8] + '_' + code2
-
 if __name__ == "__main__":
     
     workdir = sys.argv[1]
-    n_processes = int(sys.argv[2])
+    n_jobs = int(sys.argv[2])
     flowcell = sys.argv[3]
+    job_index = sys.argv[4]
     
     # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # n_processes = 2
@@ -77,33 +65,21 @@ if __name__ == "__main__":
     single_reads_folder = reads_folder + '/' + 'single'
     q_score_threshold = 20.0
     filtered_reads = []
-    single_read_files = os.listdir(reads_folder)
-    n_files_per_process = len(single_read_files) // n_processes
-    # reads_folders_lists = [single_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
-    #     if i != (n_processes - 1) else single_folders[n_folders_per_read*i:] 
-    #     for i in range(n_processes)]
-    reads_files_lists = [single_read_files[n_files_per_process*i:n_files_per_process*(i+1)] 
-        for i in range(n_processes)]
-    if len(single_read_files) % n_processes != 0:
-        extra_pairs = single_read_files[n_files_per_process * n_processes::]
-        [reads_files_lists[i].append(extra_pairs[i]) for i in range(len(extra_pairs))]
-    processes = []
-    # manager = Manager()
-    # filtered_reads = manager.list()
+    single_read_files = [single_reads_folder + '/' + file 
+        for file in os.listdir(single_reads_folder) if file.endswith('fast5')]
+    n_files_per_job = len(single_read_files) // n_jobs
+    
+    reads_to_filter = single_read_files[n_files_per_job*job_index:n_files_per_job*(job_index+1)]
+
+    if len(single_read_files) % n_jobs != 0:
+        extra_reads = single_read_files[n_files_per_job * n_jobs::]
+        if len(extra_reads) > job_index:
+            reads_to_filter.append(extra_reads[job_index])
+
     reference_file = workdir + '/' + 'reference.fasta'
-    for i in range(n_processes):
-        print(f'Process {i} launched')
-        process = mp.Process(target=filter_reads,
-                            args=(reads_files_lists[i], reference_file, q_score_threshold))
-        processes.append(process)
-        process.start()
-    for process in processes:
-        process.join()
-    # filtered_reads = list(filtered_reads)
-    # filtered_reads = '\n'.join(filtered_reads)
-    # file = open(reads_folder + '/' + 'filtered_reads.txt', 'w')
-    # file.write(filtered_reads)
-    # file.close()
+
+    print('Filter the selected reads')
+    filter_reads(reads_to_filter, reference_file, q_score_threshold)
 
     print('High-quality reads marked')
             
