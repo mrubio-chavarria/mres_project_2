@@ -71,7 +71,7 @@ if __name__ == "__main__":
         if not file.endswith('fast5'):
             continue
         old_filename = single_reads_folder + '/' + file
-        new_filename = single_reads_folder + '/' + f'read{str(idx)}'
+        new_filename = single_reads_folder + '/' + f'read{str(idx)}.fast5'
         os.rename(old_filename, new_filename)
     print('Renaming changed')
         
