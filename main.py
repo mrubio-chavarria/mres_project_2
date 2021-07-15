@@ -274,12 +274,13 @@ if __name__ == "__main__":
     The reason is that the default device for pytorch, according to the 
     version used (torch==1.9.0+cpu) is CPU.
     """
-
     # Set cuda devices visible
     os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
     database_dir = sys.argv[2]
+
+    # database_dir = '/home/mario/Projects/project_2/databases/toy_working_3xr6'
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -347,7 +348,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'epochs': 10,
+        'epochs': 1,
         'n_initialisation_epochs': 1,
         'batch_size': batch_size,
         'learning_rate': 5E-4,

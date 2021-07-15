@@ -415,7 +415,8 @@ class LSTM_module(nn.Module):
         """
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
-        output, _ = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
+        size = input_sequence.shape
+        output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
         return output
 
 
@@ -457,7 +458,7 @@ class ClassifierGELU(nn.Module):
         Forward pass.
         :param input_sequence: [torch.Tensor] the sequence to feed the model.
         """
-        output = self.model(input_sequence.view(self.batch_size, self.sequence_length, -1))
+        output = self.model(input_sequence)
         return output
 
 
