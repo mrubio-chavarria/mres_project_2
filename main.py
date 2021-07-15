@@ -128,7 +128,7 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
     with experiment.train():
-        for epoch in range(kwargs.get('epochs', 30)):
+        for epoch in range(kwargs.get('n_epochs', 30)):
             if sampler is not None:
                 sampler.set_epoch(epoch)
             for batch_id, batch in enumerate(train_data):
@@ -195,12 +195,12 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 else:
                     print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
             
-            # Record data
-            experiment.log_metric('loss', loss.item(), epoch=epoch)
-            experiment.log_metric('learning_rate', scheduler.get_lr(), epoch=epoch)
+                # Record data
+                experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
+                experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
 
 
-def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
+def train(model, train_dataset, experiment, algorithm='single', n_processes=3, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -210,15 +210,6 @@ def train(model, train_dataset, algorithm='single', n_processes=3, **kwargs):
     trainin, or single-node multi CPU Hogwild.
     :param model: [torch.nn.Module] the model to train.
     """
-    # Set comet
-    experiment_name = "toy-test-1-20210714"
-    experiment = Experiment(
-        api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
-        project_name="project-2",
-        workspace="mrubio-chavarria",
-    )
-    experiment.set_name(experiment_name)
-    experiment.display()
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('Training started')
@@ -348,8 +339,8 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'epochs': 1,
-        'n_initialisation_epochs': 1,
+        'n_epochs': 1,
+        'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 5E-4,
         'max_learning_rate': 1E-2,
@@ -360,10 +351,11 @@ if __name__ == "__main__":
         'scheduler': 'OneCycleLR',
         'in_hpc': True
     }
-
+    # Print model architecture
     print('Model: ')
     print(model)
 
+    # Print training parameters
     text_training = f"""
     Training parameters:
     - Algorithm: {training_parameters['algorithm']}
@@ -382,8 +374,32 @@ if __name__ == "__main__":
     """
     print(text_training)
 
+    # Set up Comet
+    experiment_name = "toy-test-1-20210714"
+    experiment = Experiment(
+        api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
+        project_name="project-2",
+        workspace="mrubio-chavarria",
+    )
+    experiment.set_name(experiment_name)
+    experiment.display()
+    # Log training parameters
+    experiment.log_parameters({
+        'algorithm': training_parameters['algorithm'],
+        'n_epochs': training_parameters['n_epochs'],
+        'n_initialisation_epochs': training_parameters['n_initialisation_epochs'],
+        'batch_size': training_parameters['batch_size'],
+        'learning_rate': training_parameters['learning_rate'],
+        'max_learning_rate': training_parameters['max_learning_rate'],
+        'weight_decay': training_parameters['weight_decay'],
+        'momemtum': training_parameters['momemtum'],
+        'optimiser': training_parameters['optimiser'],
+        'sequence_length': training_parameters['sequence_length'],
+        'scheduler': training_parameters['scheduler']
+    })
+   
     # Training
-    train(model, train_dataset, **training_parameters)
+    train(model, train_dataset, experiment, **training_parameters)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
