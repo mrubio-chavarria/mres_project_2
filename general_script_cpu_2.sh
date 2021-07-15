@@ -7,7 +7,7 @@ module load anaconda3/personal
 
 source activate project2_venv
 
-cd $HOME/databases
+cd $HOME/project_2/databases
 
 mv working_ap.tar.gz reference_ap.tar.gz 
 
