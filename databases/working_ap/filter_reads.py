@@ -71,8 +71,11 @@ if __name__ == "__main__":
     single_reads_folder = reads_folder + '/' + 'single'
     q_score_threshold = 20.0
     filtered_reads = []
+    single_read_files = os.listdir(single_reads_folder)
+    single_read_files = list(sorted(single_read_files, lambda x: int(x[-6].split('read')[1])))
     single_read_files = [single_reads_folder + '/' + file 
-        for file in os.listdir(single_reads_folder) if file.endswith('fast5')]
+        for file in single_read_files if file.endswith('fast5')]
+    
     n_files_per_job = len(single_read_files) // n_jobs
     
     reads_to_filter = single_read_files[n_files_per_job*job_index:n_files_per_job*(job_index+1)]
@@ -85,9 +88,10 @@ if __name__ == "__main__":
     reference_file = workdir + '/' + 'reference.fasta'
 
     print('Filter the selected reads')
-    #filter_reads(reads_to_filter, reference_file, q_score_threshold)
     print('Number of reads:', len(reads_to_filter))
-    print(reads_to_filter)
+    print('Reads filenames:')
+    [print(read.split('/')[-1]+'\n') for read in reads_to_filter]
+    filter_reads(reads_to_filter, reference_file, q_score_threshold)
     print('High-quality reads marked')
             
     
