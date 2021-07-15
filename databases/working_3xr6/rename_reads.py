@@ -9,13 +9,6 @@ perform once the basecalls have been obtained.
 # Libraries
 import os
 import sys
-from tombo import tombo_helper, tombo_stats, resquiggle
-import h5py
-import mappy
-from tqdm import tqdm
-import multiprocessing as mp
-from multiprocessing import Manager
-from shutil import move, rmtrees
 
 
 if __name__ == "__main__":
