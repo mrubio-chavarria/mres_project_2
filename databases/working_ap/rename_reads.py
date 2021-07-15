@@ -68,8 +68,8 @@ if __name__ == "__main__":
     single_reads_folder = workdir + '/' + 'reads' + '/' + flowcell + '/' + 'single'
     # Rename files
     for idx, file in enumerate(os.listdir(single_reads_folder)):
-        if not file.endswith('fast5'):
-            continue
+        # if not file.endswith('fast5'):
+        #     continue
         old_filename = single_reads_folder + '/' + file
         new_filename = single_reads_folder + '/' + f'read{str(idx)}.fast5'
         os.rename(old_filename, new_filename)
