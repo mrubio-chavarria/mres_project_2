@@ -181,7 +181,7 @@ class Dataset_3xr6(Dataset):
             :param file: [str] read filename.
             :return: [bool] True if the read is of high quality.
             """
-            return file.startswith('Q8') and file.endswith('fast5')
+            return file.startswith('Q20') and file.endswith('fast5')
 
         # Save parameters
         super().__init__()
