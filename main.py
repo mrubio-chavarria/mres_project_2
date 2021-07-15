@@ -117,7 +117,7 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
         scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
                                                         max_lr=kwargs.get('max_learning_rate', 1E-2),
                                                         steps_per_epoch=len(train_data),
-                                                        epochs=kwargs.get('epochs', 30))
+                                                        epochs=kwargs.get('n_epochs', 30))
     # Prepare training
     sequence_length, batch_size = kwargs.get('sequence_length'), kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
