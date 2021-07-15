@@ -161,7 +161,7 @@ class Dataset_3xr6(Dataset):
     Dataset to load and prepare the data in the 3xr6 dataset. 
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q8'):
         """
         DESCRIPTION:
         Class constructor.
@@ -181,7 +181,7 @@ class Dataset_3xr6(Dataset):
             :param file: [str] read filename.
             :return: [bool] True if the read is of high quality.
             """
-            return file.startswith('Q20') and file.endswith('fast5')
+            return file.startswith(hq_value) and file.endswith('fast5')
 
         # Save parameters
         super().__init__()
