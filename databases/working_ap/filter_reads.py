@@ -72,7 +72,7 @@ if __name__ == "__main__":
     q_score_threshold = 20.0
     filtered_reads = []
     single_read_files = os.listdir(single_reads_folder)
-    single_read_files = list(sorted(single_read_files, key=lambda x: int(x[-6].split('read')[1])))
+    single_read_files = list(sorted(single_read_files, key=lambda x: int(x[:-6].split('read')[1])))
     single_read_files = [single_reads_folder + '/' + file 
         for file in single_read_files if file.endswith('fast5')]
     
