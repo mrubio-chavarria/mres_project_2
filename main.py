@@ -8,6 +8,7 @@ sequence.
 """
 
 # Libraries
+from comet_ml import Experiment
 import torch
 import sys
 import os
@@ -22,7 +23,6 @@ from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
 from torch import multiprocessing as mp
 from bnlstm import LSTM
-from comet_ml import Experiment
 
 
 # Classes
