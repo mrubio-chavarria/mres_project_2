@@ -45,7 +45,7 @@ def filter_reads(read_files, reference_file,  q_score_threshold):
             filename = read_file.split('/')[-1]
             reads_folder = '/'.join(read_file.split('/')[:-1])
             if label[:-1] in filename.split('_'):
-                new_filename = reads_folder + '/' + label + filename.split['_'][-1]
+                new_filename = reads_folder + '/' + label + filename.split('_')[-1]
             else:
                 new_filename = reads_folder + '/' + label + filename
             os.rename(read_file, new_filename)

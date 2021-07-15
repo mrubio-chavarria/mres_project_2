@@ -3,10 +3,6 @@
 #PBS -lwalltime=12:00:00
 #PBS -J 0-44
 
-# IMPORTANT
-# - You should choose less processes than folders with single reads.
-# - You need more CPUs than processes to launch.
-
 module load anaconda3/personal
 
 source activate project2_venv 
