@@ -86,8 +86,7 @@ if __name__ == "__main__":
 
     print('Filter the selected reads')
     #filter_reads(reads_to_filter, reference_file, q_score_threshold)
-    print(n_jobs)
-    print(job_index)
+    print('Number of reads:', len(reads_to_filter))
     print(reads_to_filter)
     print('High-quality reads marked')
             
