@@ -28,7 +28,7 @@ if __name__ == "__main__":
     single_reads_folders = os.listdir(workdir + '/' + 'reads' + '/' + flowcell + '/' + 'single')
     single_reads_folders = [
         workdir + '/' + 'reads' + '/' + flowcell + '/' + 'single' + '/' + folder 
-        for folder in single_reads_folders if not folder.endswith('txt')
+        for folder in single_reads_folders if not folder.endswith('txt') and not folder.endswith('index')
     ]
     # Rename files
     for folder in single_reads_folders:
