@@ -9,5 +9,5 @@ source activate project2_venv
 
 # Launch script
 cd $HOME/project_2/databases
-rm -r working_3xr6
-cp -R working_3xr6_security working_3xr6
+
+tar -czvf working_3xr6.tar.gz working_3xr6
