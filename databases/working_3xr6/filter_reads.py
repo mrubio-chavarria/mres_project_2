@@ -27,7 +27,7 @@ def filter_reads(read_folders, reference_file,  q_score_threshold):
     :param reference_file: [str] route to the reference file to align.
     :param q_score_threshold: [float] the value to filter.
     """
-    label = 'Q8_'  # Label to distinguish the good reads
+    label = f'Q{int(q_score_threshold)}_'  # Label to distinguish the good reads
     for reads_folder in read_folders:
         read_files = os.listdir(reads_folder)
         for file in read_files:
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     single_folders = [single_reads_folder + '/' + folder 
         for folder in os.listdir(single_reads_folder) 
         if not (folder.endswith('txt') or folder.endswith('index'))]
-    q_score_threshold = 8.0
+    q_score_threshold = 20.0
     filtered_reads = []
     n_folders_per_process = len(single_folders) // n_processes
     # reads_folders_lists = [single_folders[n_folders_per_read*i:n_folders_per_read*(i+1)] 
