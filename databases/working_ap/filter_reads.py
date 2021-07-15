@@ -84,8 +84,9 @@ if __name__ == "__main__":
     reference_file = workdir + '/' + 'reference.fasta'
 
     print('Filter the selected reads')
-    filter_reads(reads_to_filter, reference_file, q_score_threshold)
-
+    #filter_reads(reads_to_filter, reference_file, q_score_threshold)
+    print(n_jobs)
+    print(job_index)
     print('High-quality reads marked')
             
     
