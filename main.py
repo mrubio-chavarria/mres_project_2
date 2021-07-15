@@ -383,6 +383,7 @@ if __name__ == "__main__":
     )
     experiment.set_name(experiment_name)
     experiment.display()
+    
     # Log training parameters
     experiment.log_parameters({
         'algorithm': training_parameters['algorithm'],
