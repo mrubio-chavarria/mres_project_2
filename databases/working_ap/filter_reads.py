@@ -65,6 +65,7 @@ if __name__ == "__main__":
     # Filter files below the q score threshold
     print('***************************************************************************************')
     print('Filter the reads')
+    print('Flowcell:', flowcell)
     print('***************************************************************************************')
     reads_folder = workdir + '/' + 'reads' + '/' + flowcell
     single_reads_folder = reads_folder + '/' + 'single'
@@ -87,6 +88,7 @@ if __name__ == "__main__":
     #filter_reads(reads_to_filter, reference_file, q_score_threshold)
     print(n_jobs)
     print(job_index)
+    print(reads_to_filter)
     print('High-quality reads marked')
             
     
