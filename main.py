@@ -360,7 +360,7 @@ if __name__ == "__main__":
     Training parameters:
     - Algorithm: {training_parameters['algorithm']}
     - N processes: {training_parameters['n_processes']}
-    - Epochs: {training_parameters['epochs']}
+    - Epochs: {training_parameters['n_epochs']}
     - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
     - Batch size: {training_parameters['batch_size']}
     - Learning rate: {training_parameters['learning_rate']}
@@ -383,7 +383,7 @@ if __name__ == "__main__":
     )
     experiment.set_name(experiment_name)
     experiment.display()
-    
+
     # Log training parameters
     experiment.log_parameters({
         'algorithm': training_parameters['algorithm'],
