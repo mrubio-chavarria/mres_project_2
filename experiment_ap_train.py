@@ -256,12 +256,12 @@ if __name__ == "__main__":
     It is not the same.
     """
     # Set cuda devices visible
-    # os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    # database_dir = sys.argv[2]
+    database_dir = sys.argv[2]
 
-    database_dir = '/home/mario/Projects/project_2/databases/toy_working_ap'
+    # database_dir = '/home/mario/Projects/project_2/databases/toy_working_ap'
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
