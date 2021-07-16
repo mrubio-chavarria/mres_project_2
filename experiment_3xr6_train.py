@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from torch import nn
 from torch.utils.data.distributed import DistributedSampler
 import torchaudio
-from datasets import Dataset_ap, collate_text2int_fn
+from datasets import Dataset_3xr6, collate_text2int_fn
 from models import TCN_module, LSTM_module, ClassifierGELU
 from metrics import cer
 from torch import multiprocessing as mp
@@ -225,7 +225,6 @@ def train(model, train_dataset, experiment, algorithm='single', n_processes=3, *
         train_data = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
         launch_training(model, train_data, device, experiment, **kwargs)
-
     elif algorithm == 'Hogwild':
         # Start training
         # We are not setting a blockade per epoch
@@ -291,7 +290,7 @@ if __name__ == "__main__":
     # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
     # train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
-    train_dataset = Dataset_ap(train_folder, reference_file, window_size, max_windows, hq_value='Q20')
+    train_dataset = Dataset_3xr6(train_folder, reference_file, window_size, max_windows, hq_value='Q20')
 
     # Model
     # Parameters
@@ -364,7 +363,7 @@ if __name__ == "__main__":
     print(text_training)
 
     # Set up Comet
-    experiment_name = f"acinetobacter-train-{str(datetime.now()).replace(' ', '_')}"
+    experiment_name = f"3xr6-train-{str(datetime.now()).replace(' ', '_')}"
     experiment = Experiment(
         api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
         project_name="project-2",
