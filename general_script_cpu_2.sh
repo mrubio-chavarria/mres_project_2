@@ -10,10 +10,10 @@ source activate project2_venv
 cd $HOME/project_2/databases
 
 
-for flowcell in flowcell1 flowcell2 flowcell3 flowcell4
+for flowcell in flowcell1 flowcell2 flowcell3
 do
-    rm -r working_ap/reads/$flowcell/single_security
-    cp -R working_ap/reads/$flowcell/single working_ap/reads/$flowcell/single_security
+    rm -r working_3xr6/reads/$flowcell/single_security
+    cp -R working_3xr6/reads/$flowcell/single working_3xr6/reads/$flowcell/single_security
 done
 
 
