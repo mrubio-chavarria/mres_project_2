@@ -155,20 +155,107 @@ class RawONTDataset(Dataset):
         return next(iter(self))
 
 
-class Dataset_3xr6(Dataset):
-    """
+class Dataset_ap(Dataset):
+    """"
     DESCRIPTION:
-    Dataset to load and prepare the data in the 3xr6 dataset. 
+    Dataset to load and prepare the data in the acinetobacter.
+    pittii (ap) dataset
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q8'):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20'):
         """
         DESCRIPTION:
         Class constructor.
         :param reads_folder: [str] route to the folder containing the flowcell folders.
         :param reference_file: [str] the file containing the reference sequence in fasta
         format.
-        :param window_size: [int] size in which the reads should sliced. 
+        :param window_size: [int] size in which the reads should be sliced. 
+        :param max_number_wndows: [int] parameter to artificially decrease the size of the 
+        dataset.
+        :param flowcell: [str] a param to specify if only one flowcell should be analysed.
+        If None, all the flowcells are loaded.  
+        """
+        # Helper function
+        def file_hq_filter(file):
+            """
+            DESCRIPTION:
+            A helper function to obtain only those reads with a high-quality alignment.
+            :param file: [str] read filename.
+            :return: [bool] True if the read is of high quality.
+            """
+            return file.startswith(hq_value) and file.endswith('fast5')
+        
+        super().__init__()
+        self.reads_folder = reads_folder
+        self.reference = reference_file
+        self.window_size = window_size
+        self.max_number_windows = max_number_windows
+        # Obtain the high_quality files with the reads
+        self.read_files = []
+        if flowcell is None:
+            for flowcell in os.listdir(self.reads_folder):
+                flowcell_folder = reads_folder + '/' + flowcell + '/' + 'single'
+                files = [file for file in os.listdir(flowcell_folder) 
+                    if not (file.endswith('txt') or file.endswith('index'))]
+                files = filter(lambda file: file_hq_filter(file), files)
+                files = map(lambda file: flowcell_folder + '/' + file, files)
+                self.read_files.extend(files)
+        else:
+            flowcell_folder = reads_folder + '/' + flowcell + '/' + 'single'
+            files = [file for file in os.listdir(flowcell_folder) 
+                if not (file.endswith('txt') or file.endswith('index'))]
+            files = filter(lambda file: file_hq_filter(file), files)
+            files = map(lambda file: flowcell_folder + '/' + file, files)
+            self.read_files.extend(files)
+        # Load windows
+        self.windows = load_windows(self.read_files, self.reference, self.window_size)
+        # Reduce the dataset if needed
+        if max_number_windows is not None:
+            self.windows = self.windows[:max_number_windows]
+        # Add 1 dimensiones because there is one channel
+        [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
+    
+    def __len__(self):
+        """
+        DESCRIPTION:
+        The size of the dataset is the number of windows.
+        """
+        return len(self.windows)
+    
+    def __getitem__(self, index):
+        """
+        DESRIPTION:
+        :param index: [int] window position in the array.
+        """
+        return self.windows[index]
+    
+    def __iter__(self):
+        """
+        DESCRIPTION:
+        """
+        return iter(self.windows)
+    
+    def __next__(self):
+        """
+        DESCRIPTION:
+        """
+        return next(iter(self))
+
+
+class Dataset_3xr6(Dataset):
+    """
+    DESCRIPTION:
+    Dataset to load and prepare the data in the 3xr6 dataset. 
+    """
+    # Methods
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20'):
+        """
+        DESCRIPTION:
+        Class constructor.
+        :param reads_folder: [str] route to the folder containing the flowcell folders.
+        :param reference_file: [str] the file containing the reference sequence in fasta
+        format.
+        :param window_size: [int] size in which the reads should be sliced. 
         :param max_number_wndows: [int] parameter to artificially decrease the size of the 
         dataset.
         :param flowcell: [str] a param to specify if only one flowcell should be analysed.        
@@ -218,7 +305,6 @@ class Dataset_3xr6(Dataset):
         # Add 1 dimensiones because there is one channel
         [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
 
-    
     def __len__(self):
         """
         DESCRIPTION:
