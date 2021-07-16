@@ -9,6 +9,11 @@ source activate project2_venv
 
 cd $HOME/project_2/databases
 
-mv working_ap.tar.gz reference_ap.tar.gz 
 
-tar -xf reference_ap.tar.gz
+for flowcell in flowcell1 flowcell2 flowcell3 flowcell4
+do
+    rm -r working_ap/reads/$flowcell/single
+    cp -R reference_working_ap/reads/$flowcell/multi working_ap/reads/$flowcell/single
+done
+
+
