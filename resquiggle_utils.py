@@ -54,6 +54,7 @@ def parse_resquiggle(read_file, reference_file):
     seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
     std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
     rsqgl_params = tombo_stats.load_resquiggle_parameters(seq_samp_type)
+    rsqgl_params = rsqgl_params._replace(bandwidth=2000) 
     # Extract data from FAST5
     map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
     all_raw_signal = tombo_helper.get_raw_read_slot(fast5_data)['Signal'][:]
