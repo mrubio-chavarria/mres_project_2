@@ -10,4 +10,4 @@ source activate project2_venv
 cd $HOME/project_2/databases/working_3xr6
 
 # Rename files
-python3 rename_reads.py $HOME/project_2/databases/working_3xr6 $PBS_ARRAY_INDEX
+python3 rename_reads.py $HOME/project_2/databases/working_3xr6 flowcell$PBS_ARRAY_INDEX
