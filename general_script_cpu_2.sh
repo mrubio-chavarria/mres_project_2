@@ -12,6 +12,7 @@ cd $HOME/project_2/databases
 
 for flowcell in flowcell1 flowcell2 flowcell3 flowcell4
 do
+    rm -r working_ap/reads/$flowcell/single_security
     cp -R working_ap/reads/$flowcell/single working_ap/reads/$flowcell/single_security
 done
 
