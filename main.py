@@ -23,6 +23,7 @@ from metrics import cer, _levenshtein_distance, char_errors
 from ont_fast5_api.fast5_interface import get_fast5_file
 from torch import multiprocessing as mp
 from bnlstm import LSTM
+from datetime import datetime
 
 
 # Classes
@@ -339,7 +340,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 40,
+        'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 5E-4,
@@ -401,6 +402,11 @@ if __name__ == "__main__":
    
     # Training
     train(model, train_dataset, experiment, **training_parameters)
+    
+    # Save the model
+    time = str(datetime.now()).replace(' ', '_')
+    model_name = f'model_{time}.pt'
+    torch.save(model.state_dict(), database_dir + '/' + 'saved_models' + '/' + model_name)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
