@@ -34,7 +34,7 @@ def collapse(window):
     return window
 
 
-def parse_resquiggle(read_file, reference_file):
+def parse_resquiggle(read_file, reference_file, bandwidth=6000):
     """
     DESCRIPTION:
     A function to read the information in a FAST5 file in which the 
@@ -43,6 +43,8 @@ def parse_resquiggle(read_file, reference_file):
     :param read_file: [str] route to the fast5 file with the resquiggled
     sequence.
     :param reference_file: [str] route to the fasta file with the reference.
+    :param bandwith: [int] bandwith limit to compute the event alignment 
+    during DTW. 
     :return: [tuple] there are three outputs. The first is a np.ndarray with
     the positions denoting the segments in the signal. The second is the str
     with the trimmed sequence after normalise. The third is a 
@@ -54,7 +56,7 @@ def parse_resquiggle(read_file, reference_file):
     seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
     std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
     rsqgl_params = tombo_stats.load_resquiggle_parameters(seq_samp_type)
-    rsqgl_params = rsqgl_params._replace(bandwidth=6000) 
+    rsqgl_params = rsqgl_params._replace(bandwidth=bandwidth) 
     # Extract data from FAST5
     map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
     all_raw_signal = tombo_helper.get_raw_read_slot(fast5_data)['Signal'][:]

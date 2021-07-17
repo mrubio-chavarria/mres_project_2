@@ -208,7 +208,7 @@ class Dataset_ap(Dataset):
             files = map(lambda file: flowcell_folder + '/' + file, files)
             self.read_files.extend(files)
         # Load windows
-        self.windows = load_windows(self.read_files, self.reference, self.window_size)
+        self.windows = load_windows(self.read_files, self.reference, self.window_size, bandwidth=24000)
         # Reduce the dataset if needed
         if max_number_windows is not None:
             self.windows = self.windows[:max_number_windows]
@@ -459,7 +459,7 @@ def collate_text2int_fn(batch):
     }
 
 
-def load_windows(read_files, reference_file, window_size=300):
+def load_windows(read_files, reference_file, window_size=300, bandwidth=6000):
     """
     DESCRIPTION:
     Function to load all the windows extracted from a set of reads
@@ -475,7 +475,7 @@ def load_windows(read_files, reference_file, window_size=300):
     total_windows = []
     for route in read_files:
         # Read resquiggle information
-        segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file)
+        segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth)
         # Window the resquiggle signal
         file_windows = window_resquiggle(segs, genome_seq, norm_signal, window_size)
         total_windows.extend(file_windows)
