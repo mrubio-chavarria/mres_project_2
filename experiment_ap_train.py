@@ -286,7 +286,7 @@ if __name__ == "__main__":
     # Load the train and test datasets
     batch_size = 32
     window_size = 311
-    max_windows = None
+    max_windows = 300
     train_folder = database_dir + '/' + "reads"
     # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
