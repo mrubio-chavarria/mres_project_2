@@ -173,7 +173,7 @@ class Dataset_ap(Dataset):
         :param max_number_wndows: [int] parameter to artificially decrease the size of the 
         dataset.
         :param flowcell: [str] a param to specify if only one flowcell should be analysed.
-        If None, all the flowcells are loaded.  
+        If None, all the flowcells are loaded. It should of the form 'flowcellX'.
         """
         # Helper function
         def file_hq_filter(file):
