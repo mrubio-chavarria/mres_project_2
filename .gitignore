@@ -142,3 +142,9 @@ flappie.zip
 saved_models/
 databases/**/reads
 databases/**/basecalls
+reference_doroschak2020/
+reference_3xr6/
+toy_dataset/
+databases/working_3xr6/filename_mapping.txt
+databases/working_ap/reference.fasta
+databases/working_porcupine/reference.fasta
