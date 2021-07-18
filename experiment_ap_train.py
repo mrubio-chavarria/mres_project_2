@@ -127,7 +127,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 3,
+        'n_epochs': 5,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 5E-4,
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     model_name = f'model_{time}.pt'
     model_path = database_dir + '/' + 'saved_models' + '/' + model_name
     torch.save(model.state_dict(), model_path)
-    experiment.log_model(f'model_{time}', model_path)
+    # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
