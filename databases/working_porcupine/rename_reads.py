@@ -13,6 +13,7 @@ from tombo import tombo_helper, tombo_stats, resquiggle
 import h5py
 import mappy
 
+
 if __name__ == "__main__":
     
     workdir = sys.argv[1]
