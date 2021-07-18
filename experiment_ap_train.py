@@ -88,10 +88,9 @@ if __name__ == "__main__":
     window_size = 311
     max_windows = 300
     train_folder = database_dir + '/' + "reads"
-    # test_folder = project_dir + '/' + "databases/natural_flappie_r941_native_ap_toy/test_reads"
     
-    # train_dataset = Dataset_3xr6_transformed(train_folder, reference_file, window_size, max_windows, transform)
-    train_dataset = Dataset_ap(train_folder, reference_file, window_size, max_windows, hq_value='Q20')
+    # Load dataset
+    train_dataset = Dataset_ap(train_folder, reference_file, window_size, max_windows, flowcell='flowcell1', hq_value='Q20')
 
     # Model
     # Parameters
