@@ -26,12 +26,13 @@ if __name__ == "__main__":
     print('***************************************************************************************')
     single_reads_folder = workdir + '/' + 'reads' + '/' + flowcell + '/' + 'single'
     # Rename files
-    for idx, file in enumerate(os.listdir(single_reads_folder)):
-        if not file.endswith('fast5'):
-            continue
-        old_filename = single_reads_folder + '/' + file
-        new_filename = single_reads_folder + '/' + f'read{str(idx)}.fast5'
-        os.rename(old_filename, new_filename)
+    for folder in os.listdir(single_reads_folder):
+        for idx, file in enumerate(os.listdir(single_reads_folder + '/' + folder)):
+            if not file.endswith('fast5'):
+                continue
+            old_filename = single_reads_folder + '/' + folder + '/' + file
+            new_filename = single_reads_folder + '/' + folder + '/' + f'read{str(idx)}.fast5'
+            os.rename(old_filename, new_filename)
     print('Renaming completed')
         
 
