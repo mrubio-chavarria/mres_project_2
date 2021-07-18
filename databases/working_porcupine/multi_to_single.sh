@@ -10,7 +10,7 @@ source activate project2_venv
 
 # Convert from multi to single format
 flowcell="flowcell$PBS_ARRAY_INDEX"
-reads_folder=$HOME/project_2/databases/working_ap/reads/$flowcell
+reads_folder=$HOME/project_2/databases/working_porcupine/reads/$flowcell
 echo "*****************************************"
 echo "Convert fast5 from multi to single format"
 echo "*****************************************"
@@ -22,7 +22,7 @@ echo "Conversion completed"
 echo "******************************************"
 echo "Convert fastq from single to multi format"
 echo "******************************************"
-cd $HOME/project_2/databases/working_ap/basecalls/$flowcell
+cd $HOME/project_2/databases/working_porcupine/basecalls/$flowcell
 rm multi.fastq
 cat *.fastq > multi.fastq
 echo "Merged file: multi.fastq" 

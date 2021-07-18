@@ -90,7 +90,7 @@ if __name__ == "__main__":
     train_folder = database_dir + '/' + "reads"
     
     # Load dataset
-    train_dataset = Dataset_ap(train_folder, reference_file, window_size, max_windows, flowcell='flowcell1', hq_value='Q20')
+    train_dataset = Dataset_ap(train_folder, reference_file, window_size, max_windows, flowcell='flowcell3', hq_value='Q20')
 
     # Model
     # Parameters
