@@ -420,7 +420,7 @@ class LSTM_module(nn.Module):
         return output
 
 
-class ClassifierGELU(nn.Module):
+class DecoderGELU(nn.Module):
     """
     DESCRIPTION:
     Model to assign the probabilities of every base for a given signal.
@@ -449,6 +449,46 @@ class ClassifierGELU(nn.Module):
             nn.Linear(self.initial_size, self.hidden_size),
             nn.GELU(),
             nn.Dropout(self.dropout),
+            nn.Linear(self.hidden_size, self.output_size)
+        )
+    
+    def forward(self, input_sequence):
+        """
+        DDESCRIPTION:
+        Forward pass.
+        :param input_sequence: [torch.Tensor] the sequence to feed the model.
+        """
+        output = self.model(input_sequence)
+        return output
+
+
+class DecoderChiron(nn.Module):
+    """
+    DESCRIPTION:
+    Model to assign the probabilities of every base for a given signal.
+    """
+    # Methods
+    def __init__(self, initial_size, output_size, sequence_length, batch_size, dropout=0.2):
+        """
+        DESCRIPTION:
+        Class constructor.
+        Important, the softmax is already implemented in the cost function.
+        :param initial_size: [int] input dimensionality.
+        :param output_size: [int] output dimensionality. Number of
+        classes.
+        :param sequence_length: [int] number of elements in the input sequence.
+        :param batch_size: [int] number of elements per batch.
+        :param dropout: [float] proportion of dropout neurons.
+        """
+        super().__init__()
+        self.initial_size = initial_size
+        self.hidden_size = 2 * initial_size
+        self.output_size = output_size
+        self.sequence_length = sequence_length
+        self.batch_size = batch_size
+        self.dropout = dropout
+        self.model = nn.Sequential(
+            nn.Linear(self.initial_size, self.hidden_size),
             nn.Linear(self.hidden_size, self.output_size)
         )
     

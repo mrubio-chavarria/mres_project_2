@@ -14,7 +14,7 @@ import torch
 from torch import nn
 import torchaudio
 from datasets import Dataset_3xr6
-from models import TCN_module, LSTM_module, ClassifierGELU
+from models import TCN_module, LSTM_module, DecoderGELU, DecoderChiron
 from datetime import datetime
 from training_utils import train
 
@@ -33,7 +33,7 @@ class Network(nn.Module):
         self.decoder_parameters = decoder_parameters
         self.convolutional_module = TCN_module(**self.TCN_parameters)
         self.recurrent_module = LSTM_module(**self.LSTM_parameters)
-        self.decoder = ClassifierGELU(**self.decoder_parameters)
+        self.decoder = DecoderChiron(**self.decoder_parameters)
 
     def forward(self, input_sequence):
         """
@@ -108,7 +108,7 @@ if __name__ == "__main__":
         'sequence_length': sequence_length,
         'input_size': TCN_parameters['out_channels'], 
         'batch_size': batch_size, 
-        'hidden_size': 512, # 2 * TCN_parameters['out_channels'],
+        'hidden_size': 200, # 2 * TCN_parameters['out_channels'],
         'dropout': 0.8,
         'bidirectional': True
     }
@@ -128,13 +128,13 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 1,
+        'n_epochs': 5,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 5E-4,
         'max_learning_rate': 1E-2,
-        'weight_decay': 1,
-        'momemtum': 0.9,
+        'weight_decay': 0,
+        'momemtum': 0,
         'optimiser': 'Adam',
         'sequence_length': sequence_length,
         'scheduler': None, # 'OneCycleLR',
