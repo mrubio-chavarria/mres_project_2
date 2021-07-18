@@ -147,13 +147,14 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
-                print('----------------------------------------------------------------------------------------------------------------------')
-                print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-                # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
-                if kwargs.get('scheduler') is not None:
-                    print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-                else:
-                    print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+                if batch_id % 250 == 0:
+                    print('----------------------------------------------------------------------------------------------------------------------')
+                    print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+                    # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
+                    if kwargs.get('scheduler') is not None:
+                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
+                    else:
+                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
             
                 # Record data by batch
                 experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
