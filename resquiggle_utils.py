@@ -66,12 +66,13 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
         signal = fast5_data['Raw']['Reads'][read_name]['Signal'].value.astype('float64')
         read_start_rel_to_raw = events.attrs['read_start_rel_to_raw']
         # Format the events
-        events = list(map(lambda x: (x[2], x[3], x[4].decode('utf-8')), events.value.tolist()))
+        last_event = events.value.tolist()[-1]
+        events = map(lambda x: (x[2], x[4].decode('utf-8')), events.value.tolist())
         # Create sequence and segs
         sequence = []
         segs = []
         [(sequence.append(event[-1]), segs.append(event[0])) for event in events]
-        segs.append(events[-1][0] + events[-1][1])
+        segs.append(last_event[-3] + last_event[-2])
         segs = np.array(segs)
         sequence = ''.join(sequence)
         # Trim the signal
