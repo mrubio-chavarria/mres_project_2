@@ -569,15 +569,17 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, re
     """
     # Read all the files in the folder
     total_windows = []
+    print('-------------------------------------------------')
+    print('Loading reads')
+    print('-------------------------------------------------')
     for route in read_files:
+        print('Read:', route)
         # Read resquiggle information
-        print('-------------------------------------------------')
-        print('Loading reads')
         segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
-        print('-------------------------------------------------')
         # Window the resquiggle signal
         file_windows = window_resquiggle(segs, genome_seq, norm_signal, window_size)
         total_windows.extend(file_windows)
+    print('-------------------------------------------------')
     return total_windows
 
 
