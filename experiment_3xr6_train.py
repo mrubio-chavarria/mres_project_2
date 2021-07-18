@@ -196,7 +196,7 @@ if __name__ == "__main__":
     model_name = f'model_{time}.pt'
     model_path = database_dir + '/' + 'saved_models' + '/' + model_name
     torch.save(model.state_dict(), model_path)
-    experiment.log_model(f'model_{time}', model_path)
+    # experiment.log_model(f'model_{time}', model_path)
 
     # test = list(train_data)[0]
     # output = model(test['signals'])
