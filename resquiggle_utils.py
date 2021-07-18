@@ -41,6 +41,8 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
     A function to read the information in a FAST5 file in which the 
     resquiggle has been performed. The function applies the normalisation
     on the read data and trims all the non-relevant regions.
+    IMPORTANT: when computing, you are returning the normalised signal,
+    when reading, the raw signal.
     :param read_file: [str] route to the fast5 file with the resquiggled
     sequence.
     :param reference_file: [str] route to the fasta file with the reference.
@@ -54,10 +56,11 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
     np.ndarray with the trimmed and normalised signal of the fast5 file.
     """
     fast5_data = h5py.File(read_file, 'r')
+    # Print read file for debug
+    print(read_file)
     # Read the resquiggling from file or compute it
     if read:
         # Obtain the events
-        print(read_file)
         events = fast5_data['Analyses']['RawGenomeCorrected_000']['BaseCalled_template']['Events']
         # Get raw signal
         read_name = list(fast5_data['Raw']['Reads'].keys())[0]  # They will always be single read files
