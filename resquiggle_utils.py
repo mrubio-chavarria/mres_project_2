@@ -12,6 +12,7 @@ from ont_fast5_api.fast5_interface import get_fast5_file
 from tombo import tombo_helper, tombo_stats, resquiggle
 import mappy
 import torch
+import numpy as np
 
 
 # Functions
@@ -34,7 +35,7 @@ def collapse(window):
     return window
 
 
-def parse_resquiggle(read_file, reference_file, bandwidth=6000):
+def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
     """
     DESCRIPTION:
     A function to read the information in a FAST5 file in which the 
@@ -45,45 +46,69 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000):
     :param reference_file: [str] route to the fasta file with the reference.
     :param bandwith: [int] bandwith limit to compute the event alignment 
     during DTW. 
+    :param read: [bool] a flag to indicate if the resquiggling will be read
+    from the file or recomputed.
     :return: [tuple] there are three outputs. The first is a np.ndarray with
     the positions denoting the segments in the signal. The second is the str
     with the trimmed sequence after normalise. The third is a 
     np.ndarray with the trimmed and normalised signal of the fast5 file.
     """
     fast5_data = h5py.File(read_file, 'r')
-    # Set parameters for resquiggling
-    aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
-    seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
-    std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
-    rsqgl_params = tombo_stats.load_resquiggle_parameters(seq_samp_type)
-    rsqgl_params = rsqgl_params._replace(bandwidth=bandwidth) 
-    # Extract data from FAST5
-    map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
-    all_raw_signal = tombo_helper.get_raw_read_slot(fast5_data)['Signal'][:]
-    if seq_samp_type.rev_sig:
-        all_raw_signal = all_raw_signal[::-1]
-    map_results = map_results._replace(raw_signal=all_raw_signal)
-    # Detect events in raw signal
-    num_events = tombo_stats.compute_num_events(all_raw_signal.shape[0],
-        len(map_results.genome_seq), rsqgl_params.mean_obs_per_event)
-    # Segmentation
-    valid_cpts, norm_signal, scale_values = resquiggle.segment_signal(
-        map_results, num_events, rsqgl_params)
-    # Normalisation
-    event_means = tombo_stats.compute_base_means(norm_signal, valid_cpts)
-    # Alignment
-    dp_results = resquiggle.find_adaptive_base_assignment(valid_cpts,
-        event_means, rsqgl_params, std_ref, map_results.genome_seq)
-    # Trim normalised signal
-    norm_signal = norm_signal[
-        dp_results.read_start_rel_to_raw:
-        dp_results.read_start_rel_to_raw + dp_results.segs[-1]]
-    # Segments specifiying in order the number of signal per base in the
-    # sequence, there are roughly the same of segments and normalised 
-    # signals
-    segs = resquiggle.resolve_skipped_bases_with_raw(
-        dp_results, norm_signal, rsqgl_params)
-    return segs, dp_results.genome_seq, norm_signal
+    # Read the resquiggling from file or compute it
+    if read:
+        # Obtain the events
+        events = fast5_data['Analyses']['RawGenomeCorrected_000']['BaseCalled_template']['Events']
+        # Get raw signal
+        read_name = list(fast5_data['Raw']['Reads'].keys())[0]  # They will always be single read files
+        signal = fast5_data['Raw']['Reads'][read_name]['Signal'].value.astype('float64')
+        read_start_rel_to_raw = events.attrs['read_start_rel_to_raw']
+        # Format the events
+        events = list(map(lambda x: (x[2], x[3], x[4].decode('utf-8')), events.value.tolist()))
+        # Create sequence and segs
+        sequence = []
+        segs = []
+        [(sequence.append(event[-1]), segs.append(event[0])) for event in events]
+        segs.append(events[-1][0] + events[-1][1])
+        segs = np.array(segs)
+        sequence = ''.join(sequence)
+        # Trim the signal
+        signal = signal[read_start_rel_to_raw:read_start_rel_to_raw + segs[-1]]
+    else:
+        # Set parameters for resquiggling
+        aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
+        seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
+        std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
+        rsqgl_params = tombo_stats.load_resquiggle_parameters(seq_samp_type)
+        rsqgl_params = rsqgl_params._replace(bandwidth=bandwidth) 
+        # Extract data from FAST5
+        map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
+        all_raw_signal = tombo_helper.get_raw_read_slot(fast5_data)['Signal'][:]
+        if seq_samp_type.rev_sig:
+            all_raw_signal = all_raw_signal[::-1]
+        map_results = map_results._replace(raw_signal=all_raw_signal)
+        # Detect events in raw signal
+        num_events = tombo_stats.compute_num_events(all_raw_signal.shape[0],
+            len(map_results.genome_seq), rsqgl_params.mean_obs_per_event)
+        # Segmentation
+        valid_cpts, norm_signal, scale_values = resquiggle.segment_signal(
+            map_results, num_events, rsqgl_params)
+        # Normalisation
+        event_means = tombo_stats.compute_base_means(norm_signal, valid_cpts)
+        # Alignment
+        dp_results = resquiggle.find_adaptive_base_assignment(valid_cpts,
+            event_means, rsqgl_params, std_ref, map_results.genome_seq)
+        # Trim normalised signal
+        norm_signal = norm_signal[
+            dp_results.read_start_rel_to_raw:
+            dp_results.read_start_rel_to_raw + dp_results.segs[-1]]
+        # Segments specifiying in order the number of signal per base in the
+        # sequence, there are the same of segments and normalised 
+        # sequence
+        segs = resquiggle.resolve_skipped_bases_with_raw(
+            dp_results, norm_signal, rsqgl_params)
+        signal = norm_signal
+        sequence = dp_results.genome_seq
+    return segs, sequence, signal
 
 
 def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.9):
