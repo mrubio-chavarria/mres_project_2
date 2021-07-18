@@ -159,8 +159,8 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
                 experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
             # Record data by epoch
-            experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
-            experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
+            experiment.log_metric('loss', loss.item(), epoch=epoch)
+            experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
 
 
 def train(model, train_dataset, experiment, algorithm='single', n_processes=3, **kwargs):
