@@ -572,13 +572,22 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, re
     print('-------------------------------------------------')
     print('Loading reads')
     print('-------------------------------------------------')
+    skipped_reads = 0
     for route in read_files:
         print('Read:', route)
         # Read resquiggle information
-        segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
+        try:
+            segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
+        except:
+            print('SKIPPED READ')
+            print('Read:', route)
+            skipped_reads += 1
+            continue
         # Window the resquiggle signal
         file_windows = window_resquiggle(segs, genome_seq, norm_signal, window_size)
         total_windows.extend(file_windows)
+    print('-------------------------------------------------')
+    print('Skipped reads:', str(skipped_reads))
     print('-------------------------------------------------')
     return total_windows
 

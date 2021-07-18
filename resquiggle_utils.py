@@ -57,7 +57,6 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
     """
     fast5_data = h5py.File(read_file, 'r')
     # Print read file for debug
-    print(read_file)
     # Read the resquiggling from file or compute it
     if read:
         # Obtain the events
@@ -112,6 +111,7 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
             dp_results, norm_signal, rsqgl_params)
         signal = norm_signal
         sequence = dp_results.genome_seq
+    print('Read:', read_file)
     return segs, sequence, signal
 
 
