@@ -332,6 +332,100 @@ class Dataset_3xr6(Dataset):
         return next(iter(self))
 
 
+class Dataset_3xr6_alternating(Dataset):
+    """
+    DESCRIPTION:
+    This dataset is a copy of the previous one but with alternating 
+    window sizes between batches.
+    """
+    # Methods
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_sizes=[300], max_number_windows=None, flowcell=None, hq_value='Q20'):
+        """
+        DESCRIPTION:
+        Class constructor.
+        :param reads_folder: [str] route to the folder containing the flowcell folders.
+        :param reference_file: [str] the file containing the reference sequence in fasta
+        format.
+        :param window_sizes: [list] sizes in which the reads should be sliced, a set of 
+        windows will be created for every size. This is considered for batching.
+        :param max_number_wndows: [int] parameter to artificially decrease the size of the 
+        dataset.
+        :param flowcell: [str] a param to specify if only one flowcell should be analysed.        
+        """
+        # Helper function
+        def file_hq_filter(file):
+            """
+            DESCRIPTION:
+            A helper function to obtain only those reads with a high-quality alignment.
+            :param file: [str] read filename.
+            :return: [bool] True if the read is of high quality.
+            """
+            return file.startswith(hq_value) and file.endswith('fast5')
+
+        # Save parameters
+        super().__init__()
+        self.reads_folder = reads_folder
+        self.reference = reference_file
+        self.window_sizes = window_sizes
+        self.max_number_windows = max_number_windows
+        # Obtain the high_quality files with the reads
+        self.read_files = []
+        if flowcell is None:
+            for flowcell in os.listdir(self.reads_folder):
+                flowcell_file = reads_folder + '/' + flowcell + '/' + 'single'
+                folders = [folder for folder in os.listdir(flowcell_file) 
+                    if not (folder.endswith('txt') or folder.endswith('index'))]
+                for folder in folders:
+                    folder_file = flowcell_file + '/' + folder
+                    files = filter(lambda file: file_hq_filter(file), os.listdir(folder_file))
+                    files = map(lambda file: folder_file + '/' + file, files)
+                    self.read_files.extend(files)
+        else:
+            flowcell_file = reads_folder + '/' + flowcell + '/' + 'single'
+            folders = [folder for folder in os.listdir(flowcell_file) 
+                if not (folder.endswith('txt') or folder.endswith('index'))]
+            for folder in folders:
+                folder_file = flowcell_file + '/' + folder
+                files = filter(lambda file: file_hq_filter(file), os.listdir(folder_file))
+                files = map(lambda file: folder_file + '/' + file, files)
+                self.read_files.extend(files)
+        # Load windows
+        for window_size in self.window_sizes:
+            setattr(self, f'windows_s{window_size}', load_windows(self.read_files, self.reference, window_size))
+        for window_size in self.window_sizes:
+            # Reduce the dataset if needed
+            if max_number_windows is not None:
+                setattr(self, f'windows_s{window_size}', getattr(self, f'windows_s{window_size}')[:max_number_windows])
+            # Add 1 dimensiones because there is one channel
+            [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in getattr(self, f'windows_s{window_size}')]
+
+    def __len__(self):
+        """
+        DESCRIPTION:
+        The size of the dataset is the number of windows.
+        """
+        return sum([len(getattr(self, f'windows_s{window_size}')) for window_size in self.window_sizes])
+    
+    def __getitem__(self, index):
+        """
+        DESRIPTION:
+        :param index: [int] window position in the array.
+        """
+        return self.windows[index]
+    
+    def __iter__(self):
+        """
+        DESCRIPTION:
+        """
+        return iter(self.windows)
+    
+    def __next__(self):
+        """
+        DESCRIPTION:
+        """
+        return next(iter(self))
+
+    
 class Dataset_3xr6_transformed(Dataset):
     """
     DESCRIPTION:
@@ -459,7 +553,7 @@ def collate_text2int_fn(batch):
     }
 
 
-def load_windows(read_files, reference_file, window_size=300, bandwidth=6000):
+def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, read=False):
     """
     DESCRIPTION:
     Function to load all the windows extracted from a set of reads
@@ -469,13 +563,15 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000):
     :param reference_file: [str] the fasta file containing te reference
     sequence.
     :param window_size: [int] size of the window to analyse.
+    :param read: [bool] flag to indicate if the resquiggling should be 
+    computed again or read from the files.
     :return: [list] windows (dicts) obtained from the folder reads.
     """
     # Read all the files in the folder
     total_windows = []
     for route in read_files:
         # Read resquiggle information
-        segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth)
+        segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
         # Window the resquiggle signal
         file_windows = window_resquiggle(segs, genome_seq, norm_signal, window_size)
         total_windows.extend(file_windows)
