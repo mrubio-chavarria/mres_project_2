@@ -553,7 +553,7 @@ def collate_text2int_fn(batch):
     }
 
 
-def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, read=False):
+def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, read=True):
     """
     DESCRIPTION:
     Function to load all the windows extracted from a set of reads
