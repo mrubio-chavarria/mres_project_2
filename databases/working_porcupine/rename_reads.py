@@ -27,6 +27,8 @@ if __name__ == "__main__":
     single_reads_folder = workdir + '/' + 'reads' + '/' + flowcell + '/' + 'single'
     # Rename files
     for folder in os.listdir(single_reads_folder):
+        if folder.endswith('txt'):
+            continue
         for idx, file in enumerate(os.listdir(single_reads_folder + '/' + folder)):
             if not file.endswith('fast5'):
                 continue
