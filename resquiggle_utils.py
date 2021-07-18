@@ -57,6 +57,7 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
     # Read the resquiggling from file or compute it
     if read:
         # Obtain the events
+        print(read_file)
         events = fast5_data['Analyses']['RawGenomeCorrected_000']['BaseCalled_template']['Events']
         # Get raw signal
         read_name = list(fast5_data['Raw']['Reads'].keys())[0]  # They will always be single read files
