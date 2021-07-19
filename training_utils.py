@@ -159,7 +159,6 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                     )
                 # Backward pass
                 loss.backward()
-
                 # Gradient step
                 optimiser.step()
                 if kwargs.get('scheduler') is not None:
@@ -205,21 +204,21 @@ def train(model, train_data, experiment, algorithm='single', n_processes=3, **kw
     print('Algorithm:', algorithm)
     # Select training algorithm
     if algorithm == 'single':
-        model.to(device)
+        model = model.to(device)
         model.train()
         # Start training
         launch_training(model, train_data, device, experiment, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
         model = nn.DataParallel(model)
-        model.to(device)
+        model = model.to(device)
         model.train()
         # Start training
         launch_training(model, train_data, device, experiment, **kwargs)
     # elif algorithm == 'Hogwild':
     #     # Start training
     #     # We are not setting a blockade per epoch
-    #     model.to(device)
+    #     model = model.to(device)
     #     model.train()
     #     model.share_memory()
     #     processes = []
