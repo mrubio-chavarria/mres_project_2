@@ -169,8 +169,7 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
-                # if batch_id % 250 == 0:
-                if True:
+                if batch_id % 250 == 0:
                     print('----------------------------------------------------------------------------------------------------------------------')
                     print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                     # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
