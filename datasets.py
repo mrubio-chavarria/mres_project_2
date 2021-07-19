@@ -10,10 +10,12 @@ folders.
 import os
 import torch
 import numpy as np
+from torch.utils import data
 from torch.utils.data import Dataset
 from resquiggle_utils import parse_resquiggle, window_resquiggle
 import torchaudio
 from torch import nn
+import random
 
 
 # Classes
@@ -41,118 +43,84 @@ class reshape2Tensor(object):
         return sample
 
 
-class PreONTDataset(Dataset):
+class CustomisedSampler(torch.utils.data.Sampler):
     """
     DESCRIPTION:
-    Dataset class to read and preprocess the raw ONT signal 
-    from fast5 files.
     """
-    def __init__(self, reads_folder, reference_file, window_size, max_number_windows=None):
-        super().__init__()
-        # Parameters
-        # Mel Spectrogram
-        sample_rate = 4000
-        n_fft = 50
-        window_length = n_fft
-        hop_length = 1
-        # Transforms to be applied over the whole signal
-        preprocess_transform = nn.Sequential(
-            torchaudio.transforms.MelSpectrogram(sample_rate=sample_rate, n_fft=n_fft, 
-                win_length=window_length, hop_length=hop_length)
-        )
-        self.windows = load_windows_with_features(reads_folder, reference_file, window_size, preprocess_transform)
-        # Reduce the dataset if needed
-        if max_number_windows is not None:
-            self.windows = self.windows[:max_number_windows]
-
-    def __len__(self):
-        """
-        DESCRIPTION:
-        The size of the dataset is the number of windows.
-        """
-        return len(self.windows)
-    
-    def __getitem__(self, index):
-        """
-        DESRIPTION:
-        :param index: [int] window position in the array.
-        """
-        return self.windows[index]
-    
-    def __iter__(self):
-        """
-        DESCRIPTION:
-        """
-        return iter(self.windows)
-    
-    def __next__(self):
-        """
-        DESCRIPTION:
-        """
-        return next(iter(self))
-
-class RawONTDataset(Dataset):
-    """
-    DESCRIPTION:
-    Dataset class to read and window the raw ONT signal 
-    from fast5 files.
-    """
-    # Methods
-    def __init__(self, reads_folder, reference_file, window_size=300, transform=None, max_number_windows=None):
+    def __init__(self, dataset, batch_size, shuffle=True):
         """
         DESCRIPTION:
         Class constructor.
-        :param reads_folder: [str] folder containing the reads from which
-        the windows should be obtained.
-        :param reference_file: [str] fasta file containing the reference
-        sequence to compare.
-        :param transform: [reshape2Tensor] a transformation to set
-        the vector dimensionality.
-        :param max_number_windows: [int] value to artificially reduce the
-        dataset size.
+        :param dataset: [CombinedDataset] the dataset to create the batches. 
+        :param batch_size: [int] the number of samples in the batch.
         """
-        # Save parameters
-        super().__init__()
-        self.transform = transform
-        self.folder = reads_folder
-        self.reference = reference_file
-        self.window_size = window_size
-        # Load windows
-        windows = load_windows(self.folder, self.reference, self.window_size)
-        # Apply transform if needed
-        if transform is not None:
-            self.windows = [transform(window) for window in windows]
-        else:
-            self.windows = windows
-        # Reduce the dataset if needed
-        if max_number_windows is not None:
-            self.windows = self.windows[:max_number_windows]
+        super().__init__(dataset)
+        self.dataset = dataset
+        self.batch_size = batch_size
+        self.shuffle = shuffle
     
+    def __iter__(self):
+        # Detect the number of datasets
+        datasets = [attr for attr in dir(self.dataset) if attr.startswith('windows')]
+        datasets = list(sorted(datasets, key=lambda x: int(x.split('_')[1])))
+        # Create the list to iterate
+        batches_by_dataset = []
+        n_batches_by_dataset = []
+        for dataset_name in datasets:
+            # Get dataset
+            dataset = getattr(self.dataset, dataset_name)
+            # Shuffle dataset
+            if self.shuffle:
+                random.shuffle(dataset)
+            # Compute the batches
+            dataset_id = int(dataset_name.split('_')[1])
+            n_batches = len(dataset) // self.batch_size
+            dataset_batches = [(self.batch_size*i, self.batch_size*(i+1)) 
+                for i in range(n_batches)]
+            batches_by_dataset.append(dataset_batches)
+            n_batches_by_dataset.append(len(dataset_batches))
+        for i in range(sum(n_batches_by_dataset)):
+            dataset = datasets[i % len(datasets)]
+            dataset = getattr(self.dataset, dataset)
+            start, end = batches_by_dataset[i][:].pop()
+            item = dataset[start:end]
+            yield item
+
+
+class CombinedDataset(Dataset):
+    """
+    DESCRIPTION:
+    A dataset to combine datasets of multiple window sizes.
+    """
+    # Methods
+    def __init__(self, *args):
+        """
+        DESCRIPTION:
+        Class constructor.
+        :param args: [list] datasets to combine. They are to be of the structure
+        shown with Dataset_ap or Dataset_3xr6.
+        """
+        super().__init__()
+        self.datasets = args
+        [setattr(self, f'windows_{dataset.window_size}', dataset.windows) 
+            for dataset in self.datasets]
+
     def __len__(self):
         """
         DESCRIPTION:
-        The size of the dataset is the number of windows.
+        The size of the dataset is the number of windows in all datasets.
         """
-        return len(self.windows)
+        return sum([len(dataset) for dataset in self.datasets])
     
-    def __getitem__(self, index):
+    def __getitem__(self, args):
         """
         DESRIPTION:
+        Method to support indexing in the dataset.
+        :param window_size: [int] window_size that characterise the dataset.
         :param index: [int] window position in the array.
         """
-        return self.windows[index]
-    
-    def __iter__(self):
-        """
-        DESCRIPTION:
-        """
-        return iter(self.windows)
-    
-    def __next__(self):
-        """
-        DESCRIPTION:
-        """
-        return next(iter(self))
+        window_size, index = args
+        return getattr(self, f'windows_{window_size}')[index]
 
 
 class Dataset_ap(Dataset):
