@@ -7,6 +7,7 @@ experiment scripts.
 """
 
 # Libraries
+from typing_extensions import final
 import torch
 from torch.utils.data import DataLoader
 from torch import nn
@@ -24,16 +25,37 @@ def length2indices(window):
     return indeces
 
 
-def decoder(probabilities_matrix, segments_lengths):
+def decoder(probabilities_matrix):
+    """
+    DESCRIPTION:
+    The function that implements the greedy algorithm to obtain the
+    sequence of letters from the probability matrix.
+    :param probabilities_matrix: [torch.Tensor] matrix of dimensions
+    [batch_size, sequence_length] with the output probabilities.
+    :yield: [str] the sequence associated with a series of 
+    probabilities.
+    """
     max_probabilities = torch.argmax(probabilities_matrix, dim=2)
-    letters = ['$', 'A', 'T', 'G', 'C']
-    windows = [length2indices(window) for window in segments_lengths]
+    letters = ['A', 'T', 'G', 'C', '$']
+    # windows = [length2indices(window) for window in segments_lengths]
     for i in range(len(probabilities_matrix)):
         # Output probabilities to sequence
-        sequence = [[letters[prob] for prob in max_probabilities[i].tolist()][windows[i][index]:windows[i][index+1]]
-            for index in range(len(windows[i])-1)]
-        sequence = ''.join([''.join(list(set(segment))) for segment in sequence])
-        yield sequence.replace('$', '')
+        # OLD
+        # sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
+        # sequence = [sequence[windows[i][index]:windows[i][index+1]] for index in range(len(windows[i])-1)]
+        # sequence = [''.join(list(set(segment))) for segment in sequence]
+        # sequence = ''.join(sequence)
+        final_sequence = []
+        sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
+        final_sequence = []
+        for item in sequence:
+            if not final_sequence:
+                final_sequence.append(item)
+                continue
+            if final_sequence[-1] != item:
+                final_sequence.append(item)
+        final_sequence = ''.join(final_sequence)
+        yield final_sequence.replace('$', '')
 
 
 def init_weights(module):
@@ -69,9 +91,9 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                                     weight_decay=kwargs.get('weight_decay', 0))
     elif kwargs.get('optimiser') == 'RMSprop':
         optimiser = torch.optim.RMSprop(model.parameters(),
-                                        lr=kwargs.get('learning_rate', 1E-4),
+                                        lr=kwargs.get('learning_rate', 1E-3),
                                         weight_decay=kwargs.get('weight_decay',0),
-                                        momentum=kwargs.get('momemtum'))
+                                        momentum=kwargs.get('momemtum', 0))
     else:
         raise ValueError('Invalid optimiser selected')
     # Create scheduler
@@ -84,7 +106,7 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
     sequence_length, batch_size = kwargs.get('sequence_length'), kwargs.get('batch_size')
     sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
-    loss_function = nn.CTCLoss().to(device)
+    loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
@@ -143,11 +165,12 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 if kwargs.get('scheduler') is not None:
                     scheduler.step()
                 # Decode output
-                output_sequences = list(decoder(output.view(*output_size), target_segments))
+                output_sequences = list(decoder(output.view(*output_size)))
                 error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
-                if batch_id % 250 == 0:
+                # if batch_id % 250 == 0:
+                if True:
                     print('----------------------------------------------------------------------------------------------------------------------')
                     print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                     # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
@@ -159,9 +182,11 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 # Record data by batch
                 experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
                 experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
+                experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
             # Record data by epoch
             experiment.log_metric('loss', loss.item(), epoch=epoch)
             experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
+            experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
 
 
 def train(model, train_dataset, experiment, algorithm='single', n_processes=3, **kwargs):
