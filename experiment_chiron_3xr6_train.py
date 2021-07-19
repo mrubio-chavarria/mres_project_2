@@ -86,7 +86,7 @@ if __name__ == "__main__":
     )
 
     # Load the train and test datasets
-    batch_size = 32
+    batch_size = 16
     window_sizes = [200, 400, 1000]
     max_windows = 1024
     train_folder = database_dir + '/' + "reads"
