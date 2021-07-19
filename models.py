@@ -371,7 +371,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, sequence_length, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False):
+    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -390,19 +390,18 @@ class LSTM_module(nn.Module):
         self.input_size = input_size
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.sequence_length = sequence_length
         self.dropout_proportion = dropout
         self.bidirectional = bidirectional
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        # Pytorch's LSTM
-        self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-            batch_first=True, bidirectional=self.bidirectional)
+        # # Pytorch's LSTM
+        # self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+        #     batch_first=True, bidirectional=self.bidirectional)
         # BatchNorm LSTM
-        # self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
-        #     batch_first=True, method='orthogonal', bidirectional=True, 
-        #     batch_norm=True)
+        self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
+            batch_first=True, method='orthogonal', bidirectional=True, 
+            batch_norm=True)
 
     
     def forward(self, input_sequence):
@@ -416,7 +415,10 @@ class LSTM_module(nn.Module):
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
         size = input_sequence.shape
-        output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
+        # Pytorch's LSTM
+        # output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
+        # Batch Norm LSTM
+        output, _ = self.model(input_sequence.view(size[2], size[0], size[1]))
         return output
 
 
@@ -468,7 +470,7 @@ class DecoderChiron(nn.Module):
     Model to assign the probabilities of every base for a given signal.
     """
     # Methods
-    def __init__(self, initial_size, output_size, sequence_length, batch_size, dropout=0.2):
+    def __init__(self, initial_size, output_size, batch_size, dropout=0.2):
         """
         DESCRIPTION:
         Class constructor.
@@ -476,7 +478,6 @@ class DecoderChiron(nn.Module):
         :param initial_size: [int] input dimensionality.
         :param output_size: [int] output dimensionality. Number of
         classes.
-        :param sequence_length: [int] number of elements in the input sequence.
         :param batch_size: [int] number of elements per batch.
         :param dropout: [float] proportion of dropout neurons.
         """
@@ -484,7 +485,6 @@ class DecoderChiron(nn.Module):
         self.initial_size = initial_size
         self.hidden_size = 2 * initial_size
         self.output_size = output_size
-        self.sequence_length = sequence_length
         self.batch_size = batch_size
         self.dropout = dropout
         self.model = nn.Sequential(
