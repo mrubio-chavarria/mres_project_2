@@ -188,7 +188,7 @@ if __name__ == "__main__":
         'weight_decay': training_parameters['weight_decay'],
         'momemtum': training_parameters['momemtum'],
         'optimiser': training_parameters['optimiser'],
-        'sequence_length': training_parameters['sequence_length'],
+        'sequence_length': training_parameters['sequence_lengths'],
         'scheduler': training_parameters['scheduler']
     })
    
