@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Load the train and test datasets
     batch_size = 256
     window_sizes = [200, 400, 1000]
-    max_windows = 512
+    max_windows = 1024
     train_folder = database_dir + '/' + "reads"
     
     # Load dataset
@@ -96,7 +96,6 @@ if __name__ == "__main__":
     train_dataset_400 = Dataset_3xr6(train_folder, reference_file, window_sizes[1], max_windows, flowcell='flowcell3', hq_value='Q20')
     train_dataset_1000 = Dataset_3xr6(train_folder, reference_file, window_sizes[2], max_windows, flowcell='flowcell3', hq_value='Q20')
     train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
-
 
     train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
 
