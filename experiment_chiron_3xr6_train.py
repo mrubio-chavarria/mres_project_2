@@ -104,7 +104,7 @@ if __name__ == "__main__":
     TCN_parameters = {
         'n_layers': 5,
         'in_channels': 1,
-        'out_channels': 256,
+        'out_channels': 128,  # 256
         'kernel_size': 3,
         'dropout': 0.8
     }
