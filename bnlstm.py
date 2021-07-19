@@ -122,6 +122,7 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'bias_hh_reverse', getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = device  # Store for future calculations
         self.weight_ih = self.weight_ih.to(device)
         self.weight_hh = self.weight_hh.to(device)
         self.bias_ih = self.bias_ih.to(device)
@@ -186,8 +187,8 @@ class LSTMlayer(nn.Module):
 
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.batch_size, self.hidden_size)
-            c_0 = torch.zeros(self.batch_size, self.hidden_size)
+            h_0 = torch.zeros(self.batch_size, self.hidden_size).to(self.device)
+            c_0 = torch.zeros(self.batch_size, self.hidden_size).to(self.device)
         else:
             h_0, c_0 = initial_states
         # Forward pass
