@@ -103,8 +103,8 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                                                         steps_per_epoch=len(train_data),
                                                         epochs=kwargs.get('n_epochs', 30))
     # Prepare training
-    sequence_length, batch_size = kwargs.get('sequence_length'), kwargs.get('batch_size')
-    sequences_lengths = tuple([sequence_length] * batch_size)
+    batch_size = kwargs.get('batch_size')
+    # sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
@@ -122,6 +122,8 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                 target_sequences = batch['sequences']
                 targets_lengths = batch['targets_lengths']
                 batch, target = batch['signals'].to(device), batch['targets'].to(device)
+                # All the sequences in a batch are of the same length
+                sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
                 if batch.shape[0] != batch_size:
                     continue
                 # Forward pass
