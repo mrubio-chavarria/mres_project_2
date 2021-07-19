@@ -62,6 +62,8 @@ class LSTMlayer(nn.Module):
         self.layer_index = layer_index
         self.bidirectional = bidirectional
         self.weigths_initialisation_method = method
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = device  # Store for future calculations
         # Create the batch norms if needed
         self.batch_norms = None
         self.batch_norms_reverse = None
@@ -71,20 +73,20 @@ class LSTMlayer(nn.Module):
             # c_t is going to have hidden size 
             self.batch_norms = [
                 # weight_hh @ h_t_1
-                nn.BatchNorm1d(1),
+                nn.BatchNorm1d(1).to(device),
                 # weight_hh @ x_t 
-                nn.BatchNorm1d(1),
+                nn.BatchNorm1d(1).to(device),
                 # c_t_1
-                nn.BatchNorm1d(hidden_size)
+                nn.BatchNorm1d(hidden_size).to(device)
             ]
             if bidirectional:
                 self.batch_norms_reverse = [
                     # weight_hh @ h_t_1
-                    nn.BatchNorm1d(1),
+                    nn.BatchNorm1d(1).to(device),
                     # weight_hh @ x_t 
-                    nn.BatchNorm1d(1),
+                    nn.BatchNorm1d(1).to(device),
                     # c_t_1
-                    nn.BatchNorm1d(hidden_size)
+                    nn.BatchNorm1d(hidden_size).to(device)
                 ]
             # Define the cell
             self.cell = bnlstm_cell
@@ -121,8 +123,6 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'bias_ih_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse'))
                 setattr(self, f'bias_hh_reverse', getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.device = device  # Store for future calculations
         self.weight_ih = self.weight_ih.to(device)
         self.weight_hh = self.weight_hh.to(device)
         self.bias_ih = self.bias_ih.to(device)
