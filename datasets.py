@@ -83,7 +83,7 @@ class CustomisedSampler(torch.utils.data.Sampler):
         for i in range(n_last * len(datasets)):
             dataset = datasets[i % len(datasets)]
             dataset = getattr(self.dataset, dataset)
-            start, end = batches_by_dataset[i].pop()
+            start, end = batches_by_dataset[i % len(datasets)].pop()
             item = dataset[start:end]
             yield item
 
