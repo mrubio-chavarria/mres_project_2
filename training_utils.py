@@ -188,7 +188,7 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
             experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
 
 
-def train(model, train_dataset, experiment, algorithm='single', n_processes=3, **kwargs):
+def train(model, train_data, experiment, algorithm='single', n_processes=3, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -197,6 +197,7 @@ def train(model, train_dataset, experiment, algorithm='single', n_processes=3, *
     :param algorithm: [str] the algorithm to train. Classic single-node and CPU 
     trainin, or single-node multi CPU Hogwild.
     :param model: [torch.nn.Module] the model to train.
+    COMPLETE
     """
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -206,8 +207,6 @@ def train(model, train_dataset, experiment, algorithm='single', n_processes=3, *
     if algorithm == 'single':
         model.to(device)
         model.train()
-        # Prepare the data
-        train_data = DataLoader(train_dataset, batch_size=kwargs.get('batch_size'), shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
         launch_training(model, train_data, device, experiment, **kwargs)
     elif algorithm == 'DataParallel':
@@ -215,26 +214,24 @@ def train(model, train_dataset, experiment, algorithm='single', n_processes=3, *
         model = nn.DataParallel(model)
         model.to(device)
         model.train()
-        train_data = DataLoader(train_dataset, batch_size=kwargs.get('batch_size'), shuffle=True, collate_fn=collate_text2int_fn)
         # Start training
         launch_training(model, train_data, device, experiment, **kwargs)
-    elif algorithm == 'Hogwild':
-        # Start training
-        # We are not setting a blockade per epoch
-        model.to(device)
-        model.train()
-        model.share_memory()
-        processes = []
-        for rank in range(n_processes):
-            train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
-            train_data = DataLoader(dataset=train_dataset,
-                            sampler=train_sampler,
-                            batch_size=kwargs['batch_size'],
-                            collate_fn=collate_text2int_fn)
+    # elif algorithm == 'Hogwild':
+    #     # Start training
+    #     # We are not setting a blockade per epoch
+    #     model.to(device)
+    #     model.train()
+    #     model.share_memory()
+    #     processes = []
+    #     for rank in range(n_processes):
+    #         train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
+    #         train_data = DataLoader(dataset=train_dataset, sampler=train_sampler, batch_size=kwargs.get('batch_size'), collate_fn=collate_text2int_fn)
             
-            print(f'Process {rank} launched')
-            process = mp.Process(target=launch_training, args=(model, train_data, device, experiment, rank, train_sampler), kwargs=kwargs)
-            process.start()
-            processes.append(process)
-        for process in processes:
-            process.join()
+    #         print(f'Process {rank} launched')
+    #         process = mp.Process(target=launch_training, args=(model, train_data, device, experiment, rank, train_sampler), kwargs=kwargs)
+    #         process.start()
+    #         processes.append(process)
+    #     for process in processes:
+    #         process.join()
+    else:
+        raise ValueError('Invalid training method')
