@@ -97,14 +97,14 @@ if __name__ == "__main__":
     # Parameters
     sequence_length = window_size
     TCN_parameters = {
-        'n_layers': 3,
+        'n_layers': 5,
         'in_channels': 1,
-        'out_channels': 32,
+        'out_channels': 256,
         'kernel_size': 3,
         'dropout': 0.8
     }
     LSTM_parameters = {
-        'n_layers': 5,
+        'n_layers': 3,
         'sequence_length': sequence_length,
         'input_size': TCN_parameters['out_channels'], 
         'batch_size': batch_size, 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
         'n_epochs': 5,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
-        'learning_rate': 5E-4,
+        'learning_rate': 0.001,
         'max_learning_rate': 1E-2,
         'weight_decay': 0,
         'momemtum': 0,
