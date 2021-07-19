@@ -14,7 +14,7 @@ import sys
 import torch
 from torch import nn
 import torchaudio
-from datasets import Dataset_3xr6, CombinedDataset
+from datasets import CustomisedSampler, Dataset_3xr6, CombinedDataset
 from models import TCN_module, LSTM_module, DecoderChiron
 from datetime import datetime
 from training_utils import train
@@ -97,7 +97,8 @@ if __name__ == "__main__":
     train_dataset_1000 = Dataset_3xr6(train_folder, reference_file, window_sizes[2], max_windows, flowcell='flowcell3', hq_value='Q20')
     train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
-    train_data = CustomisedDataLoader(train_dataset, batch_size=batch_size, collate_fn=collate_text2int_fn)
+
+    train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
 
     # Model
     # Parameters
