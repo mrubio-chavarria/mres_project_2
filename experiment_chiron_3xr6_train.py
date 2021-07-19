@@ -86,7 +86,7 @@ if __name__ == "__main__":
     )
 
     # Load the train and test datasets
-    batch_size = 256
+    batch_size = 32
     window_sizes = [200, 400, 1000]
     max_windows = 1024
     train_folder = database_dir + '/' + "reads"
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     TCN_parameters = {
         'n_layers': 5,
         'in_channels': 1,
-        'out_channels': 128,  # 256
+        'out_channels': 256,
         'kernel_size': 3,
         'dropout': 0.8
     }
