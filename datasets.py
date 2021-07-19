@@ -177,7 +177,9 @@ class Dataset_ap(Dataset):
             files = map(lambda file: flowcell_folder + '/' + file, files)
             self.read_files.extend(files)
         # Limit the number of reads
-        self.read_files = self.read_files[0:max_reads]
+        if max_reads is not None:
+            if len(self.read_files) >= max_reads:
+                self.read_files = self.read_files[0:max_reads] 
         # Load windows
         self.windows = load_windows(self.read_files, self.reference, self.window_size, bandwidth=24000)
         # Reduce the dataset if needed
