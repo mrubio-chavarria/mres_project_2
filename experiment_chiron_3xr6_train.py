@@ -108,7 +108,7 @@ if __name__ == "__main__":
     # Model
     # Parameters
     TCN_parameters = {
-        'n_layers': 1,
+        'n_layers': 5,
         'in_channels': 1,
         'out_channels': 256,
         'kernel_size': 3,
