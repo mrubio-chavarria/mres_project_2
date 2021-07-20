@@ -35,7 +35,7 @@ def collapse(window):
     return window
 
 
-def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
+def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False, norm='usual'):
     """
     DESCRIPTION:
     A function to read the information in a FAST5 file in which the 
@@ -76,7 +76,12 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False):
         segs = np.array(segs)
         sequence = ''.join(sequence)
         # Trim the signal
-        signal = signal[read_start_rel_to_raw:read_start_rel_to_raw + segs[-1]]
+        norm_signal = signal[read_start_rel_to_raw:read_start_rel_to_raw + segs[-1]]
+        # Normalise signal
+        if norm == 'usual':
+            mu = np.mean(signal)
+            sd = np.std(signal)
+            norm_signal = (norm_signal - mu) / sd
     else:
         # Set parameters for resquiggling
         aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
