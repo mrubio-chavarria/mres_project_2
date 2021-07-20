@@ -140,7 +140,6 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
     seq_signal = '*'.join(initial_seq_signal) + '$'
     # Perform the windowing over the signal
     windows = []
-    print(len(seq_signal))
     for i in range(0, len(norm_signal), int(round((1 - overlap) * window_size))):
         window = {'signal_indeces': (i, i+window_size),
                 'sequence': seq_signal[2*i:2*(i+window_size)].replace('$', ''),
@@ -149,8 +148,5 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
     # Collapse the repeated bases for all the windows
     windows = [collapse(window) for window in windows]
     # Filter uncompleted windows and return
-    test1 = list(filter(lambda x: len(x['sequence']) == 0, windows))
-    test2 = list(filter(lambda x: '$' in x['sequence'], windows))
     windows = windows[:-int(round(1/(1-overlap)))]
-    print(len(windows))
     return windows
