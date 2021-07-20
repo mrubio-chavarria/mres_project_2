@@ -147,8 +147,7 @@ if __name__ == "__main__":
         'optimiser': 'RMSprop',
         'sequence_lengths': window_sizes,
         'scheduler': None, # 'OneCycleLR',
-        'in_hpc': True,
-        'max_batches': 1000
+        'in_hpc': True
     }
     # Print model architecture
     print('Model: ')
@@ -170,6 +169,7 @@ if __name__ == "__main__":
     - Sequence lengths: {training_parameters['sequence_lengths']}
     - Scheduler: {training_parameters['scheduler']}
     - In HPC: {training_parameters['in_hpc']}
+    - N Batches: {training_parameters['max_batches']}
     """
     print(text_training)
 
