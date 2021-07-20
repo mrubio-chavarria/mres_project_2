@@ -115,10 +115,9 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False, norm
         # sequence
         segs = resquiggle.resolve_skipped_bases_with_raw(
             dp_results, norm_signal, rsqgl_params)
-        signal = norm_signal
         sequence = dp_results.genome_seq
     print('Read:', read_file)
-    return segs, sequence, signal
+    return segs, sequence, norm_signal
 
 
 def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.9):
@@ -136,15 +135,22 @@ def window_resquiggle(segs, genome_seq, norm_signal, window_size=300, overlap=0.
     # Relate signal to sequence
     # $: symbol to fill
     # *: symbol to distinguish between segments
-    seq_signal = '*'.join([((genome_seq[i] + '$') * len(norm_signal[segs[i]:segs[i+1]]))[:-1] 
-        for i in range(len(segs[:-1]))]) + '$'
+    initial_seq_signal = [((genome_seq[i] + '$') * (segs[i+1] - segs[i]))[:-1] 
+        for i in range(len(segs[:-1]))]
+    seq_signal = '*'.join(initial_seq_signal) + '$'
     # Perform the windowing over the signal
-    windows = [{
-        'signal_indeces': (i, i+window_size),
-        'sequence': seq_signal[2*i:2*(i+window_size)].replace('$', ''),
-        'signal': torch.FloatTensor(norm_signal[i:i+window_size])} 
-        for i in range(0, len(norm_signal), int(round((1 - overlap) * window_size)))]
+    windows = []
+    print(len(seq_signal))
+    for i in range(0, len(norm_signal), int(round((1 - overlap) * window_size))):
+        window = {'signal_indeces': (i, i+window_size),
+                'sequence': seq_signal[2*i:2*(i+window_size)].replace('$', ''),
+                'signal': torch.FloatTensor(norm_signal[i:i+window_size])}
+        windows.append(window)
     # Collapse the repeated bases for all the windows
     windows = [collapse(window) for window in windows]
     # Filter uncompleted windows and return
-    return windows[:-int(round(1/(1-overlap)))]
+    test1 = list(filter(lambda x: len(x['sequence']) == 0, windows))
+    test2 = list(filter(lambda x: '$' in x['sequence'], windows))
+    windows = windows[:-int(round(1/(1-overlap)))]
+    print(len(windows))
+    return windows
