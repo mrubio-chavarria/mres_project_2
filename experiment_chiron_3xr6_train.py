@@ -132,7 +132,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 5,
+        'n_epochs': 3,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
