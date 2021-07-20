@@ -19,6 +19,7 @@ from models import TCN_module, LSTM_module, DecoderChiron
 from datetime import datetime
 from training_utils import train
 from datasets import collate_text2int_fn
+from torch.utils.data import DataLoader
 
 
 # Classes
@@ -87,18 +88,21 @@ if __name__ == "__main__":
 
     # Load the train and test datasets
     batch_size = 256
-    window_sizes = [200, 400, 1000]
-    max_reads = 1000
+    window_sizes = [300]
+    max_reads = 4000
     max_windows = None
     train_folder = database_dir + '/' + "reads"
     
-    # Load dataset
-    train_dataset_200 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    train_dataset_400 = Dataset_ap(train_folder, reference_file, window_sizes[1], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    train_dataset_1000 = Dataset_ap(train_folder, reference_file, window_sizes[2], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
+    # # Load dataset
+    # train_dataset_200 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
+    # train_dataset_400 = Dataset_ap(train_folder, reference_file, window_sizes[1], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
+    # train_dataset_1000 = Dataset_ap(train_folder, reference_file, window_sizes[2], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
+    # train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
-    train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
+    # train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
+
+    train_dataset_300 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20', max_reads=max_reads)
+    train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
 
     # Model
     # Parameters
