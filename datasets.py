@@ -131,7 +131,7 @@ class Dataset_ap(Dataset):
     pittii (ap) dataset
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=4000):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=2000):
         """
         DESCRIPTION:
         Class constructor.
@@ -179,7 +179,7 @@ class Dataset_ap(Dataset):
         # Limit the number of reads
         if max_reads is not None:
             if len(self.read_files) >= max_reads:
-                self.read_files = self.read_files[0:max_reads] 
+                self.read_files = random.sample(self.read_files, max_reads)
         # Load windows
         self.windows = load_windows(self.read_files, self.reference, self.window_size, bandwidth=24000)
         # Reduce the dataset if needed
@@ -552,6 +552,7 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, re
         try:
             segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
         except:
+            # In some reads the resquiggling was not successful
             print('SKIPPED READ')
             print('Read:', route)
             skipped_reads += 1
