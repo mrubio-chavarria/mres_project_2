@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=16:mem=96gb:ngpus=4
+#PBS -lselect=1:ncpus=16:mem=96gb:ngpus=4:gpu_type=RTX6000
 #PBS -lwalltime=03:00:00
 
 # Load dependencies
