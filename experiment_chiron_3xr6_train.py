@@ -86,7 +86,7 @@ if __name__ == "__main__":
     )
 
     # Load the train and test datasets
-    batch_size = 256
+    batch_size = 128
     window_sizes = [200, 400, 1000]
     max_windows = None
     max_reads = None  # Select all the reads
