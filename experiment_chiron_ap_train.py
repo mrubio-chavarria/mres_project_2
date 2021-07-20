@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Load the train and test datasets
     batch_size = 256
     window_sizes = [200, 400, 1000]
-    max_reads = None
+    max_reads = 1000
     max_windows = None
     train_folder = database_dir + '/' + "reads"
     
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 3,
+        'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
