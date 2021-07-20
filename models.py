@@ -395,13 +395,13 @@ class LSTM_module(nn.Module):
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        # Pytorch's LSTM
-        self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-            batch_first=True, bidirectional=self.bidirectional)
-        # # BatchNorm LSTM
-        # self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
-        #     batch_first=True, method='orthogonal', bidirectional=True, 
-        #     batch_norm=True)
+        # # Pytorch's LSTM
+        # self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+        #     batch_first=True, bidirectional=self.bidirectional)
+        # BatchNorm LSTM
+        self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
+            batch_first=True, method='orthogonal', bidirectional=True, 
+            batch_norm=True)
 
     
     def forward(self, input_sequence):
@@ -415,10 +415,10 @@ class LSTM_module(nn.Module):
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
         size = input_sequence.shape
-        # Pytorch's LSTM
-        output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
-        # # Batch Norm LSTM
-        # output, _ = self.model(input_sequence.view(size[2], size[0], size[1]))
+        # # Pytorch's LSTM
+        # output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
+        # Batch Norm LSTM
+        output, _ = self.model(input_sequence.view(size[2], size[0], size[1]))
         return output
 
 
