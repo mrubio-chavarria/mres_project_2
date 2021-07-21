@@ -148,7 +148,7 @@ if __name__ == "__main__":
         'sequence_lengths': window_sizes,
         'scheduler': None, # 'OneCycleLR',
         'in_hpc': True,
-        'max_batches': 1000
+        'max_batches': 500
     }
     # Print model architecture
     print('Model: ')
