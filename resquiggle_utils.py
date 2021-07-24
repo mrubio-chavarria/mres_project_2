@@ -8,7 +8,6 @@ resquiggled fast5 files.
 
 # Libraries
 import h5py
-from ont_fast5_api.fast5_interface import get_fast5_file
 from tombo import tombo_helper, tombo_stats, resquiggle
 import mappy
 import torch
