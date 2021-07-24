@@ -141,7 +141,7 @@ if __name__ == "__main__":
         'batch_size': batch_size,
         'learning_rate': 0.0001,
         'max_learning_rate': 1E-2,
-        'weight_decay': 0.01,
+        'weight_decay': 0,
         'momemtum': 0,
         'optimiser': 'Adam',
         'sequence_lengths': window_sizes,
