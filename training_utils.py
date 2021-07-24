@@ -89,9 +89,9 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
         optimiser = torch.optim.Adam(model.parameters(),
                                     lr=kwargs.get('learning_rate', 1E-4),
                                     weight_decay=kwargs.get('weight_decay', 0))
-    elif kwargs.get('optimiser') == 'RMSprop':
+    elif kwargs.get('optimiser', 'SGD') == 'RMSprop':
         optimiser = torch.optim.RMSprop(model.parameters(),
-                                        lr=kwargs.get('learning_rate', 1E-3),
+                                        lr=kwargs.get('learning_rate', 1E-4),
                                         weight_decay=kwargs.get('weight_decay',0),
                                         momentum=kwargs.get('momemtum', 0))
     else:
