@@ -146,7 +146,7 @@ if __name__ == "__main__":
         'max_learning_rate': 1E-2,
         'weight_decay': 0,
         'momemtum': 0,
-        'optimiser': 'RMSprop',
+        'optimiser': 'SGD',
         'sequence_lengths': window_sizes,
         'scheduler': 'OneCycleLR',
         'in_hpc': True,
