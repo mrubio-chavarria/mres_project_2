@@ -202,7 +202,7 @@ if __name__ == "__main__":
     })
    
     # # Training
-    train(model, train_data, experiment, **training_parameters)
+    # train(model, train_data, experiment, **training_parameters)
     
     # Save the model
     time = str(datetime.now()).replace(' ', '_')
