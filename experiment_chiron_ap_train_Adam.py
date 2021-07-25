@@ -130,7 +130,7 @@ if __name__ == "__main__":
         'momemtum': 0,
         'optimiser': 'Adam',
         'sequence_lengths': window_sizes,
-        'scheduler': None, # 'OneCycleLR',
+        'scheduler': 'OneCycleLR',
         'in_hpc': True,
         'max_batches': 500,
         'file_manual_record': file_manual_record
