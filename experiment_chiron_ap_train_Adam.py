@@ -85,8 +85,8 @@ if __name__ == "__main__":
 
     # train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
 
-    # train_dataset_300 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20', max_reads=max_reads)
-    # train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
+    train_dataset_300 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20', max_reads=max_reads)
+    train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
 
     # # Model
     # # Parameters
