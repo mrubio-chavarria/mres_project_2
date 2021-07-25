@@ -13,7 +13,6 @@ import os
 import sys
 import torch
 from torch import nn
-import torchaudio
 from datasets import CustomisedSampler, Dataset_3xr6, CombinedDataset
 from models import TCN_module, LSTM_module, DecoderChiron
 from datetime import datetime
@@ -70,21 +69,6 @@ if __name__ == "__main__":
     reference_file = database_dir + '/' + 'reference.fasta'
 
     # Transforms
-    # Mel Spectrogram
-    sample_rate = 4000
-    n_fft = 100
-    window_length = n_fft
-    hop_length = 1
-    mel_spectrogram = torchaudio.transforms.MelSpectrogram(
-        sample_rate=sample_rate,
-        n_fft=n_fft,
-        win_length=n_fft,
-        hop_length=hop_length
-    )
-    # Pack the transforms together
-    transform = nn.Sequential(
-        mel_spectrogram
-    )
 
     # Load the train and test datasets
     batch_size = 256
