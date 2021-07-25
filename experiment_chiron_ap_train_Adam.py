@@ -158,32 +158,34 @@ if __name__ == "__main__":
     """
     print(text_training)
 
-    # # Set up Comet
-    # experiment_name = f"acinetobacter-train-{str(datetime.now()).replace(' ', '_')}"
-    # experiment = Experiment(
-    #     api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
-    #     project_name="project-2",
-    #     workspace="mrubio-chavarria",
-    # )
-    # experiment.set_name(experiment_name)
-    # experiment.display()
+    # Set up Comet
+    record_experiment = False
+    if record_experiment:
+        experiment_name = f"acinetobacter-train-{str(datetime.now()).replace(' ', '_')}"
+        experiment = Experiment(
+            api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
+            project_name="project-2",
+            workspace="mrubio-chavarria",
+        )
+        experiment.set_name(experiment_name)
+        experiment.display()
 
-    # # Log training parameters
-    # experiment.log_parameters({
-    #     'algorithm': training_parameters['algorithm'],
-    #     'n_epochs': training_parameters['n_epochs'],
-    #     'n_initialisation_epochs': training_parameters['n_initialisation_epochs'],
-    #     'batch_size': training_parameters['batch_size'],
-    #     'learning_rate': training_parameters['learning_rate'],
-    #     'max_learning_rate': training_parameters['max_learning_rate'],
-    #     'weight_decay': training_parameters['weight_decay'],
-    #     'momemtum': training_parameters['momemtum'],
-    #     'optimiser': training_parameters['optimiser'],
-    #     'sequence_lengths': training_parameters['sequence_lengths'],
-    #     'scheduler': training_parameters['scheduler']
-    # })
-    
-    experiment = None
+        # Log training parameters
+        experiment.log_parameters({
+            'algorithm': training_parameters['algorithm'],
+            'n_epochs': training_parameters['n_epochs'],
+            'n_initialisation_epochs': training_parameters['n_initialisation_epochs'],
+            'batch_size': training_parameters['batch_size'],
+            'learning_rate': training_parameters['learning_rate'],
+            'max_learning_rate': training_parameters['max_learning_rate'],
+            'weight_decay': training_parameters['weight_decay'],
+            'momemtum': training_parameters['momemtum'],
+            'optimiser': training_parameters['optimiser'],
+            'sequence_lengths': training_parameters['sequence_lengths'],
+            'scheduler': training_parameters['scheduler']
+        })
+    else:
+        experiment = None
     # Training
     train(model, train_data, experiment, **training_parameters)
     
@@ -203,8 +205,9 @@ if __name__ == "__main__":
     # # errors = [cer(test['sequences'][i], output_sequences[i]) for i in range(len(test['sequences']))]
     # # # print(loss_function(output.view(sequence_length, batch_size, -1), test['targets'], sequences_lengths, test['targets_lengths']))
 
-    # # Stop recording parameters
-    # experiment.end()
+    # Stop recording parameters
+    if record_experiment:
+        experiment.end()
 
     
             
