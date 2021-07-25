@@ -173,3 +173,7 @@ proof_3xr6_bad_quality/
 librispeech_data/
 LibriSpeech/
 DeepSpeech/
+databases/working_ap.tar.gz
+databases/working_porcupine/count_fast5.sh
+databases/working_porcupine/filter_reads.py
+databases/working_porcupine/filter_reads.sh
