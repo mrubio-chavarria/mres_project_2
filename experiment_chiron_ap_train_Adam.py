@@ -88,33 +88,33 @@ if __name__ == "__main__":
     train_dataset_300 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20', max_reads=max_reads)
     train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
 
-    # # Model
-    # # Parameters
-    # TCN_parameters = {
-    #     'n_layers': 5,
-    #     'in_channels': 1,
-    #     'out_channels': 256,
-    #     'kernel_size': 3,
-    #     'dropout': 0.8
-    # }
-    # LSTM_parameters = {
-    #     'n_layers': 3,
-    #     'input_size': TCN_parameters['out_channels'], 
-    #     'batch_size': batch_size, 
-    #     'hidden_size': 200, # 2 * TCN_parameters['out_channels'],
-    #     'dropout': 0.8,
-    #     'bidirectional': True
-    # }
-    # decoder_parameters = {
-    #     'initial_size': 2 * LSTM_parameters['hidden_size'],
-    #     # The hidden size dim is always twice the initial_size
-    #     'output_size': 5,  # n_classes: blank + 4 bases
-    #     'batch_size': batch_size,
-    #     'dropout': 0.8
-    # }
+    # Model
+    # Parameters
+    TCN_parameters = {
+        'n_layers': 5,
+        'in_channels': 1,
+        'out_channels': 256,
+        'kernel_size': 3,
+        'dropout': 0.8
+    }
+    LSTM_parameters = {
+        'n_layers': 3,
+        'input_size': TCN_parameters['out_channels'], 
+        'batch_size': batch_size, 
+        'hidden_size': 200, # 2 * TCN_parameters['out_channels'],
+        'dropout': 0.8,
+        'bidirectional': True
+    }
+    decoder_parameters = {
+        'initial_size': 2 * LSTM_parameters['hidden_size'],
+        # The hidden size dim is always twice the initial_size
+        'output_size': 5,  # n_classes: blank + 4 bases
+        'batch_size': batch_size,
+        'dropout': 0.8
+    }
     
-    # # Create the model
-    # model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)  
+    # Create the model
+    model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)  
 
     # # Training parameters
     # training_parameters = {
