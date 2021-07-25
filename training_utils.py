@@ -184,7 +184,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                     avg_error = sum(error_rates) / len(error_rates)
                     # Show progress
-                    losses.append(loss)
+                    losses.append(loss.item())
                     avgcers.append(avg_error)
                     if batch_id % 25 == 0:
                         print('----------------------------------------------------------------------------------------------------------------------')
@@ -265,7 +265,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
-                losses.append(loss)
+                losses.append(loss.item())
                 avgcers.append(avg_error)
                 if batch_id % 25 == 0:
                     print('----------------------------------------------------------------------------------------------------------------------')
