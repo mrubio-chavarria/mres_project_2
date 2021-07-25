@@ -63,7 +63,8 @@ if __name__ == "__main__":
     # Project directory
     database_dir = sys.argv[2]
 
-    # database_dir = '/home/mario/Projects/project_2/databases/toy_working_ap'
+    # Storage file
+    file_manual_record = sys.argv[3]
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -131,7 +132,8 @@ if __name__ == "__main__":
         'sequence_lengths': window_sizes,
         'scheduler': 'OneCycleLR',
         'in_hpc': True,
-        'max_batches': 500
+        'max_batches': 500,
+        'file_manual_record': file_manual_record
     }
 
     # Print model architecture
