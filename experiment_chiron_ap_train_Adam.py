@@ -126,11 +126,11 @@ if __name__ == "__main__":
         'batch_size': batch_size,
         'learning_rate': 0.0001,
         'max_learning_rate': 1E-2,
-        'weight_decay': 0.01,
+        'weight_decay': 0,
         'momemtum': 0,
         'optimiser': 'Adam',
         'sequence_lengths': window_sizes,
-        'scheduler': 'OneCycleLR',
+        'scheduler': None, # 'OneCycleLR',
         'in_hpc': True,
         'max_batches': 500,
         'file_manual_record': file_manual_record
@@ -191,12 +191,12 @@ if __name__ == "__main__":
     # Training
     train(model, train_data, experiment, **training_parameters)
     
-    # # Save the model
-    # time = str(datetime.now()).replace(' ', '_')
-    # model_name = f'model_{time}.pt'
-    # model_path = database_dir + '/' + 'saved_models' + '/' + model_name
-    # torch.save(model.state_dict(), model_path)
-    # # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
+    # Save the model
+    time = str(datetime.now()).replace(' ', '_')
+    model_name = f'model_{time}.pt'
+    model_path = database_dir + '/' + 'saved_models' + '/' + model_name
+    torch.save(model.state_dict(), model_path)
+    # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
 
     # # test = list(train_data)[0]
     # # output = model(test['signals'])
