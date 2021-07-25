@@ -13,7 +13,6 @@ import numpy as np
 from torch.utils import data
 from torch.utils.data import Dataset
 from resquiggle_utils import parse_resquiggle, window_resquiggle
-import torchaudio
 from torch import nn
 import random
 
