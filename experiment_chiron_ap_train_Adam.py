@@ -199,14 +199,14 @@ if __name__ == "__main__":
         'scheduler': training_parameters['scheduler']
     })
    
-    # Training
-    train(model, train_data, experiment, **training_parameters)
+    # # Training
+    # train(model, train_data, experiment, **training_parameters)
     
-    # Save the model
-    time = str(datetime.now()).replace(' ', '_')
-    model_name = f'model_{time}.pt'
-    model_path = database_dir + '/' + 'saved_models' + '/' + model_name
-    torch.save(model.state_dict(), model_path)
+    # # Save the model
+    # time = str(datetime.now()).replace(' ', '_')
+    # model_name = f'model_{time}.pt'
+    # model_path = database_dir + '/' + 'saved_models' + '/' + model_name
+    # torch.save(model.state_dict(), model_path)
     # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
 
     # test = list(train_data)[0]
