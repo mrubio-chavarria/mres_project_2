@@ -15,6 +15,7 @@ from torch.utils.data.distributed import DistributedSampler
 from datasets import collate_text2int_fn
 from metrics import cer
 from torch import multiprocessing as mp
+import pandas as pd
 
 
 # Functions
@@ -80,6 +81,12 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     after eery epoch in the case of multiprocessing.
     COMPLETE
     """
+    # Helper functions
+    def record_in_file(loss_values, avgcer_values):
+        file = kwargs.get('file_manual_record')
+        data = {'loss': loss_values, 'avgcer': avgcer_values}
+        pd.DataFrame.from_dict(data).to_csv(file, sep='\t')
+    
     # Create optimiser
     if kwargs.get('optimiser', 'SGD') == 'SGD':
         optimiser = torch.optim.SGD(model.parameters(),
@@ -112,6 +119,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
+    avgcers = []
+    losses = []
     if experiment is not None:
         with experiment.train():
             for epoch in range(kwargs.get('n_epochs', 1)):
@@ -175,6 +184,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                     avg_error = sum(error_rates) / len(error_rates)
                     # Show progress
+                    losses.append(loss)
+                    avgcers.append(avg_error)
                     if batch_id % 25 == 0:
                         print('----------------------------------------------------------------------------------------------------------------------')
                         print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
@@ -254,6 +265,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
+                losses.append(loss)
+                avgcers.append(avg_error)
                 if batch_id % 25 == 0:
                     print('----------------------------------------------------------------------------------------------------------------------')
                     print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
@@ -262,6 +275,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
                     else:
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+    # Manual record in file
+    record_in_file(losses, avgcers)
         
 
 
