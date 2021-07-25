@@ -116,47 +116,47 @@ if __name__ == "__main__":
     # Create the model
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)  
 
-    # # Training parameters
-    # training_parameters = {
-    #     'algorithm': 'DataParallel',
-    #     'n_processes': 1,
-    #     'n_epochs': 1,
-    #     'n_initialisation_epochs': 0,
-    #     'batch_size': batch_size,
-    #     'learning_rate': 0.0001,
-    #     'max_learning_rate': 1E-2,
-    #     'weight_decay': 0.01,
-    #     'momemtum': 0,
-    #     'optimiser': 'Adam',
-    #     'sequence_lengths': window_sizes,
-    #     'scheduler': 'OneCycleLR',
-    #     'in_hpc': True,
-    #     'max_batches': 500
-    # }
+    # Training parameters
+    training_parameters = {
+        'algorithm': 'DataParallel',
+        'n_processes': 1,
+        'n_epochs': 1,
+        'n_initialisation_epochs': 0,
+        'batch_size': batch_size,
+        'learning_rate': 0.0001,
+        'max_learning_rate': 1E-2,
+        'weight_decay': 0.01,
+        'momemtum': 0,
+        'optimiser': 'Adam',
+        'sequence_lengths': window_sizes,
+        'scheduler': 'OneCycleLR',
+        'in_hpc': True,
+        'max_batches': 500
+    }
 
-    # # Print model architecture
-    # print('Model: ')
-    # print(model)
+    # Print model architecture
+    print('Model: ')
+    print(model)
 
-    # # Print training parameters
-    # text_training = f"""
-    # Training parameters:
-    # - Algorithm: {training_parameters['algorithm']}
-    # - N processes: {training_parameters['n_processes']}
-    # - Epochs: {training_parameters['n_epochs']}
-    # - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
-    # - Batch size: {training_parameters['batch_size']}
-    # - Learning rate: {training_parameters['learning_rate']}
-    # - Max learning rate: {training_parameters['max_learning_rate']}
-    # - Weight decay: {training_parameters['weight_decay']}
-    # - Momemtum: {training_parameters['momemtum']}
-    # - Optimiser: {training_parameters['optimiser']}
-    # - Sequence lengths (alternating): {training_parameters['sequence_lengths']}
-    # - Scheduler: {training_parameters['scheduler']}
-    # - In HPC: {training_parameters['in_hpc']}
-    # - N Batches: {training_parameters['max_batches']}
-    # """
-    # print(text_training)
+    # Print training parameters
+    text_training = f"""
+    Training parameters:
+    - Algorithm: {training_parameters['algorithm']}
+    - N processes: {training_parameters['n_processes']}
+    - Epochs: {training_parameters['n_epochs']}
+    - N initialisation epochs: {training_parameters['n_initialisation_epochs']}
+    - Batch size: {training_parameters['batch_size']}
+    - Learning rate: {training_parameters['learning_rate']}
+    - Max learning rate: {training_parameters['max_learning_rate']}
+    - Weight decay: {training_parameters['weight_decay']}
+    - Momemtum: {training_parameters['momemtum']}
+    - Optimiser: {training_parameters['optimiser']}
+    - Sequence lengths (alternating): {training_parameters['sequence_lengths']}
+    - Scheduler: {training_parameters['scheduler']}
+    - In HPC: {training_parameters['in_hpc']}
+    - N Batches: {training_parameters['max_batches']}
+    """
+    print(text_training)
 
     # # Set up Comet
     # experiment_name = f"acinetobacter-train-{str(datetime.now()).replace(' ', '_')}"
@@ -182,9 +182,10 @@ if __name__ == "__main__":
     #     'sequence_lengths': training_parameters['sequence_lengths'],
     #     'scheduler': training_parameters['scheduler']
     # })
-   
-    # # Training
-    # train(model, train_data, experiment, **training_parameters)
+    
+    experiment = None
+    # Training
+    train(model, train_data, experiment, **training_parameters)
     
     # # Save the model
     # time = str(datetime.now()).replace(' ', '_')
