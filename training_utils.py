@@ -70,7 +70,7 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, device, experiment, rank=0, sampler=None, **kwargs):
+def launch_training(model, train_data, device, experiment=None, rank=0, sampler=None, **kwargs):
     """
     DESCRIPTION:
     UPDATE
@@ -112,7 +112,87 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
-    with experiment.train():
+    if experiment is not None:
+        with experiment.train():
+            for epoch in range(kwargs.get('n_epochs', 1)):
+                if sampler is not None:
+                    sampler.set_epoch(epoch)
+                for batch_id, batch in enumerate(train_data):
+                    if batch_id == max_batches:
+                        break
+                    # Clean gradient
+                    model.zero_grad()
+                    # Move data to device
+                    target_segments = batch['fragments']
+                    target_sequences = batch['sequences']
+                    targets_lengths = batch['targets_lengths']
+                    batch, target = batch['signals'].to(device), batch['targets'].to(device)
+                    # All the sequences in a batch are of the same length
+                    sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
+                    if batch.shape[0] != batch_size:
+                        continue
+                    # Forward pass
+                    output = model(batch)
+                    # Loss
+                    # Set different loss to initialise
+                    output_size = output.shape
+                    if epoch in initialisation_epochs:
+                        # Initialisation
+                        # Loss function: CrossEntropy
+                        # Create the labels
+                        fragments = target_segments
+                        new_targets = []
+                        total = 0
+                        new_targets = []
+                        for i in range(len(fragments)):
+                            new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
+                            new_targets.append(new_target)
+                            total += len(fragments[i])
+                        targets = torch.stack([torch.LongTensor(target) for target in new_targets])
+                        # Compute the loss
+                        output_size = output.shape
+                        output = output.view(output_size[0], output_size[2], output_size[1])
+                        loss = initialisation_loss_function(output, targets)
+                    else:
+                        # Regular
+                        # Loss function: CTC
+                        # Compute the loss
+                        output = output.view(output_size[1], output_size[0], output_size[2])
+                        loss = loss_function(
+                            log_softmax(output),
+                            target,
+                            sequences_lengths,
+                            targets_lengths
+                        )
+                    # Backward pass
+                    loss.backward()
+                    # Gradient step
+                    optimiser.step()
+                    if kwargs.get('scheduler') is not None:
+                        scheduler.step()
+                    # Decode output
+                    output_sequences = list(decoder(output.view(*output_size)))
+                    error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
+                    avg_error = sum(error_rates) / len(error_rates)
+                    # Show progress
+                    if batch_id % 25 == 0:
+                        print('----------------------------------------------------------------------------------------------------------------------')
+                        print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+                        # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
+                        if kwargs.get('scheduler') is not None:
+                            print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
+                        else:
+                            print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+                
+                    # Record data by batch
+                    experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
+                    experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
+                    experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
+                # Record data by epoch
+                experiment.log_metric('loss', loss.item(), epoch=epoch)
+                experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
+                experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
+    else:
         for epoch in range(kwargs.get('n_epochs', 1)):
             if sampler is not None:
                 sampler.set_epoch(epoch)
@@ -182,18 +262,10 @@ def launch_training(model, train_data, device, experiment, rank=0, sampler=None,
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
                     else:
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
-            
-                # Record data by batch
-                experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
-                experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
-                experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
-            # Record data by epoch
-            experiment.log_metric('loss', loss.item(), epoch=epoch)
-            experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
-            experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
+        
 
 
-def train(model, train_data, experiment, algorithm='single', n_processes=3, **kwargs):
+def train(model, train_data, experiment=None, algorithm='single', n_processes=3, **kwargs):
     """
     DESCRIPTION:
     UPDATE
