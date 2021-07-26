@@ -18,7 +18,6 @@ from metrics import cer
 from torch import multiprocessing as mp
 import pandas as pd
 from fast_ctc_decode import beam_search
-from losses import ETLoss
 
 
 # Functions
@@ -130,7 +129,6 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
-    test_loss = ETLoss(cer)
     # Train
     avgcers = []
     losses = []
@@ -266,7 +264,6 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     # Loss function: CTC
                     # Compute the loss
                     output = output.view(output_size[1], output_size[0], output_size[2])
-                    loss = test_loss(softmax(output), target)
                     loss = loss_function(
                         log_softmax(output),
                         target,
