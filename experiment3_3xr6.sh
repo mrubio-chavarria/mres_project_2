@@ -1,6 +1,6 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=8:mem=48gb:ngpus=2
-#PBS -lwalltime=06:00:00
+#PBS -lselect=1:ncpus=4:mem=24gb:ngpus=1
+#PBS -lwalltime=05:00:00
 
 # Load dependencies
 module load anaconda3/personal
@@ -12,4 +12,4 @@ echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 # Launch script
 id=2
 echo "Launch script"
-python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_0_$id.tsv
+python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_1_$id.tsv
