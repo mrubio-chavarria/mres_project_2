@@ -104,7 +104,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     else:
         raise ValueError('Invalid optimiser selected')
     # Max number of batches
-    max_batches = kwargs.get('max_batches', 500)
+    max_batches = kwargs.get('max_batches', None)
     # Create scheduler
     if kwargs.get('scheduler') is not None:
         scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
@@ -127,8 +127,9 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 if sampler is not None:
                     sampler.set_epoch(epoch)
                 for batch_id, batch in enumerate(train_data):
-                    if batch_id == max_batches:
-                        break
+                    if max_batches is not None:
+                        if batch_id == max_batches:
+                            continue
                     # Clean gradient
                     model.zero_grad()
                     # Move data to device
@@ -208,8 +209,9 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
             if sampler is not None:
                 sampler.set_epoch(epoch)
             for batch_id, batch in enumerate(train_data):
-                if batch_id == max_batches:
-                    break
+                if max_batches is not None:
+                    if batch_id == max_batches:
+                        continue
                 # Clean gradient
                 model.zero_grad()
                 # Move data to device
