@@ -9,6 +9,7 @@ experiment scripts.
 # Libraries
 from typing_extensions import final
 import torch
+from torch.nn.modules.loss import SoftMarginLoss
 from torch.utils.data import DataLoader
 from torch import nn
 from torch.utils.data.distributed import DistributedSampler
@@ -17,6 +18,7 @@ from metrics import cer
 from torch import multiprocessing as mp
 import pandas as pd
 from fast_ctc_decode import beam_search
+from losses import ETLoss
 
 
 # Functions
@@ -62,9 +64,9 @@ def decoder(probabilities_matrix, method='beam_search'):
             prob = probabilities_matrix[i]
             yield final_sequence_greedy
     elif method == 'beam_search':
-        probs = probabilities_matrix.detach().numpy()
+        probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
-            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-8)
+            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-12)
             yield seq.replace('$', '')
 
 
@@ -124,9 +126,11 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     batch_size = kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
+    softmax = nn.Softmax(dim=2).to(device)
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
+    test_loss = ETLoss(cer)
     # Train
     avgcers = []
     losses = []
@@ -234,9 +238,13 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     continue
                 # Forward pass
                 output = model(batch)
+                output_size = output.shape
+                # Decode output
+                output_sequences = list(decoder(output.view(*output_size)))
+                error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
+                avg_error = sum(error_rates) / len(error_rates)
                 # Loss
                 # Set different loss to initialise
-                output_size = output.shape
                 if epoch in initialisation_epochs:
                     # Initialisation
                     # Loss function: CrossEntropy
@@ -251,7 +259,6 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                         total += len(fragments[i])
                     targets = torch.stack([torch.LongTensor(target) for target in new_targets])
                     # Compute the loss
-                    output_size = output.shape
                     output = output.view(output_size[0], output_size[2], output_size[1])
                     loss = initialisation_loss_function(output, targets)
                 else:
@@ -259,6 +266,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     # Loss function: CTC
                     # Compute the loss
                     output = output.view(output_size[1], output_size[0], output_size[2])
+                    loss = test_loss(softmax(output), target)
                     loss = loss_function(
                         log_softmax(output),
                         target,
@@ -271,10 +279,6 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 optimiser.step()
                 if kwargs.get('scheduler') is not None:
                     scheduler.step()
-                # Decode output
-                output_sequences = list(decoder(output.view(*output_size)))
-                error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
-                avg_error = sum(error_rates) / len(error_rates)
                 # Show progress
                 losses.append(loss.item())
                 avgcers.append(avg_error)
