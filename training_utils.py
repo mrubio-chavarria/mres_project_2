@@ -124,12 +124,12 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     if experiment is not None:
         with experiment.train():
             for epoch in range(kwargs.get('n_epochs', 5)):
-                if sampler is not None:
-                    sampler.set_epoch(epoch)
+                # if sampler is not None:
+                #     sampler.set_epoch(epoch)
                 for batch_id, batch in enumerate(train_data):
                     if max_batches is not None:
                         if batch_id == max_batches:
-                            continue
+                            break
                     # Clean gradient
                     model.zero_grad()
                     # Move data to device
@@ -206,12 +206,12 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
     else:
         for epoch in range(kwargs.get('n_epochs', 5)):
-            if sampler is not None:
-                sampler.set_epoch(epoch)
+            # if sampler is not None:
+            #     sampler.set_epoch(epoch)
             for batch_id, batch in enumerate(train_data):
                 if max_batches is not None:
                     if batch_id == max_batches:
-                        continue
+                        break
                 # Clean gradient
                 model.zero_grad()
                 # Move data to device
