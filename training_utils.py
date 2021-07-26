@@ -123,7 +123,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     losses = []
     if experiment is not None:
         with experiment.train():
-            for epoch in range(kwargs.get('n_epochs', 1)):
+            for epoch in range(kwargs.get('n_epochs', 5)):
                 if sampler is not None:
                     sampler.set_epoch(epoch)
                 for batch_id, batch in enumerate(train_data):
