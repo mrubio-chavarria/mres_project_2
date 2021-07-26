@@ -16,6 +16,7 @@ from datasets import collate_text2int_fn
 from metrics import cer
 from torch import multiprocessing as mp
 import pandas as pd
+from fast_ctc_decode import beam_search
 
 
 # Functions
@@ -26,7 +27,7 @@ def length2indices(window):
     return indeces
 
 
-def decoder(probabilities_matrix):
+def decoder(probabilities_matrix, method='beam_search'):
     """
     DESCRIPTION:
     The function that implements the greedy algorithm to obtain the
@@ -36,27 +37,35 @@ def decoder(probabilities_matrix):
     :yield: [str] the sequence associated with a series of 
     probabilities.
     """
-    max_probabilities = torch.argmax(probabilities_matrix, dim=2)
     letters = ['A', 'T', 'G', 'C', '$']
     # windows = [length2indices(window) for window in segments_lengths]
-    for i in range(len(probabilities_matrix)):
-        # Output probabilities to sequence
-        # OLD
-        # sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
-        # sequence = [sequence[windows[i][index]:windows[i][index+1]] for index in range(len(windows[i])-1)]
-        # sequence = [''.join(list(set(segment))) for segment in sequence]
-        # sequence = ''.join(sequence)
-        final_sequence = []
-        sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
-        final_sequence = []
-        for item in sequence:
-            if not final_sequence:
-                final_sequence.append(item)
-                continue
-            if final_sequence[-1] != item:
-                final_sequence.append(item)
-        final_sequence = ''.join(final_sequence)
-        yield final_sequence.replace('$', '')
+    if method == 'greedy':
+        max_probabilities = torch.argmax(probabilities_matrix, dim=2)
+        for i in range(len(probabilities_matrix)):
+            # Output probabilities to sequence
+            # OLD
+            # sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
+            # sequence = [sequence[windows[i][index]:windows[i][index+1]] for index in range(len(windows[i])-1)]
+            # sequence = [''.join(list(set(segment))) for segment in sequence]
+            # sequence = ''.join(sequence)
+            final_sequence = []
+            sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
+            final_sequence = []
+            for item in sequence:
+                if not final_sequence:
+                    final_sequence.append(item)
+                    continue
+                if final_sequence[-1] != item:
+                    final_sequence.append(item)
+            final_sequence = ''.join(final_sequence)
+            final_sequence_greedy = final_sequence.replace('$', '')
+            prob = probabilities_matrix[i]
+            yield final_sequence_greedy
+    elif method == 'beam_search':
+        probs = probabilities_matrix.detach().numpy()
+        for prob in probs:
+            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-8)
+            yield seq.replace('$', '')
 
 
 def init_weights(module):
