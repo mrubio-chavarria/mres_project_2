@@ -29,7 +29,7 @@ def length2indices(window):
     return indeces
 
 
-def decoder(probabilities_matrix, method='beam_search'):
+def decoder(probabilities_matrix, method='greedy'):
     """
     DESCRIPTION:
     The function that implements the greedy algorithm to obtain the
@@ -66,7 +66,7 @@ def decoder(probabilities_matrix, method='beam_search'):
     elif method == 'beam_search':
         probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
-            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-12)
+            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-24)
             yield seq.replace('$', '')
 
 
@@ -257,7 +257,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                         new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
                         new_targets.append(new_target)
                         total += len(fragments[i])
-                    targets = torch.stack([torch.LongTensor(target) for target in new_targets])
+                    targets = torch.stack([torch.LongTensor(target) for target in new_targets]).to(device)
                     # Compute the loss
                     output = output.view(output_size[0], output_size[2], output_size[1])
                     loss = initialisation_loss_function(output, targets)
