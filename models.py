@@ -114,7 +114,7 @@ class ResidualBlockII(nn.Module):
     been directly taken from Chiron.
     """
     # Methods
-    def __init__(self, in_channels, out_channels=256, kernel_size=3):
+    def __init__(self, in_channels, out_channels=256, kernel_size=3, dropout=0.5):
         """
         DESCRIPTION:
         Class constructor.
@@ -470,7 +470,7 @@ class DecoderChiron(nn.Module):
     Model to assign the probabilities of every base for a given signal.
     """
     # Methods
-    def __init__(self, initial_size, output_size, batch_size, dropout=0.2):
+    def __init__(self, initial_size, output_size, batch_size, dropout=0.8):
         """
         DESCRIPTION:
         Class constructor.
@@ -499,6 +499,50 @@ class DecoderChiron(nn.Module):
         :param input_sequence: [torch.Tensor] the sequence to feed the model.
         """
         output = self.model(input_sequence)
+        return output
+
+
+class DecoderCustom(nn.Module):
+    """
+    DESCRIPTION:
+    Model to assign the probabilities of every base for a given signal.
+    """
+    # Methods
+    def __init__(self, initial_size, output_size, batch_size, dropout=0.8):
+        """
+        DESCRIPTION:
+        Class constructor.
+        Important, the softmax is already implemented in the cost function.
+        :param initial_size: [int] input dimensionality.
+        :param output_size: [int] output dimensionality. Number of
+        classes.
+        :param batch_size: [int] number of elements per batch.
+        :param dropout: [float] proportion of dropout neurons.
+        """
+        super().__init__()
+        self.initial_size = initial_size
+        self.hidden_size = 2 * initial_size
+        self.output_size = output_size
+        self.batch_size = batch_size
+        self.linear_1 = nn.Linear(self.initial_size, self.hidden_size)
+        self.dropout = nn.Dropout(dropout)
+        self.linear_2 = nn.Linear(self.hidden_size, self.output_size)
+        
+    def forward(self, input_sequence):
+        """
+        DDESCRIPTION:
+        Forward pass.
+        :param input_sequence: [torch.Tensor] the sequence to feed the model.
+        """
+        # # Prepare the constant weights and bias
+        # with torch.no_grad():
+        #     linear_2_bias = torch.cat((self.linear_2.bias[0:-1], torch.Tensor([0.01])))
+        #     linear_2_weight = torch.cat((self.linear_2.weight[0:-1, :], torch.Tensor([[0.01] * (2 * self.initial_size)])))
+        # self.linear_2.bias = torch.nn.Parameter(linear_2_bias)
+        # self.linear_2.weight = torch.nn.Parameter(linear_2_weight)
+        output = self.linear_1(input_sequence)
+        output = self.dropout(output)
+        output = self.linear_2(output)
         return output
 
 
