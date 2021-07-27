@@ -177,3 +177,7 @@ databases/working_ap.tar.gz
 databases/working_porcupine/count_fast5.sh
 databases/working_porcupine/filter_reads.py
 databases/working_porcupine/filter_reads.sh
+statistics/sequencing_summaries/
+statistics/models/
+statistics/metadata_ap.tsv
+statistics/metadata_3xr6.tsv
