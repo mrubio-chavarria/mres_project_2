@@ -15,6 +15,7 @@ from torch.utils.data import Dataset
 from resquiggle_utils import parse_resquiggle, window_resquiggle
 from torch import nn
 import random
+from tqdm import tqdm
 
 
 # Classes
@@ -545,15 +546,12 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, re
     print('Loading reads')
     print('-------------------------------------------------')
     skipped_reads = 0
-    for route in read_files:
-        print('Read:', route)
+    for route in tqdm(read_files):
         # Read resquiggle information
         try:
             segs, genome_seq, norm_signal = parse_resquiggle(route, reference_file, bandwidth, read)
         except:
             # In some reads the resquiggling was not successful
-            print('SKIPPED READ')
-            print('Read:', route)
             skipped_reads += 1
             continue
         # Window the resquiggle signal
