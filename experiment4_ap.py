@@ -158,6 +158,7 @@ if __name__ == "__main__":
     - Scheduler: {training_parameters['scheduler']}
     - In HPC: {training_parameters['in_hpc']}
     - N Batches: {training_parameters['max_batches']}
+    - Step size: {training_parameters['step_size']}
     """
     print(text_training)
 
