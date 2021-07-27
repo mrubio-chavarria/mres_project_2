@@ -19,14 +19,14 @@ import multiprocessing as mp
 # Functions
 def extract_info(pair):
     read_file, reference_file = pair
-    fast5_data = h5py.File(read_file, 'r')
-    read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
-    # Set parameters for resquiggling
-    aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
-    seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
-    std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
-    # Extract data from FAST5
     try:
+        fast5_data = h5py.File(read_file, 'r')
+        read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
+        # Set parameters for resquiggling
+        aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
+        seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
+        std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
+        # Extract data from FAST5
         mean_q_score = resquiggle.map_read(fast5_data, aligner, std_ref).mean_q_score
         failed_parsing = False
         failed_alignment = False
@@ -35,6 +35,7 @@ def extract_info(pair):
         failed_parsing = False
         failed_alignment = True
     except OSError:
+        read_id = "Failed parsing"
         mean_q_score = 0
         failed_parsing = True
         failed_alignment = True
