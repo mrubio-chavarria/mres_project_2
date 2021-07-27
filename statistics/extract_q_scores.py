@@ -28,12 +28,18 @@ def extract_info(pair):
     # Extract data from FAST5
     try:
         mean_q_score = resquiggle.map_read(fast5_data, aligner, std_ref).mean_q_score
+        failed_parsing = False
         failed_alignment = False
     except tombo_helper.TomboError:
         mean_q_score = 0
+        failed_parsing = False
+        failed_alignment = True
+    except OSError:
+        mean_q_score = 0
+        failed_parsing = True
         failed_alignment = True
     # Return paremeters
-    return read_id, mean_q_score, failed_alignment
+    return read_id, mean_q_score, failed_parsing, failed_alignment
 
 def extract_q_score(read_files, reference_file, workdir, n_processes=2):
     """
@@ -49,7 +55,7 @@ def extract_q_score(read_files, reference_file, workdir, n_processes=2):
         data = pool.map(extract_info, pairs)
     dataset_name = reference_file.split('/')[-2].split('_')[-1]
     storage_file = workdir + '/' + f'q_score_record_{dataset_name}.tsv'
-    pd.DataFrame(data=data, columns=('read_id', 'mean_q_score', 'failed_alignment')).to_csv(storage_file, sep='\t')
+    pd.DataFrame(data=data, columns=('read_id', 'mean_q_score', 'failed_parsing', 'failed_alignment')).to_csv(storage_file, sep='\t')
 
 
 if __name__ == "__main__":
