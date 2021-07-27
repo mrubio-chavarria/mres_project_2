@@ -181,3 +181,5 @@ statistics/sequencing_summaries/
 statistics/models/
 statistics/metadata_ap.tsv
 statistics/metadata_3xr6.tsv
+manual_record.tsv
+databases/working_3xr6/reference.fasta
