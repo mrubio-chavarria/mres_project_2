@@ -43,7 +43,6 @@ def extract_q_score(read_files, reference_file, workdir, n_processes=2):
     :param q_score_threshold: [float] the value to filter.
     """
     data = []
-    read_files = read_files[0:100]
     # Label to distinguish the good reads
     pairs = map(lambda x: (x, reference_file), read_files)
     with mp.Pool(n_processes) as pool:
