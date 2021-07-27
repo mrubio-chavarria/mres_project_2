@@ -7,4 +7,4 @@ module load anaconda3/personal
 
 source activate project2_venv
 
-python3 $HOME/project_2/statistics/extract_q_scores.py $HOME/project_2/databases/working_3xr6 32
+python3 $HOME/project_2/statistics/extract_q_scores.py $HOME/project_2/databases/working_ap 32
