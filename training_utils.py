@@ -11,13 +11,14 @@ from typing_extensions import final
 import torch
 from torch.nn.modules.loss import SoftMarginLoss
 from torch.utils.data import DataLoader
-from torch import nn
+from torch import max_pool1d, nn
 from torch.utils.data.distributed import DistributedSampler
 from datasets import collate_text2int_fn
 from metrics import cer
 from torch import multiprocessing as mp
 import pandas as pd
 from fast_ctc_decode import beam_search
+from torch.optim.lr_scheduler import StepLR
 
 
 # Functions
@@ -65,8 +66,11 @@ def decoder(probabilities_matrix, method='greedy'):
     elif method == 'beam_search':
         probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
-            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-24)
-            yield seq.replace('$', '')
+            try:
+                seq, _ = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-6)
+                yield seq.replace('$', '')
+            except:
+                yield 'No good transcription'
 
 
 def init_weights(module):
@@ -114,13 +118,18 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     else:
         raise ValueError('Invalid optimiser selected')
     # Max number of batches
+    print('Optimiser:', optimiser)
     max_batches = kwargs.get('max_batches', None)
     # Create scheduler
     if kwargs.get('scheduler') is not None:
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
-                                                        max_lr=kwargs.get('max_learning_rate', 1E-2),
-                                                        steps_per_epoch=len(train_data),
-                                                        epochs=kwargs.get('n_epochs', 30))
+        if kwargs.get('scheduler') == 'OneCycleLR':
+            scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
+                                                            max_lr=kwargs.get('max_learning_rate', 1E-2),
+                                                            steps_per_epoch=len(train_data),
+                                                            epochs=kwargs.get('n_epochs', 30))
+        elif kwargs.get('scheduler') == 'StepLR':
+            scheduler = StepLR(optimiser, step_size=kwargs.get('step_size', 5), gamma=1.1)
+
     # Prepare training
     batch_size = kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
@@ -133,6 +142,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     avgcers = []
     losses = []
     if experiment is not None:
+        # THIS SECTION IS NOT UPDATED
         with experiment.train():
             for epoch in range(kwargs.get('n_epochs', 5)):
                 # if sampler is not None:
@@ -189,7 +199,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     loss.backward()
                     # Gradient step
                     optimiser.step()
-                    if kwargs.get('scheduler') is not None:
+                    if kwargs.get('scheduler', None) == 'OneCycleLR':
                         scheduler.step()
                     # Decode output
                     output_sequences = list(decoder(output.view(*output_size)))
@@ -215,6 +225,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 experiment.log_metric('loss', loss.item(), epoch=epoch)
                 experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
                 experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
+                if kwargs.get('scheduler') == 'StepLR':
+                    scheduler.step()
     else:
         for epoch in range(kwargs.get('n_epochs', 5)):
             # if sampler is not None:
@@ -239,7 +251,10 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 output_size = output.shape
                 # Decode output
                 output_sequences = list(decoder(output.view(*output_size)))
-                error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
+                error_rates = [cer(target_sequences[i], output_sequences[i]) 
+                    if output_sequences[i] != 'No good transcription' else 0
+                    for i in range(len(output_sequences))
+                ]
                 avg_error = sum(error_rates) / len(error_rates)
                 # Loss
                 # Set different loss to initialise
@@ -274,19 +289,21 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 loss.backward()
                 # Gradient step
                 optimiser.step()
-                if kwargs.get('scheduler') is not None:
-                    scheduler.step()
+                if kwargs.get('scheduler') == 'OneCycleLR':
+                        scheduler.step()
                 # Show progress
                 losses.append(loss.item())
                 avgcers.append(avg_error)
+                print('----------------------------------------------------------------------------------------------------------------------')
+                print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+                # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
                 if batch_id % 25 == 0:
-                    print('----------------------------------------------------------------------------------------------------------------------')
-                    print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-                    # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
                     if kwargs.get('scheduler') is not None:
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
                     else:
-                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
+                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
+            if kwargs.get('scheduler') == 'StepLR':
+                scheduler.step()
     # Manual record in file
     record_in_file(losses, avgcers)
         
