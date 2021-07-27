@@ -115,7 +115,6 @@ def parse_resquiggle(read_file, reference_file, bandwidth=6000, read=False, norm
         segs = resquiggle.resolve_skipped_bases_with_raw(
             dp_results, norm_signal, rsqgl_params)
         sequence = dp_results.genome_seq
-    print('Read:', read_file)
     return segs, sequence, norm_signal
 
 
