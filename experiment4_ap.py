@@ -132,7 +132,7 @@ if __name__ == "__main__":
         'sequence_lengths': window_sizes,
         'scheduler': 'StepLR',
         'in_hpc': True,
-        'max_batches': None,
+        'max_batches': 500,
         'step_size': 2,
         'file_manual_record': file_manual_record
     }
