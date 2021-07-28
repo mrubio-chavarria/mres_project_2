@@ -67,7 +67,7 @@ def decoder(probabilities_matrix, method='greedy'):
         probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
             try:
-                seq, _ = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-6)
+                seq, _ = beam_search(prob, ''.join(letters), beam_size=1, beam_cut_threshold=1E-6)
                 yield seq.replace('$', '')
             except:
                 yield 'No good transcription'
