@@ -128,7 +128,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                                                             steps_per_epoch=len(train_data),
                                                             epochs=kwargs.get('n_epochs', 30))
         elif kwargs.get('scheduler') == 'StepLR':
-            scheduler = StepLR(optimiser, step_size=kwargs.get('step_size', 5), gamma=1.1)
+            scheduler = StepLR(optimiser, step_size=kwargs.get('step_size', 5), gamma=0.1)
 
     # Prepare training
     batch_size = kwargs.get('batch_size')
