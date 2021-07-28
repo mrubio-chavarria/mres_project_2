@@ -10,6 +10,5 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Launch script
-id=1
 echo "Launch script"
-python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_3_$id.tsv
+python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_5.tsv
