@@ -129,7 +129,7 @@ if __name__ == "__main__":
         'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
-        'learning_rate': 0.0001,
+        'learning_rate': 0.001,
         'max_learning_rate': 1E-2,
         'weight_decay': 0.01,
         'momemtum': 0.9,
