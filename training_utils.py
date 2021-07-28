@@ -121,13 +121,13 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     print('Optimiser:', optimiser)
     max_batches = kwargs.get('max_batches', None)
     # Create scheduler
-    if kwargs.get('scheduler') is not None:
-        if kwargs.get('scheduler') == 'OneCycleLR':
+    if kwargs.get('scheduler', None) is not None:
+        if kwargs.get('scheduler', None) == 'OneCycleLR':
             scheduler = torch.optim.lr_scheduler.OneCycleLR(optimiser,
                                                             max_lr=kwargs.get('max_learning_rate', 1E-2),
                                                             steps_per_epoch=len(train_data),
                                                             epochs=kwargs.get('n_epochs', 30))
-        elif kwargs.get('scheduler') == 'StepLR':
+        elif kwargs.get('scheduler', None) == 'StepLR':
             scheduler = StepLR(optimiser, step_size=kwargs.get('step_size', 5), gamma=0.1)
 
     # Prepare training
@@ -225,7 +225,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 experiment.log_metric('loss', loss.item(), epoch=epoch)
                 experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
                 experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
-                if kwargs.get('scheduler') == 'StepLR':
+                if kwargs.get('scheduler', None) == 'StepLR':
                     scheduler.step()
     else:
         for epoch in range(kwargs.get('n_epochs', 5)):
@@ -289,7 +289,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 loss.backward()
                 # Gradient step
                 optimiser.step()
-                if kwargs.get('scheduler') == 'OneCycleLR':
+                if kwargs.get('scheduler', None) == 'OneCycleLR':
                         scheduler.step()
                 # Show progress
                 losses.append(loss.item())
@@ -301,7 +301,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
                     else:
                         print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-            if kwargs.get('scheduler') == 'StepLR':
+            if kwargs.get('scheduler', None) == 'StepLR':
                 scheduler.step()
     # Manual record in file
     record_in_file(losses, avgcers)
