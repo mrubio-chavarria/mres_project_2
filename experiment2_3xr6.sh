@@ -11,5 +11,5 @@ echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Launch script
 echo "Launch script"
-id=25
+id=13
 python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_RMSprop_storage_$id.tsv
