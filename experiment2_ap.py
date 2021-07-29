@@ -67,6 +67,9 @@ if __name__ == "__main__":
     # Storage file
     file_manual_record = sys.argv[3]
 
+    # Configuration
+    conf_index = int(sys.argv[4])
+
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
 
@@ -119,23 +122,117 @@ if __name__ == "__main__":
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)  
 
     # Training parameters
-    training_parameters = {
-        'algorithm': 'DataParallel',
-        'n_processes': 1,
-        'n_epochs': 1,
-        'n_initialisation_epochs': 0,
-        'batch_size': batch_size,
-        'learning_rate': 0.001,
-        'max_learning_rate': 1E-2,
-        'weight_decay': 0,
-        'momemtum': 0.9,
-        'optimiser': 'SGD',
-        'sequence_lengths': window_sizes,
-        'scheduler': None, # 'OneCycleLR',
-        'in_hpc': True,
-        'max_batches': 500,
-        'file_manual_record': file_manual_record
-    }
+    configurations = [
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.001,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': None,
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        },
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.001,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0.01,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': None,
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        },
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.0001,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': None,
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        },
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.0001,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0.01,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': None,
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        },
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.01,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': 'StepLR',
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        },
+        {
+            'algorithm': 'DataParallel',
+            'n_processes': 1,
+            'n_epochs': 5,
+            'n_initialisation_epochs': 0,
+            'batch_size': batch_size,
+            'learning_rate': 0.01,
+            'max_learning_rate': 1E-2,
+            'weight_decay': 0.01,
+            'momemtum': 0,
+            'optimiser': 'Adam',
+            'sequence_lengths': window_sizes,
+            'scheduler': 'StepLR',
+            'step_size': 2,
+            'in_hpc': True,
+            'max_batches': 500,
+            'file_manual_record': file_manual_record
+        }
+    ]
+    training_parameters = configurations[conf_index]
 
     # Generate experiment ID
     experiment_id = str(uuid4())
