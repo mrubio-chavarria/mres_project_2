@@ -79,6 +79,7 @@ if __name__ == "__main__":
     max_windows = None
     max_reads = None  # Select all the reads
     train_folder = database_dir + '/' + "reads"
+    shuffle = False
     
     # Load dataset
     # train_dataset_200 = Dataset_3xr6(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20')
@@ -91,7 +92,7 @@ if __name__ == "__main__":
 
     flowcell = 'flowcell1'
     train_dataset_300 = Dataset_3xr6(train_folder, reference_file, window_sizes[0], max_windows, flowcell=flowcell, hq_value='Q20')
-    train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=True, collate_fn=collate_text2int_fn)
+    train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_text2int_fn)
 
     # Model
     # Parameters
@@ -137,6 +138,7 @@ if __name__ == "__main__":
         'scheduler': None, #'OneCycleLR',
         'in_hpc': True,
         'max_batches': 500,
+        'shuffle': False,
         'file_manual_record': file_manual_record
     }
 
