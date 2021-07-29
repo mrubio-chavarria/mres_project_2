@@ -11,8 +11,9 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
-echo "Array job ID: $PBS_ARRAY_INDEX"
+ID=0
+echo "ID: $ID"
 
 # Launch script
 echo "Launch script"
-python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp2_$PBS_ARRAY_INDEX.tsv $PBS_ARRAY_INDEX
+python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp2_$ID.tsv $ID
