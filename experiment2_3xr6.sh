@@ -1,7 +1,6 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=8:mem=48gb:ngpus=2
 #PBS -lwalltime=24:00:00
-#PBS -J 1-6
 
 # Load dependencies
 module load anaconda3/personal

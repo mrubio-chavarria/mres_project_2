@@ -10,7 +10,7 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
-id=0
+ID=0
 echo "ID: $ID"
 
 # Launch script
