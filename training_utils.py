@@ -19,6 +19,7 @@ from torch import multiprocessing as mp
 import pandas as pd
 from fast_ctc_decode import beam_search
 from torch.optim.lr_scheduler import StepLR
+from pytictoc import TicToc
 
 
 # Functions
@@ -319,6 +320,9 @@ def train(model, train_data, experiment=None, algorithm='single', n_processes=3,
     :param model: [torch.nn.Module] the model to train.
     COMPLETE
     """
+    # Compute training time
+    t = TicToc()
+    t.tic()
     # Set device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print('Training started')
@@ -355,3 +359,6 @@ def train(model, train_data, experiment=None, algorithm='single', n_processes=3,
     #         process.join()
     else:
         raise ValueError('Invalid training method')
+    print('************************************************************')
+    t.toc('TRAINING TIME: ')
+    print('************************************************************')
