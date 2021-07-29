@@ -11,7 +11,7 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
-echo $PBS_ARRAY_INDEX
+echo "Array job ID: $PBS_ARRAY_INDEX"
 
 # Launch script
 echo "Launch script"
