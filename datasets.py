@@ -510,7 +510,7 @@ def collate_text2int_fn(batch):
         sequences.append(item['sequence'])
         targets_lengths.append(len(item['sequence']))
         targets.append(
-            torch.Tensor(text2int(relationship, item['sequence']))
+            torch.Tensor(text2int(relationship, item['sequence'])).int()
         )
         signals.append(item['signal'])
         fragments.append(item['fragments'])
