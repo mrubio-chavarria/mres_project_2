@@ -19,6 +19,7 @@ from datetime import datetime
 from training_utils import train
 from datasets import collate_text2int_fn
 from torch.utils.data import DataLoader
+from uuid import uuid4
 
 
 # Classes
@@ -71,8 +72,6 @@ if __name__ == "__main__":
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
-
-    # Transforms
 
     # Load the train and test datasets
     batch_size = 32
@@ -142,6 +141,13 @@ if __name__ == "__main__":
         'file_manual_record': file_manual_record
     }
 
+    # Generate experiment ID
+    experiment_id = str(uuid4())
+    # Print ID
+    print('****************************************************************')
+    print(f'EXPERIMENT ID: {experiment_id}')
+    print('****************************************************************')
+
     # Print model architecture
     print('Model: ')
     print(model)
@@ -199,7 +205,7 @@ if __name__ == "__main__":
     
     # Save the model
     time = str(datetime.now()).replace(' ', '_')
-    model_name = f'model_{time}.pt'
+    model_name = f'model_{time}_{experiment_id}.pt'
     model_path = database_dir + '/' + 'saved_models' + '/' + model_name
     torch.save(model.state_dict(), model_path)
     # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
