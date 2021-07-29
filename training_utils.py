@@ -46,11 +46,6 @@ def decoder(probabilities_matrix, method='greedy'):
         max_probabilities = torch.argmax(probabilities_matrix, dim=2)
         for i in range(len(probabilities_matrix)):
             # Output probabilities to sequence
-            # OLD
-            # sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
-            # sequence = [sequence[windows[i][index]:windows[i][index+1]] for index in range(len(windows[i])-1)]
-            # sequence = [''.join(list(set(segment))) for segment in sequence]
-            # sequence = ''.join(sequence)
             final_sequence = []
             sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
             final_sequence = []
@@ -61,14 +56,13 @@ def decoder(probabilities_matrix, method='greedy'):
                 if final_sequence[-1] != item:
                     final_sequence.append(item)
             final_sequence = ''.join(final_sequence)
-            final_sequence_greedy = final_sequence.replace('$', '')
-            prob = probabilities_matrix[i]
+            final_sequence_greedy = ''.join([''.join(set(fragment)) for fragment in final_sequence.split('$')])
             yield final_sequence_greedy
     elif method == 'beam_search':
         probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
             try:
-                seq, _ = beam_search(prob, ''.join(letters), beam_size=1, beam_cut_threshold=1E-6)
+                seq, _ = beam_search(prob, ''.join(letters), beam_size=20, beam_cut_threshold=1E-48)
                 yield seq.replace('$', '')
             except:
                 yield 'No good transcription'
@@ -209,7 +203,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     # Show progress
                     losses.append(loss.item())
                     avgcers.append(avg_error)
-                    if batch_id % 25 == 0:
+                    #if batch_id % 25 == 0:
+                    if True:
                         print('----------------------------------------------------------------------------------------------------------------------')
                         print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                         # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
@@ -295,7 +290,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 # Show progress
                 losses.append(loss.item())
                 avgcers.append(avg_error)
-                if batch_id % 25 == 0:
+                # if batch_id % 25 == 0:
+                if True:
                     print('----------------------------------------------------------------------------------------------------------------------')
                     print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                     if kwargs.get('scheduler') is not None:
