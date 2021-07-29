@@ -68,7 +68,7 @@ if __name__ == "__main__":
     file_manual_record = sys.argv[3]
 
     # Number of initialisation epochs
-    n_initialisation_epochs = int(sys.argv[4]) - 1
+    n_initialisation_epochs = int(sys.argv[4])
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
