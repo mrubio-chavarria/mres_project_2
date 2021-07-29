@@ -15,4 +15,4 @@ echo "ID: $ID"
 
 # Launch script
 echo "Launch script"
-python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp2_$ID.tsv $ID
+echo "python3 $HOME/project_2/experiment2_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp2_$ID.tsv $ID"
