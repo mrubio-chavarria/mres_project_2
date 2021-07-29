@@ -208,8 +208,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     # Show progress
                     losses.append(loss.item())
                     avgcers.append(avg_error)
-                    #if batch_id % 25 == 0:
-                    if True:
+                    if batch_id % 25 == 0:
                         print('----------------------------------------------------------------------------------------------------------------------')
                         print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                         # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
@@ -295,8 +294,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 # Show progress
                 losses.append(loss.item())
                 avgcers.append(avg_error)
-                # if batch_id % 25 == 0:
-                if True:
+                if batch_id % 25 == 0:
                     print('----------------------------------------------------------------------------------------------------------------------')
                     print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
                     if kwargs.get('scheduler') is not None:
