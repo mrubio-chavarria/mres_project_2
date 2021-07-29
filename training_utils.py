@@ -17,7 +17,7 @@ from datasets import collate_text2int_fn
 from metrics import cer
 from torch import multiprocessing as mp
 import pandas as pd
-from fast_ctc_decode import beam_search
+from fast_ctc_decode import beam_search, viterbi_search
 from torch.optim.lr_scheduler import StepLR
 from pytictoc import TicToc
 
@@ -30,7 +30,7 @@ def length2indices(window):
     return indeces
 
 
-def decoder(probabilities_matrix, method='greedy'):
+def decoder(probabilities_matrix, method='viterbi_search'):
     """
     DESCRIPTION:
     The function that implements the greedy algorithm to obtain the
@@ -58,6 +58,11 @@ def decoder(probabilities_matrix, method='greedy'):
             final_sequence = ''.join(final_sequence)
             final_sequence_greedy = ''.join([''.join(set(fragment)) for fragment in final_sequence.split('$')])
             yield final_sequence_greedy
+    elif method == 'viterbi_search':
+        probs = probabilities_matrix.cpu().detach().numpy()
+        for prob in probs:
+            seq, _ = viterbi_search(prob, ''.join(letters))
+            yield seq.replace('$', '')
     elif method == 'beam_search':
         probs = probabilities_matrix.cpu().detach().numpy()
         for prob in probs:
