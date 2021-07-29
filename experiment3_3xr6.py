@@ -13,7 +13,7 @@ import sys
 import torch
 from torch import nn
 from datasets import Dataset_3xr6
-from models import TCN_module, LSTM_module, DecoderChiron
+from models import DecoderCustom, TCN_module, LSTM_module, DecoderChiron
 from datetime import datetime
 from training_utils import train
 from datasets import collate_text2int_fn
@@ -35,7 +35,7 @@ class Network(nn.Module):
         self.decoder_parameters = decoder_parameters
         self.convolutional_module = TCN_module(**self.TCN_parameters)
         self.recurrent_module = LSTM_module(**self.LSTM_parameters)
-        self.decoder = DecoderChiron(**self.decoder_parameters)
+        self.decoder = DecoderCustom(**self.decoder_parameters)
 
     def forward(self, input_sequence):
         """
