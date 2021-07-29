@@ -494,11 +494,11 @@ def collate_text2int_fn(batch):
     # Relationship to convert between letters and labels
     relationship = {
         # Base: label
-        '$': 0,
-        'A': 1,
-        'T': 2,
-        'G': 3,
-        'C': 4
+        'A': 0,
+        'T': 1,
+        'G': 2,
+        'C': 3,
+        '$': 4
     }
     # Prepare the labels in pytorch format for CTC loss
     targets_lengths = []
