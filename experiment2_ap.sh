@@ -10,6 +10,9 @@ source activate project2_venv
 # Check GPUs
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
+# Check array index
+echo $PBS_ARRAY_INDEX
+
 # Launch script
 echo "Launch script"
 python3 $HOME/project_2/experiment2_ap.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_ap $HOME/project_2/ap_exp2_$PBS_ARRAY_INDEX.tsv $PBS_ARRAY_INDEX
