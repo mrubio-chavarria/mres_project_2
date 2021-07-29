@@ -30,7 +30,7 @@ def length2indices(window):
     return indeces
 
 
-def decoder(probabilities_matrix, method='viterbi_search'):
+def decoder(probabilities_matrix, n_labels=5, method='greedy'):
     """
     DESCRIPTION:
     The function that implements the greedy algorithm to obtain the
@@ -40,7 +40,7 @@ def decoder(probabilities_matrix, method='viterbi_search'):
     :yield: [str] the sequence associated with a series of 
     probabilities.
     """
-    letters = ['A', 'T', 'G', 'C', '$']
+    letters = ['A', 'T', 'G', 'C', '$'][0:n_labels]
     # windows = [length2indices(window) for window in segments_lengths]
     if method == 'greedy':
         max_probabilities = torch.argmax(probabilities_matrix, dim=2)
@@ -250,7 +250,7 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                 output = model(batch)
                 output_size = output.shape
                 # Decode output
-                output_sequences = list(decoder(output.view(*output_size)))
+                output_sequences = list(decoder(output.view(*output_size), kwargs.get('n_labels', 5)))
                 error_rates = [cer(target_sequences[i], output_sequences[i]) 
                     if output_sequences[i] != 'No good transcription' else 0
                     for i in range(len(output_sequences))

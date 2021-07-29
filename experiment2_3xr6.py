@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # Transforms
 
     # Load the train and test datasets
-    batch_size = 256
+    batch_size = 32
     # window_sizes = [200, 400, 1000]
     window_sizes = [300]
     max_windows = None

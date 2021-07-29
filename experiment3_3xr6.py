@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # Transforms
 
     # Load the train and test datasets
-    batch_size = 256
+    batch_size = 32
     # window_sizes = [200, 400, 1000]
     window_sizes = [300]
     max_windows = None
@@ -139,6 +139,7 @@ if __name__ == "__main__":
         'scheduler': None, #'OneCycleLR',
         'in_hpc': True,
         'max_batches': 500,
+        'n_labels': decoder_parameters['output_size'],
         'shuffle': shuffle,
         'file_manual_record': file_manual_record
     }
