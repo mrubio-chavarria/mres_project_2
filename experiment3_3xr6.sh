@@ -11,4 +11,5 @@ echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Launch script
 echo "Launch script"
-python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_5.tsv
+id=0
+python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_0_$id.tsv

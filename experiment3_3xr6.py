@@ -77,7 +77,7 @@ if __name__ == "__main__":
     # window_sizes = [200, 400, 1000]
     window_sizes = [300]
     max_windows = None
-    max_reads = None  # Select all the reads
+    max_reads = 1000  # Select all the reads
     train_folder = database_dir + '/' + "reads"
     shuffle = False
     
@@ -127,18 +127,18 @@ if __name__ == "__main__":
         'algorithm': 'DataParallel',
         'n_processes': 1,
         'n_epochs': 5,
-        'n_initialisation_epochs': 5,
+        'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
         'max_learning_rate': 1E-2,
-        'weight_decay': 0.01,
+        'weight_decay': 0,
         'momemtum': 0,
         'optimiser': 'Adam',
         'sequence_lengths': window_sizes,
         'scheduler': None, #'OneCycleLR',
         'in_hpc': True,
         'max_batches': 500,
-        'shuffle': False,
+        'shuffle': shuffle,
         'file_manual_record': file_manual_record
     }
 
