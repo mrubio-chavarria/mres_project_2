@@ -65,7 +65,8 @@ if __name__ == "__main__":
     # Storage file
     file_manual_record = sys.argv[3]
 
-    # database_dir = '/home/mario/Projects/project_2/databases/toy_working_ap'
+    # Number of initialisation epochs
+    n_initialisation_epochs = int(sys.argv[4])
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -127,7 +128,7 @@ if __name__ == "__main__":
         'algorithm': 'DataParallel',
         'n_processes': 1,
         'n_epochs': 5,
-        'n_initialisation_epochs': 4,
+        'n_initialisation_epochs': n_initialisation_epochs,
         'batch_size': batch_size,
         'learning_rate': 0.001,
         'max_learning_rate': 1E-2,
