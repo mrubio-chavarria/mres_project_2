@@ -7,6 +7,7 @@ experiment scripts.
 """
 
 # Libraries
+from losses import FocalCTCLoss
 from typing_extensions import final
 import torch
 from torch.nn.modules.loss import SoftMarginLoss
@@ -134,7 +135,6 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     batch_size = kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
-    softmax = nn.Softmax(dim=2).to(device)
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
@@ -248,9 +248,8 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                     continue
                 # Forward pass
                 output = model(batch)
-                output_size = output.shape
                 # Decode output
-                output_sequences = list(decoder(output.view(*output_size), kwargs.get('n_labels', 5)))
+                output_sequences = list(decoder(output, kwargs.get('n_labels', 5)))
                 error_rates = [cer(target_sequences[i], output_sequences[i]) 
                     if output_sequences[i] != 'No good transcription' else 0
                     for i in range(len(output_sequences))
@@ -272,15 +271,14 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
                         total += len(fragments[i])
                     targets = torch.stack([torch.LongTensor(target) for target in new_targets]).to(device)
                     # Compute the loss
-                    output = output.view(output_size[0], output_size[2], output_size[1])
+                    output = output.permute(0, 2, 1)
                     loss = initialisation_loss_function(output, targets)
                 else:
                     # Regular
                     # Loss function: CTC
                     # Compute the loss
-                    output = output.view(output_size[1], output_size[0], output_size[2])
                     loss = loss_function(
-                        log_softmax(output),
+                        log_softmax(output.permute(1, 0, 2)),
                         target,
                         sequences_lengths,
                         targets_lengths
