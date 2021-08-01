@@ -397,14 +397,13 @@ class LSTM_module(nn.Module):
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        # # Pytorch's LSTM
-        # # Pytorch LSTM module to compare if needed
-        # self.model_torch = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-        #     batch_first=batch_first, bidirectional=bidirectional)
-        # BatchNorm LSTM
-        self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
-            method='orthogonal', bidirectional=bidirectional, batch_norm=True,
-            reference=self.model_torch)
+        # Pytorch's LSTM
+        # Pytorch LSTM module to compare if needed
+        self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+            batch_first=batch_first, bidirectional=bidirectional)
+        # # BatchNorm LSTM
+        # self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
+        #     method='orthogonal', bidirectional=bidirectional, batch_norm=True)
 
     
     def forward(self, input_sequence):
@@ -417,17 +416,17 @@ class LSTM_module(nn.Module):
         """
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
-        # # Pytorch's LSTM
-        # # Pytorch LSTM module to compare if needed
-        # if self.batch_first:
-        #     output_torch, _ = self.model_torch(input_sequence.permute(0, 2, 1))
-        # else:
-        #     output_torch, _ = self.model_torch(input_sequence.permute(2, 0, 1))
-        # Batch Norm LSTM
+        # Pytorch's LSTM
+        # Pytorch LSTM module to compare if needed
         if self.batch_first:
-            output, _ = self.model(input_sequence.permute(0, 2, 1))
+            output, _ = self.model_torch(input_sequence.permute(0, 2, 1))
         else:
-            output, _ = self.model(input_sequence.permute(2, 0, 1))
+            output, _ = self.model_torch(input_sequence.permute(2, 0, 1))
+        # # Batch Norm LSTM
+        # if self.batch_first:
+        #     output, _ = self.model(input_sequence.permute(0, 2, 1))
+        # else:
+        #     output, _ = self.model(input_sequence.permute(2, 0, 1))
         return output
 
 
