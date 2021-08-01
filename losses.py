@@ -35,52 +35,44 @@ class ETLoss(nn.Module):
         output_sequences = list(decoder(output.view(*output_size)))
         error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
         """
-        print(probs.shape)
-        print(targets.shape)
-        batch_size = probs.shape[1]
-        output_sequences = list(decoder(probs.view(probs.shape[0], probs.shape[1], -1)))
-        error_rates = [cer(targets[i], output_sequences[i]) for i in range(len(output_sequences))]
-        print(item_probs.shape)
-        print()
+        # DEVELOPMENT
         return 3
 
 
-def decoder(probabilities_matrix, method='greedy'):
+class FocalCTCLoss(nn.Module):
     """
     DESCRIPTION:
-    The function that implements the greedy algorithm to obtain the
-    sequence of letters from the probability matrix.
-    :param probabilities_matrix: [torch.Tensor] matrix of dimensions
-    [batch_size, sequence_length] with the output probabilities.
-    :yield: [str] the sequence associated with a series of 
-    probabilities.
+    Implementation of the focal CTC loss introduced in:
+    https://doi.org/10.1155/2019/9345861
     """
-    letters = ['A', 'T', 'G', 'C', '$']
-    # windows = [length2indices(window) for window in segments_lengths]
-    if method == 'greedy':
-        max_probabilities = torch.argmax(probabilities_matrix, dim=2)
-        for i in range(len(probabilities_matrix)):
-            # Output probabilities to sequence
-            # OLD
-            # sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
-            # sequence = [sequence[windows[i][index]:windows[i][index+1]] for index in range(len(windows[i])-1)]
-            # sequence = [''.join(list(set(segment))) for segment in sequence]
-            # sequence = ''.join(sequence)
-            final_sequence = []
-            sequence = [letters[prob] for prob in max_probabilities[i].tolist()]
-            final_sequence = []
-            for item in sequence:
-                if not final_sequence:
-                    final_sequence.append(item)
-                    continue
-                if final_sequence[-1] != item:
-                    final_sequence.append(item)
-            final_sequence = ''.join(final_sequence)
-            final_sequence_greedy = final_sequence.replace('$', '')
-            prob = probabilities_matrix[i]
-            yield final_sequence_greedy
-    elif method == 'beam_search':
-        probs = probabilities_matrix.cpu().detach().numpy()
-        for prob in probs:
-            seq, path = beam_search(prob, ''.join(letters), beam_size=5, beam_cut_threshold=1E-24)
-            yield seq.replace('$', '')
+    # Methods
+    def __init__(self, alpha=0.25, gamma=0.5, blank=0):
+        """
+        DESCRIPTION:
+        Class constructor.
+        :param alpha: [float] first focal hyperparameter.
+        :param gamma: [float] second focal hyperparameter.
+        :param blank: [int] position of the blank character in the input probabilities.
+        """
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.blank = blank
+        self.ctc_loss = nn.CTCLoss(blank=blank)
+
+    def forward(self, log_probs, targets, input_lengths, target_lengths):
+        """
+        DESCRIPTION:
+        Forward pass.
+        :param log_probs: [torch.Tensor] the log softmax input probabilities. 
+        outputted by the network. Dimensionality: [sequence_length, batch_size, n_classes].
+        :param targets: [torch.Tensor] ints containing the label for every time step in the
+        sequences. All the samples in the batch are concatenated.
+        :param input_lengths: [tuple] ints describing the size of every input in the batch.
+        :param target_lengths: [tuple] ints describing the length of the label of every 
+        sample in the batch.
+        :return: [torch.Tensor] loss value.
+        """
+        ctc_value = self.ctc_loss(log_probs, targets, input_lengths, target_lengths)
+        return self.alpha * (1 - torch.exp(-ctc_value)) ** self.gamma * ctc_value
+
