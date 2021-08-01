@@ -11,6 +11,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.nn.modules import batchnorm
 from bnlstm import LSTM
+import numpy as np
 
 
 # Classes
@@ -371,7 +372,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False):
+    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False, batch_first=True):
         """
         DESCRIPTION:
         Class constructor.
@@ -392,16 +393,18 @@ class LSTM_module(nn.Module):
         self.hidden_size = hidden_size
         self.dropout_proportion = dropout
         self.bidirectional = bidirectional
+        self.batch_first = batch_first
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        # Pytorch's LSTM
-        self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-            batch_first=True, bidirectional=self.bidirectional)
-        # # BatchNorm LSTM
-        # self.model = LSTM(input_size, hidden_size, n_layers, batch_size,
-        #     batch_first=True, method='orthogonal', bidirectional=True, 
-        #     batch_norm=True)
+        # # Pytorch's LSTM
+        # # Pytorch LSTM module to compare if needed
+        # self.model_torch = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+        #     batch_first=batch_first, bidirectional=bidirectional)
+        # BatchNorm LSTM
+        self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
+            method='orthogonal', bidirectional=bidirectional, batch_norm=True,
+            reference=self.model_torch)
 
     
     def forward(self, input_sequence):
@@ -414,11 +417,17 @@ class LSTM_module(nn.Module):
         """
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
-        size = input_sequence.shape
-        # Pytorch's LSTM
-        output, _ = self.model(input_sequence.view(size[0], size[2], size[1]))
-        # # Batch Norm LSTM
-        # output, _ = self.model(input_sequence.view(size[2], size[0], size[1]))
+        # # Pytorch's LSTM
+        # # Pytorch LSTM module to compare if needed
+        # if self.batch_first:
+        #     output_torch, _ = self.model_torch(input_sequence.permute(0, 2, 1))
+        # else:
+        #     output_torch, _ = self.model_torch(input_sequence.permute(2, 0, 1))
+        # Batch Norm LSTM
+        if self.batch_first:
+            output, _ = self.model(input_sequence.permute(0, 2, 1))
+        else:
+            output, _ = self.model(input_sequence.permute(2, 0, 1))
         return output
 
 
@@ -524,9 +533,11 @@ class DecoderCustom(nn.Module):
         self.hidden_size = 2 * initial_size
         self.output_size = output_size
         self.batch_size = batch_size
-        self.linear_1 = nn.Linear(self.initial_size, self.hidden_size)
-        self.dropout = nn.Dropout(dropout)
-        self.linear_2 = nn.Linear(self.hidden_size, self.output_size)
+        self.model = nn.Sequential(
+            nn.Linear(self.initial_size, self.hidden_size),
+            #nn.Dropout(dropout),
+            nn.Linear(self.hidden_size, self.output_size)
+        )
         
     def forward(self, input_sequence):
         """
@@ -534,15 +545,8 @@ class DecoderCustom(nn.Module):
         Forward pass.
         :param input_sequence: [torch.Tensor] the sequence to feed the model.
         """
-        # # Prepare the constant weights and bias
-        # with torch.no_grad():
-        #     linear_2_bias = torch.cat((self.linear_2.bias[0:-1], torch.Tensor([0.01])))
-        #     linear_2_weight = torch.cat((self.linear_2.weight[0:-1, :], torch.Tensor([[0.01] * (2 * self.initial_size)])))
-        # self.linear_2.bias = torch.nn.Parameter(linear_2_bias)
-        # self.linear_2.weight = torch.nn.Parameter(linear_2_weight)
-        output = self.linear_1(input_sequence)
-        output = self.dropout(output)
-        output = self.linear_2(output)
+        # Prepare the constant weights and bias
+        output = self.model(input_sequence)
         return output
 
 
