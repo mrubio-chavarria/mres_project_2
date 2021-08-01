@@ -19,30 +19,6 @@ from tqdm import tqdm
 
 
 # Classes
-class reshape2Tensor(object):
-    """
-    DESCRIPTION:
-    A transform object to set the sample signals in the proper
-    format.
-    """
-    # Methods
-    def __init__(self, shape):
-        """
-        DESCRIPTION:
-        Class constructor.
-        :param shape: [tuple] the dimensions in which the signals
-        should be fitted.
-        """
-        super().__init__()
-        self.shape = shape
-    
-    def __call__(self, sample):
-        sample['signal'] = torch.from_numpy(
-            sample['signal'].astype(np.dtype('d'))
-        ).view(*self.shape)
-        return sample
-
-
 class CustomisedSampler(torch.utils.data.Sampler):
     """
     DESCRIPTION:
