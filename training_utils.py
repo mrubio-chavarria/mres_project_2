@@ -255,6 +255,7 @@ def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', *
     # Go through the test batches
     losses = []
     errors = []
+    print(list(test_data))
     for batch in test_data:
         # Clean gradient
         model.zero_grad()
