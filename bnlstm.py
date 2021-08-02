@@ -32,11 +32,11 @@ class BatchNormModule(nn.Module):
         self.eps = eps
         self.momentum = momentum
         self.affine = affine
-        self.zero_bias = zero_bias
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.zero_bias = zero_bias 
+
         if self.affine:
-            self.weight = nn.Parameter(torch.FloatTensor(num_features).to(device))
-            self.bias = nn.Parameter(torch.FloatTensor(num_features).to(device))
+            self.weight = nn.Parameter(torch.FloatTensor(num_features))
+            self.bias = nn.Parameter(torch.FloatTensor(num_features))
         else:
             self.register_parameter('weight', None)
             self.register_parameter('bias', None)
@@ -139,9 +139,9 @@ class LSTMlayer(nn.Module):
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
             # Batch normalisation parameters
-            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
+            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True).to(device)
+            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True).to(device)
+            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True).to(device)
             # Initialise the parameters
             self.bn_ih.reset_parameters()
             self.bn_hh.reset_parameters()
