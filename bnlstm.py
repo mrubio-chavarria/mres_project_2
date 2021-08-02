@@ -200,6 +200,7 @@ class LSTMlayer(nn.Module):
         dimensionality: [n_directions, batch_size, hidden_size] (the code follows when possible
         the Pytorch convention, with num_layers==1).
         """
+        sequence = sequence.to(self.device)
         # Initialise hidden and cell states
         if initial_states is None:
             h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
