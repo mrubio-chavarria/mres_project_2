@@ -248,7 +248,7 @@ def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', *
     """
     model.eval()
     # Set device
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # Prepare loss if needed
     if loss_type == 'CTCLoss':
         log_softmax = nn.LogSoftmax(dim=2).to(device)
@@ -310,7 +310,7 @@ def train(model, train_data, validation_data, algorithm='single', **kwargs):
     t = TicToc()
     t.tic()
     # Set device
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print('Training started')
     print('Algorithm:', algorithm)
     # Select training algorithm
