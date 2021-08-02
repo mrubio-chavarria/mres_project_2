@@ -36,7 +36,11 @@ def filter_reads(read_files, reference_file,  q_score_threshold, workdir, new_wa
         read_ids = [read[0] for read in csv.reader(read_ids_file, delimiter='\t')][1::]
         read_ids_file.close()
         for read_file in read_files:
-            fast5_data = h5py.File(read_file, 'r')
+            try:
+                fast5_data = h5py.File(read_file, 'r')
+            except OSError:
+                # File badly parsed or corrupted
+                continue
             read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
             if read_id in read_ids:
                 reads_folder = '/'.join(read_file.split('/')[:-1])
