@@ -372,7 +372,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False, batch_first=True, batch_norm=False):
+    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False, batch_first=True, batch_norm=False, gamma=0.1):
         """
         DESCRIPTION:
         Class constructor.
@@ -386,6 +386,7 @@ class LSTM_module(nn.Module):
         are bidirectional. 
         :param batch_norm: [bool] a parameter to indicate if the LSTM should be 
         batch norm or not.
+        :param gamma: [float] the gamma value to initialise the LSTM batch norms.
         """
         super().__init__()
         # Parameters
@@ -401,7 +402,7 @@ class LSTM_module(nn.Module):
         # LSTM layers
         if batch_norm:
             self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
-                bidirectional=bidirectional, batch_norm=True)
+                bidirectional=bidirectional, batch_norm=True, gamma=gamma)
         else:
             self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
                 batch_first=batch_first, bidirectional=bidirectional)

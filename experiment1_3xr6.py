@@ -117,7 +117,7 @@ if __name__ == "__main__":
         'dropout': 0.8,
         'bidirectional': True,
         'batch_norm': True if gamma_value > 0.0 else False,
-        'bn_gamma': gamma_value
+        'gamma': gamma_value
     }
     decoder_parameters = {
         'initial_size': 2 * LSTM_parameters['hidden_size'],
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     - Scheduler: {training_parameters['scheduler']}
     - In HPC: {training_parameters['in_hpc']}
     - N Batches: {training_parameters['max_batches']}
-    - Gamma value: {LSTM_parameters['bn_gamma']}
+    - Gamma value: {LSTM_parameters['gamma']}
     - BNLSTM: {LSTM_parameters['batch_norm']}
     """
     print(text_training)
