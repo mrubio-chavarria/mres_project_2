@@ -115,7 +115,7 @@ class LSTMlayer(nn.Module):
     The class to stack the LSTM cells in a single layer.
     """
     # Methods
-    def __init__(self, input_size, hidden_size, layer_index, reference=None, bidirectional=False, batch_norm=False, max_length=1000):
+    def __init__(self, input_size, hidden_size, layer_index, reference=None, bidirectional=False, batch_norm=False, gamma=0.1, max_length=1000):
         """
         DESCRIPTION:
         Class constructor.
@@ -127,6 +127,7 @@ class LSTMlayer(nn.Module):
         be bidirectional or not.
         :param batch_norm: [bool] flag to indicate if there should be recurrent batch
         normalisation.
+        :param gamma: [float] gamma value to initialse the batch norms.
         """
         super().__init__()
         self.input_size = input_size
@@ -148,9 +149,9 @@ class LSTMlayer(nn.Module):
             self.bn_c.reset_parameters()
             self.bn_ih.bias.data.fill_(0).to(self.device)
             self.bn_hh.bias.data.fill_(0).to(self.device)
-            self.bn_ih.weight.data.fill_(0.1).to(self.device)
-            self.bn_hh.weight.data.fill_(0.1).to(self.device)
-            self.bn_c.weight.data.fill_(0.1).to(self.device)
+            self.bn_ih.weight.data.fill_(gamma).to(self.device)
+            self.bn_hh.weight.data.fill_(gamma).to(self.device)
+            self.bn_c.weight.data.fill_(gamma).to(self.device)
 
         # Import or create the matrices
         if reference is None:
@@ -308,7 +309,7 @@ class LSTM(nn.Module):
     Final LSTM module built on the previous ones.
     """
     # Methods
-    def __init__(self, input_size, hidden_size, num_layers, batch_first=False, reference=None, bidirectional=False, batch_norm=False):
+    def __init__(self, input_size, hidden_size, num_layers, batch_first=False, reference=None, bidirectional=False, batch_norm=False, gamma=0.1):
         """
         Class constructor.
         :param input_size: [int] dimensionality of every item in the input sequence.
@@ -322,6 +323,7 @@ class LSTM(nn.Module):
         be bidirectional or not.
         :param batch_norm: [bool] flag to indicate if there should be recurrent batch
         normalisation.
+        :param gamma: [float] gamma value to initialse the batch norms.
         """
         super().__init__()
         self.input_size = input_size
@@ -333,9 +335,9 @@ class LSTM(nn.Module):
         self.layers = []
         for i in range(self.num_layers):
             if i == 0:
-                self.layers.append(LSTMlayer(input_size, hidden_size, i, reference, bidirectional, batch_norm))
+                self.layers.append(LSTMlayer(input_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
             else:
-                self.layers.append(LSTMlayer(self.n_directions * hidden_size, hidden_size, i, reference, bidirectional, batch_norm))
+                self.layers.append(LSTMlayer(self.n_directions * hidden_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
     
     def forward(self, sequence):
         """
