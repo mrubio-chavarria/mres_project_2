@@ -58,7 +58,7 @@ if __name__ == "__main__":
     It is not the same.
     """
     # Set cuda devices visible
-    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
+    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1].split(',')[0]
 
     # Project directory
     database_dir = sys.argv[2]
