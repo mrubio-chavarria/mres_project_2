@@ -372,7 +372,7 @@ class LSTM_module(nn.Module):
     LSTM module to integrate in the final network.
     """
     # Methods
-    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False, batch_first=True):
+    def __init__(self, n_layers, input_size, batch_size, hidden_size, dropout=0.2, bidirectional=False, batch_first=True, batch_norm=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -384,6 +384,8 @@ class LSTM_module(nn.Module):
         :param dropout: [float] proportion of dropout neurons.
         :param bidirectional: [bool] variable to indicate if the LSTM layers
         are bidirectional. 
+        :param batch_norm: [bool] a parameter to indicate if the LSTM should be 
+        batch norm or not.
         """
         super().__init__()
         # Parameters
@@ -397,15 +399,14 @@ class LSTM_module(nn.Module):
         self.hidden_cell_state = (torch.zeros(1, batch_size, hidden_size),
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
-        # # Pytorch's LSTM
-        # # Pytorch LSTM module to compare if needed
-        # self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
-        #     batch_first=batch_first, bidirectional=bidirectional)
-        # BatchNorm LSTM
-        self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
-            bidirectional=bidirectional, batch_norm=True)
+        if batch_norm:
+            self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
+                bidirectional=bidirectional, batch_norm=True)
+        else:
+            self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
+                batch_first=batch_first, bidirectional=bidirectional)
 
-    
+
     def forward(self, input_sequence):
         """
         DESCRIPTION:
@@ -416,13 +417,6 @@ class LSTM_module(nn.Module):
         """
         # We do not store the hidden and cell states
         # When bidirectional, the output dim is 2 * hidden dim
-        # # Pytorch's LSTM
-        # # Pytorch LSTM module to compare if needed
-        # if self.batch_first:
-        #     output, _ = self.model(input_sequence.permute(0, 2, 1))
-        # else:
-        #     output, _ = self.model(input_sequence.permute(2, 0, 1))
-        # Batch Norm LSTM
         if self.batch_first:
             output, _ = self.model(input_sequence.permute(0, 2, 1))
         else:
