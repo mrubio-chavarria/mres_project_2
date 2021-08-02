@@ -1,7 +1,7 @@
 #!/home/mario/anaconda3/envs/project2_venv/bin python
 
 import torch
-from torch import nn
+from torch import device, nn
 from torch.nn import init
 
 # Classes
@@ -202,15 +202,21 @@ class LSTMlayer(nn.Module):
         """
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
-            c_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
+            h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+            c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
         else:
             h_0, c_0 = initial_states
+        h_0 = h_0.to(self.device)
+        c_0 = c_0.to(self.device)
         # Forward pass
         h_f, c_f = self.sequence_pass(sequence, h_0, c_0, reverse=False)
+        h_f = h_f.to(self.device)
+        c_f = c_f.to(self.device)
         if self.bidirectional:
             # Backward pass
             h_b, c_b = self.sequence_pass(sequence, h_0, c_0, reverse=True)
+            h_b = h_b.to(self.device)
+            c_b = c_b.to(self.device)
             # Concat both
             h = torch.cat((h_f, h_b), dim=2)
             c = torch.cat((c_f, c_b), dim=2)
