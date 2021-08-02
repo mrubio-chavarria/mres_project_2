@@ -8,15 +8,9 @@ experiment scripts.
 
 # Libraries
 from losses import FocalCTCLoss
-from typing_extensions import final
 import torch
-from torch.nn.modules.loss import SoftMarginLoss
-from torch.utils.data import DataLoader
-from torch import max_pool1d, nn
-from torch.utils.data.distributed import DistributedSampler
-from datasets import collate_text2int_fn
+from torch import log_softmax, nn
 from metrics import cer
-from torch import multiprocessing as mp
 import pandas as pd
 from fast_ctc_decode import beam_search, viterbi_search
 from torch.optim.lr_scheduler import StepLR
@@ -86,15 +80,14 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, device, experiment=None, rank=0, sampler=None, **kwargs):
+def launch_training(model, train_data, test_data, device, **kwargs):
     """
     DESCRIPTION:
-    UPDATE
-    A function to launch the model training.
-    :param rank: [int] index of the process executing the function.
-    :param sampler: [DistributedSampler] sampler to control batch reordering
-    after eery epoch in the case of multiprocessing.
-    COMPLETE
+    Function that effectively launches the training. 
+    :param model: [nn.Module] the model to train.
+    :param train_data: [iter] the data organised in batches ready to train.
+    :param test_data: [iter] the data organised in batches ready to test.
+    :param device: [torch.device] device to move the data into.
     """
     # Helper functions
     def record_in_file(loss_values, avgcer_values):
@@ -105,15 +98,19 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     # Create optimiser
     if kwargs.get('optimiser', 'SGD') == 'SGD':
         optimiser = torch.optim.SGD(model.parameters(),
-                                    lr=kwargs.get('learning_rate', 1E-4),
+                                    lr=kwargs.get('learning_rate', 1E-3),
                                     momentum=kwargs.get('momemtum', 0))
     elif kwargs.get('optimiser', 'SGD') == 'Adam':
         optimiser = torch.optim.Adam(model.parameters(),
-                                    lr=kwargs.get('learning_rate', 1E-4),
+                                    lr=kwargs.get('learning_rate', 1E-3),
+                                    weight_decay=kwargs.get('weight_decay', 0))
+    elif kwargs.get('optimiser', 'SGD') == 'AdamW':
+        optimiser = torch.optim.AdamW(model.parameters(),
+                                    lr=kwargs.get('learning_rate', 1E-3),
                                     weight_decay=kwargs.get('weight_decay', 0))
     elif kwargs.get('optimiser', 'SGD') == 'RMSprop':
         optimiser = torch.optim.RMSprop(model.parameters(),
-                                        lr=kwargs.get('learning_rate', 1E-4),
+                                        lr=kwargs.get('learning_rate', 1E-3),
                                         weight_decay=kwargs.get('weight_decay',0),
                                         momentum=kwargs.get('momemtum', 0))
     else:
@@ -135,187 +132,160 @@ def launch_training(model, train_data, device, experiment=None, rank=0, sampler=
     batch_size = kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
+    loss_function = FocalCTCLoss(blank=4).to(device)
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
     avgcers = []
     losses = []
-    if experiment is not None:
-        # THIS SECTION IS NOT UPDATED
-        with experiment.train():
-            for epoch in range(kwargs.get('n_epochs', 5)):
-                # if sampler is not None:
-                #     sampler.set_epoch(epoch)
-                for batch_id, batch in enumerate(train_data):
-                    if max_batches is not None:
-                        if batch_id == max_batches:
-                            break
-                    # Clean gradient
-                    model.zero_grad()
-                    # Move data to device
-                    target_segments = batch['fragments']
-                    target_sequences = batch['sequences']
-                    targets_lengths = batch['targets_lengths']
-                    batch, target = batch['signals'].to(device), batch['targets'].to(device)
-                    # All the sequences in a batch are of the same length
-                    sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
-                    if batch.shape[0] != batch_size:
-                        continue
-                    # Forward pass
-                    output = model(batch)
-                    # Loss
-                    # Set different loss to initialise
-                    output_size = output.shape
-                    if epoch in initialisation_epochs:
-                        # Initialisation
-                        # Loss function: CrossEntropy
-                        # Create the labels
-                        fragments = target_segments
-                        new_targets = []
-                        total = 0
-                        new_targets = []
-                        for i in range(len(fragments)):
-                            new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
-                            new_targets.append(new_target)
-                            total += len(fragments[i])
-                        targets = torch.stack([torch.LongTensor(target) for target in new_targets])
-                        # Compute the loss
-                        output_size = output.shape
-                        output = output.view(output_size[0], output_size[2], output_size[1])
-                        loss = initialisation_loss_function(output, targets)
-                    else:
-                        # Regular
-                        # Loss function: CTC
-                        # Compute the loss
-                        output = output.view(output_size[1], output_size[0], output_size[2])
-                        loss = loss_function(
-                            log_softmax(output),
-                            target,
-                            sequences_lengths,
-                            targets_lengths
-                        )
-                    # Backward pass
-                    loss.backward()
-                    # Gradient step
-                    optimiser.step()
-                    if kwargs.get('scheduler', None) == 'OneCycleLR':
-                        scheduler.step()
-                    # Decode output
-                    output_sequences = list(decoder(output.view(*output_size)))
-                    error_rates = [cer(target_sequences[i], output_sequences[i]) for i in range(len(output_sequences))]
-                    avg_error = sum(error_rates) / len(error_rates)
-                    # Show progress
-                    losses.append(loss.item())
-                    avgcers.append(avg_error)
-                    if batch_id % 25 == 0:
-                        print('----------------------------------------------------------------------------------------------------------------------')
-                        print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-                        # print(f'First target: {target_sequences[0]}\nFirst output: {seq}')
-                        if kwargs.get('scheduler') is not None:
-                            print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-                        else:
-                            print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error}')
-                
-                    # Record data by batch
-                    experiment.log_metric('loss', loss.item(), step=batch_id, epoch=epoch)
-                    experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], step=batch_id, epoch=epoch)
-                    experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
-                # Record data by epoch
-                experiment.log_metric('loss', loss.item(), epoch=epoch)
-                experiment.log_metric('learning_rate', optimiser.param_groups[0]["lr"], epoch=epoch)
-                experiment.log_metric('avg_batch_error', avg_error, step=batch_id, epoch=epoch)
-                if kwargs.get('scheduler', None) == 'StepLR':
+    for epoch in range(kwargs.get('n_epochs', 5)):
+        for batch_id, batch in enumerate(train_data):
+            if max_batches is not None:
+                if batch_id == max_batches:
+                    break
+            # Clean gradient
+            model.zero_grad()
+            # Move data to device
+            target_segments = batch['fragments']
+            target_sequences = batch['sequences']
+            targets_lengths = batch['targets_lengths']
+            batch, target = batch['signals'].to(device), batch['targets'].to(device)
+            # All the sequences in a batch are of the same length
+            sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
+            if batch.shape[0] != batch_size:
+                continue
+            # Forward pass
+            output = model(batch)
+            # Decode output
+            output_sequences = list(decoder(output, kwargs.get('n_labels', 5)))
+            error_rates = [cer(target_sequences[i], output_sequences[i]) 
+                if output_sequences[i] != 'No good transcription' else 0
+                for i in range(len(output_sequences))
+            ]
+            avg_error = sum(error_rates) / len(error_rates)
+            # Loss
+            # Set different loss to initialise
+            if epoch in initialisation_epochs:
+                # Initialisation
+                # Loss function: CrossEntropy
+                # Create the labels
+                fragments = target_segments
+                new_targets = []
+                total = 0
+                new_targets = []
+                for i in range(len(fragments)):
+                    new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
+                    new_targets.append(new_target)
+                    total += len(fragments[i])
+                targets = torch.stack([torch.LongTensor(target) for target in new_targets]).to(device)
+                # Compute the loss
+                output = output.permute(0, 2, 1)
+                loss = initialisation_loss_function(output, targets)
+            else:
+                # Regular
+                # Loss function: CTC
+                # Compute the loss
+                loss = loss_function(
+                    log_softmax(output.permute(1, 0, 2)),
+                    target,
+                    sequences_lengths,
+                    targets_lengths
+                )
+            # Backward pass
+            loss.backward()
+            # Gradient step
+            optimiser.step()
+            if kwargs.get('scheduler', None) == 'OneCycleLR':
                     scheduler.step()
-    else:
-        for epoch in range(kwargs.get('n_epochs', 5)):
-            # if sampler is not None:
-            #     sampler.set_epoch(epoch)
-            for batch_id, batch in enumerate(train_data):
-                if max_batches is not None:
-                    if batch_id == max_batches:
-                        break
-                # Clean gradient
-                model.zero_grad()
-                # Move data to device
-                target_segments = batch['fragments']
-                target_sequences = batch['sequences']
-                targets_lengths = batch['targets_lengths']
-                batch, target = batch['signals'].to(device), batch['targets'].to(device)
-                # All the sequences in a batch are of the same length
-                sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
-                if batch.shape[0] != batch_size:
-                    continue
-                # Forward pass
-                output = model(batch)
-                # Decode output
-                output_sequences = list(decoder(output, kwargs.get('n_labels', 5)))
-                error_rates = [cer(target_sequences[i], output_sequences[i]) 
-                    if output_sequences[i] != 'No good transcription' else 0
-                    for i in range(len(output_sequences))
-                ]
-                avg_error = sum(error_rates) / len(error_rates)
-                # Loss
-                # Set different loss to initialise
-                if epoch in initialisation_epochs:
-                    # Initialisation
-                    # Loss function: CrossEntropy
-                    # Create the labels
-                    fragments = target_segments
-                    new_targets = []
-                    total = 0
-                    new_targets = []
-                    for i in range(len(fragments)):
-                        new_target = [it for sb in [[target[total+j].tolist()] * fragments[i][j] for j in range(len(fragments[i]))] for it in sb]
-                        new_targets.append(new_target)
-                        total += len(fragments[i])
-                    targets = torch.stack([torch.LongTensor(target) for target in new_targets]).to(device)
-                    # Compute the loss
-                    output = output.permute(0, 2, 1)
-                    loss = initialisation_loss_function(output, targets)
+            # Show progress
+            losses.append(loss.item())
+            avgcers.append(avg_error)
+            if batch_id % 5 == 0:
+                print('----------------------------------------------------------------------------------------------------------------------')
+                print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
+                if kwargs.get('scheduler') is not None:
+                    print(f'Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
                 else:
-                    # Regular
-                    # Loss function: CTC
-                    # Compute the loss
-                    loss = loss_function(
-                        log_softmax(output.permute(1, 0, 2)),
-                        target,
-                        sequences_lengths,
-                        targets_lengths
-                    )
-                # Backward pass
-                loss.backward()
-                # Gradient step
-                optimiser.step()
-                if kwargs.get('scheduler', None) == 'OneCycleLR':
-                        scheduler.step()
-                # Show progress
-                losses.append(loss.item())
-                avgcers.append(avg_error)
-                if batch_id % 25 == 0:
-                    print('----------------------------------------------------------------------------------------------------------------------')
-                    print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
-                    if kwargs.get('scheduler') is not None:
-                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-                    else:
-                        print(f'Process: {rank} Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
-            if kwargs.get('scheduler', None) == 'StepLR':
-                scheduler.step()
+                    print(f'Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
+        # Study test dataset per epoch
+        test_loss, test_error = test(model, test_data, loss_function, cer, loss_type='CTCLoss', **kwargs)
+        if kwargs.get('scheduler', None) == 'StepLR':
+            scheduler.step()
     # Manual record in file
     record_in_file(losses, avgcers)
         
 
-
-def train(model, train_data, experiment=None, algorithm='single', n_processes=3, **kwargs):
+def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', **kwargs):
     """
     DESCRIPTION:
-    UPDATE
-    A wrapper to control the use of multiprocessing Hogwild algorithm from single
-    node traditional training.
-    :param algorithm: [str] the algorithm to train. Classic single-node and CPU 
-    trainin, or single-node multi CPU Hogwild.
+    Function to test the model progression during training in the validation
+    dataset.
     :param model: [torch.nn.Module] the model to train.
-    COMPLETE
+    :param test_data: [iter] the data organised in batches ready to test.
+    :param loss_function: [nn.Module] function to test model progression.
+    :param error_function: [nn.Module] function to test model progression.
+    :param loss_type: [str] label to identify the loss function used.
+    """
+    model.eval()
+    # Set device
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # Prepare loss if needed
+    if loss_type == 'CTCLoss':
+        log_softmax = nn.LogSoftmax(dim=2).to(device)
+    # Go through the test batches
+    losses = []
+    errors = []
+    for batch in test_data:
+        # Clean gradient
+        model.zero_grad()
+        # Move data to device
+        target_segments = batch['fragments']
+        target_sequences = batch['sequences']
+        targets_lengths = batch['targets_lengths']
+        batch, target = batch['signals'].to(device), batch['targets'].to(device)
+        # All the sequences in a batch are of the same length
+        sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
+        # Forward pass
+        output = model(batch)
+        # Decode output
+        output_sequences = list(decoder(output, kwargs.get('n_labels', 5)))
+        error_rates = [error_function(target_sequences[i], output_sequences[i]) 
+            if output_sequences[i] != 'No good transcription' else 0
+            for i in range(len(output_sequences))
+        ]
+        avg_error = sum(error_rates) / len(error_rates)
+        # Loss
+        if loss_type == 'CTCLoss':
+            # Loss function: CTC
+            # Compute the loss
+            loss = loss_function(
+                log_softmax(output.permute(1, 0, 2)),
+                target,
+                sequences_lengths,
+                targets_lengths
+            )
+        else:
+            raise KeyError('Invalide loss type declared')
+        # Store progress
+        losses.append(loss.item())
+        errors.append(avg_error)
+    model.train()
+    # Return the averages
+    avg_loss = sum(losses) / len(losses)
+    avg_error = sum(errors) / len(errors)
+    return avg_loss, avg_error
+
+
+def train(model, train_data, test_data, algorithm='single', **kwargs):
+    """
+    DESCRIPTION:
+    Fucntion to abstract the training from the rest of the process.
+    :param model: [torch.nn.Module] the model to train.
+    :param train_data: [iter] the data organised in batches ready to train.
+    :param test_data: [iter] the data organised in batches ready to test.
+    :param algorithm: [str] the type of algorithm to use for batch parallelisation.
+    If single, there is no parallelisation. Alternative, DataParallel.
     """
     # Compute training time
     t = TicToc()
@@ -329,31 +299,14 @@ def train(model, train_data, experiment=None, algorithm='single', n_processes=3,
         model = model.to(device)
         model.train()
         # Start training
-        launch_training(model, train_data, device, experiment, **kwargs)
+        launch_training(model, train_data, test_data, device, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
         model = nn.DataParallel(model)
         model = model.to(device)
         model.train()
         # Start training
-        launch_training(model, train_data, device, experiment, **kwargs)
-    # elif algorithm == 'Hogwild':
-    #     # Start training
-    #     # We are not setting a blockade per epoch
-    #     model = model.to(device)
-    #     model.train()
-    #     model.share_memory()
-    #     processes = []
-    #     for rank in range(n_processes):
-    #         train_sampler = DistributedSampler(train_dataset, num_replicas=n_processes, rank=rank)
-    #         train_data = DataLoader(dataset=train_dataset, sampler=train_sampler, batch_size=kwargs.get('batch_size'), collate_fn=collate_text2int_fn)
-            
-    #         print(f'Process {rank} launched')
-    #         process = mp.Process(target=launch_training, args=(model, train_data, device, experiment, rank, train_sampler), kwargs=kwargs)
-    #         process.start()
-    #         processes.append(process)
-    #     for process in processes:
-    #         process.join()
+        launch_training(model, train_data, test_data, device, **kwargs)
     else:
         raise ValueError('Invalid training method')
     print('************************************************************')
