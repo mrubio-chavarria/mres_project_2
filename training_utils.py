@@ -80,7 +80,7 @@ def init_weights(module):
         [nn.init.xavier_uniform_(getattr(module, attr)) for attr in dir(module) if attr.startswith('weight_')]
 
 
-def launch_training(model, train_data, test_data, device, **kwargs):
+def launch_training(model, train_data, validation_data, device, **kwargs):
     """
     DESCRIPTION:
     Function that effectively launches the training. 
@@ -90,10 +90,24 @@ def launch_training(model, train_data, test_data, device, **kwargs):
     :param device: [torch.device] device to move the data into.
     """
     # Helper functions
-    def record_in_file(loss_values, avgcer_values):
+    def record_in_file(train_loss_values, train_avgcer_values, test_loss_values, test_avgcer_values):
+        """
+        DESCRIPTION:
+        Helper function to store all the information in the same file.
+        :param train_loss_values: [list] train loss values to store.
+        :param train_avgcer_values: [list] train average cer values to store.
+        :param train_loss_values: [list] test loss values to store.
+        :param train_avgcer_values: [list] test average cer values to store.
+        """
+        # Read file
         file = kwargs.get('file_manual_record')
-        data = {'loss': loss_values, 'avgcer': avgcer_values}
-        pd.DataFrame.from_dict(data).to_csv(file, sep='\t')
+        # Format train and test data in same table
+        loss_values = train_loss_values + test_loss_values
+        avgcer_values = train_avgcer_values + test_avgcer_values
+        training = [True] * len(train_loss_values) + [False] * len(test_loss_values)
+        data = {'loss': loss_values, 'avgcer': avgcer_values, 'training': training}
+        # Store
+        pd.DataFrame.from_dict(data).to_csv(file, sep='\t', header=False)
     
     # Create optimiser
     if kwargs.get('optimiser', 'SGD') == 'SGD':
@@ -137,8 +151,10 @@ def launch_training(model, train_data, test_data, device, **kwargs):
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
     # Train
-    avgcers = []
-    losses = []
+    train_loss = []
+    train_avgcer = []
+    test_loss = []
+    test_avgcer = []
     for epoch in range(kwargs.get('n_epochs', 5)):
         for batch_id, batch in enumerate(train_data):
             if max_batches is not None:
@@ -199,8 +215,8 @@ def launch_training(model, train_data, test_data, device, **kwargs):
             if kwargs.get('scheduler', None) == 'OneCycleLR':
                     scheduler.step()
             # Show progress
-            losses.append(loss.item())
-            avgcers.append(avg_error)
+            train_loss.append(loss.item())
+            train_avgcer.append(avg_error)
             if batch_id % 5 == 0:
                 print('----------------------------------------------------------------------------------------------------------------------')
                 print(f'First target: {target_sequences[0]}\nFirst output: {output_sequences[0]}')
@@ -209,11 +225,13 @@ def launch_training(model, train_data, test_data, device, **kwargs):
                 else:
                     print(f'Epoch: {epoch} Batch: {batch_id} Loss: {loss} Error: {avg_error} Learning rate: {optimiser.param_groups[0]["lr"]}')
         # Study test dataset per epoch
-        test_loss, test_error = test(model, test_data, loss_function, cer, loss_type='CTCLoss', **kwargs)
+        loss, avgcer = test(model, validation_data, loss_function, cer, loss_type='CTCLoss', **kwargs)
+        test_loss.append(loss)
+        test_avgcer.append(avgcer)
         if kwargs.get('scheduler', None) == 'StepLR':
             scheduler.step()
     # Manual record in file
-    record_in_file(losses, avgcers)
+    record_in_file(train_loss, train_avgcer, test_loss, test_avgcer)
         
 
 def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', **kwargs):
@@ -277,13 +295,13 @@ def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', *
     return avg_loss, avg_error
 
 
-def train(model, train_data, test_data, algorithm='single', **kwargs):
+def train(model, train_data, validation_data, algorithm='single', **kwargs):
     """
     DESCRIPTION:
     Fucntion to abstract the training from the rest of the process.
     :param model: [torch.nn.Module] the model to train.
     :param train_data: [iter] the data organised in batches ready to train.
-    :param test_data: [iter] the data organised in batches ready to test.
+    :param validation_data: [iter] validation data organised in batches.
     :param algorithm: [str] the type of algorithm to use for batch parallelisation.
     If single, there is no parallelisation. Alternative, DataParallel.
     """
@@ -299,14 +317,14 @@ def train(model, train_data, test_data, algorithm='single', **kwargs):
         model = model.to(device)
         model.train()
         # Start training
-        launch_training(model, train_data, test_data, device, **kwargs)
+        launch_training(model, train_data, validation_data, device, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
         model = nn.DataParallel(model)
         model = model.to(device)
         model.train()
         # Start training
-        launch_training(model, train_data, test_data, device, **kwargs)
+        launch_training(model, train_data, validation_data, device, **kwargs)
     else:
         raise ValueError('Invalid training method')
     print('************************************************************')
