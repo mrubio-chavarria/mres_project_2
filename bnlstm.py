@@ -33,10 +33,10 @@ class BatchNormModule(nn.Module):
         self.momentum = momentum
         self.affine = affine
         self.zero_bias = zero_bias
-
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         if self.affine:
-            self.weight = nn.Parameter(torch.FloatTensor(num_features))
-            self.bias = nn.Parameter(torch.FloatTensor(num_features))
+            self.weight = nn.Parameter(torch.FloatTensor(num_features).to(device))
+            self.bias = nn.Parameter(torch.FloatTensor(num_features).to(device))
         else:
             self.register_parameter('weight', None)
             self.register_parameter('bias', None)
