@@ -291,8 +291,8 @@ def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', *
         errors.append(avg_error)
     model.train()
     # Return the averages
-    avg_loss = sum(losses) / len(losses)
-    avg_error = sum(errors) / len(errors)
+    avg_loss = sum(losses) / len(losses) if len(losses) > 0 else 0
+    avg_error = sum(errors) / len(errors) if len(errors) > 0 else 0
     return avg_loss, avg_error
 
 
