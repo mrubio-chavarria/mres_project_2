@@ -107,7 +107,7 @@ class Dataset_ap(Dataset):
     pittii (ap) dataset
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=4000):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=None):
         """
         DESCRIPTION:
         Class constructor.
@@ -161,7 +161,7 @@ class Dataset_ap(Dataset):
         # Reduce the dataset if needed
         if max_number_windows is not None:
             self.windows = self.windows[:max_number_windows]
-        # Add 1 dimensiones because there is one channel
+        # Add 1 dimensions because there is one channel
         [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
     
     def __len__(self):
@@ -197,7 +197,7 @@ class Dataset_3xr6(Dataset):
     Dataset to load and prepare the data in the 3xr6 dataset. 
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20'):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=None):
         """
         DESCRIPTION:
         Class constructor.
@@ -246,12 +246,16 @@ class Dataset_3xr6(Dataset):
                 files = filter(lambda file: file_hq_filter(file), os.listdir(folder_file))
                 files = map(lambda file: folder_file + '/' + file, files)
                 self.read_files.extend(files)
+        # Limit the number of reads
+        if max_reads is not None:
+            if len(self.read_files) >= max_reads:
+                self.read_files = random.sample(self.read_files, max_reads)
         # Load windows
         self.windows = load_windows(self.read_files, self.reference, self.window_size)
         # Reduce the dataset if needed
         if max_number_windows is not None:
             self.windows = self.windows[:max_number_windows]
-        # Add 1 dimensiones because there is one channel
+        # Add 1 dimensions because there is one channel
         [window.update({'signal': torch.unsqueeze(window['signal'], dim=0)}) for window in self.windows]
 
     def __len__(self):
