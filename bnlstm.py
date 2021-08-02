@@ -33,19 +33,20 @@ class BatchNormModule(nn.Module):
         self.momentum = momentum
         self.affine = affine
         self.zero_bias = zero_bias 
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
         if self.affine:
-            self.weight = nn.Parameter(torch.FloatTensor(num_features))
-            self.bias = nn.Parameter(torch.FloatTensor(num_features))
+            self.weight = nn.Parameter(torch.FloatTensor(num_features)).to(self.device)
+            self.bias = nn.Parameter(torch.FloatTensor(num_features)).to(self.device)
         else:
             self.register_parameter('weight', None)
             self.register_parameter('bias', None)
         for i in range(max_length):
             self.register_buffer(
-                f'running_mean_{i}', torch.zeros(num_features)
+                f'running_mean_{i}', torch.zeros(num_features).to(self.device)
             )
             self.register_buffer(
-                f'running_var_{i}', torch.zeros(num_features)
+                f'running_var_{i}', torch.zeros(num_features).to(self.device)
             )
 
         self.reset_parameters()
@@ -138,18 +139,18 @@ class LSTMlayer(nn.Module):
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
             # Batch normalisation parameters
-            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
+            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True).to(self.device)
+            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True).to(self.device)
+            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True).to(self.device)
             # Initialise the parameters
             self.bn_ih.reset_parameters()
             self.bn_hh.reset_parameters()
             self.bn_c.reset_parameters()
-            self.bn_ih.bias.data.fill_(0)
-            self.bn_hh.bias.data.fill_(0)
-            self.bn_ih.weight.data.fill_(0.1)
-            self.bn_hh.weight.data.fill_(0.1)
-            self.bn_c.weight.data.fill_(0.1)
+            self.bn_ih.bias.data.fill_(0).to(self.device)
+            self.bn_hh.bias.data.fill_(0).to(self.device)
+            self.bn_ih.weight.data.fill_(0.1).to(self.device)
+            self.bn_hh.weight.data.fill_(0.1).to(self.device)
+            self.bn_c.weight.data.fill_(0.1).to(self.device)
 
         # Import or create the matrices
         if reference is None:
