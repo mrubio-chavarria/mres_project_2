@@ -67,7 +67,7 @@ if __name__ == "__main__":
     file_manual_record = sys.argv[3]
 
     # Storage file
-    gamma_value = float(sys.argv[4]) / 10
+    gamma_value = (float(int(sys.argv[4])) - 1) / 10
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
@@ -83,8 +83,8 @@ if __name__ == "__main__":
     
     # Load the test dataset
     validation_window_sizes = [300]
-    validation_max_windows = batch_size # Controls test dataset size: 1 epoch
-    validation_max_reads = 160  # Select all the reads
+    validation_max_windows = 3 * batch_size # Controls test dataset size: 3 epoch
+    validation_max_reads = 200  # Select all the reads
     validation_folder = database_dir + '/' + 'validation_reads'
     
     # Load dataset
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         'hidden_size': 200, # 2 * TCN_parameters['out_channels'],
         'dropout': 0.8,
         'bidirectional': True,
-        'batch_norm': True,
+        'batch_norm': True if gamma_value > 0.0 else False,
         'bn_gamma': gamma_value
     }
     decoder_parameters = {
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 2,
+        'n_epochs': 5,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
@@ -179,6 +179,8 @@ if __name__ == "__main__":
     - Scheduler: {training_parameters['scheduler']}
     - In HPC: {training_parameters['in_hpc']}
     - N Batches: {training_parameters['max_batches']}
+    - Gamma value: {LSTM_parameters['bn_gamma']}
+    - BNLSTM: {LSTM_parameters['batch_norm']}
     """
     print(text_training)
 
