@@ -178,13 +178,13 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
                 setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device and format biases dimensions
-        self.weight_ih = self.weight_ih.to(device)
-        self.weight_hh = self.weight_hh.to(device)
-        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1)).to(device)
+        self.weight_ih = self.weight_ih.to(self.device)
+        self.weight_hh = self.weight_hh.to(self.device)
+        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1)).to(self.device)
         if self.bidirectional:
-            self.weight_ih_reverse = self.weight_ih_reverse.to(device)
-            self.weight_hh_reverse = self.weight_hh_reverse.to(device)
-            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1)).to(device)
+            self.weight_ih_reverse = self.weight_ih_reverse.to(self.device)
+            self.weight_hh_reverse = self.weight_hh_reverse.to(self.device)
+            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1)).to(self.device)
 
     def forward(self, sequence, initial_states=None):
         """
