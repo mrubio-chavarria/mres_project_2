@@ -114,7 +114,8 @@ if __name__ == "__main__":
         'batch_size': batch_size, 
         'hidden_size': 200, # 2 * TCN_parameters['out_channels'],
         'dropout': 0.8,
-        'bidirectional': True
+        'bidirectional': True,
+        'batch_norm': True
     }
     decoder_parameters = {
         'initial_size': 2 * LSTM_parameters['hidden_size'],
