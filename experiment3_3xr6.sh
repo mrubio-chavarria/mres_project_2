@@ -17,4 +17,4 @@ echo "Array job ID: $PBS_ARRAY_INDEX"
 # Launch script
 echo "Launch script"
 n_initialisation_epochs=0
-python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_$PBS_ARRAY_INDEX.tsv $n_initialisation_epochs
+python3 $HOME/project_2/experiment3_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/3xr6_exp3_epoch_$PBS_ARRAY_INDEX.tsv $PBS_ARRAY_INDEX $n_initialisation_epochs

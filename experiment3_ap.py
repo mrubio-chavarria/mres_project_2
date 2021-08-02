@@ -73,24 +73,31 @@ if __name__ == "__main__":
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
 
-    # Load the train and test datasets
     batch_size = 32
-    window_sizes = [300]
-    max_reads = 1000
-    max_windows = None
-    train_folder = database_dir + '/' + "reads"
     shuffle = False
+    # Load the train dataset
+    train_window_sizes = [200, 400, 1000]
+    train_max_windows = None
+    train_max_reads = 2000  # Select all the reads
+    train_folder = database_dir + '/' + "train_reads"
     
-    # # Load dataset
-    # train_dataset_200 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    # train_dataset_400 = Dataset_ap(train_folder, reference_file, window_sizes[1], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    # train_dataset_1000 = Dataset_ap(train_folder, reference_file, window_sizes[2], max_windows, flowcell='flowcell1', hq_value='Q20', max_reads=max_reads)
-    # train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
+    # Load the test dataset
+    validation_window_sizes = [300]
+    validation_max_windows = batch_size  # Controls test dataset size: 1 epoch
+    validation_max_reads = None  # Select all the reads
+    validation_folder = database_dir + '/' + "validation_reads"
+    
+    # Load dataset
+    train_dataset_200 = Dataset_ap(train_folder, reference_file, train_window_sizes[0], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    train_dataset_400 = Dataset_ap(train_folder, reference_file, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    train_dataset_1000 = Dataset_ap(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
-    # train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
-
-    train_dataset_300 = Dataset_ap(train_folder, reference_file, window_sizes[0], max_windows, hq_value='Q20', max_reads=max_reads)
-    train_data = DataLoader(train_dataset_300, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_text2int_fn)
+    validation_dataset_300 = Dataset_ap(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    validation_dataset = CombinedDataset(validation_dataset_300)
+    
+    train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
+    validation_data = CustomisedDataLoader(dataset=validation_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
 
     # Model
     # Parameters
@@ -124,7 +131,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 5,
+        'n_epochs': 2,
         'n_initialisation_epochs': n_initialisation_epochs,
         'batch_size': batch_size,
         'learning_rate': 0.001,
@@ -132,10 +139,10 @@ if __name__ == "__main__":
         'weight_decay': 0,
         'momemtum': 0,
         'optimiser': 'Adam',
-        'sequence_lengths': window_sizes,
+        'sequence_lengths': train_window_sizes,
         'scheduler': None, # 'OneCycleLR',
         'in_hpc': True,
-        'max_batches': 500,
+        'max_batches': 5,
         'n_labels': decoder_parameters['output_size'],
         'shuffle': shuffle,
         'file_manual_record': file_manual_record
@@ -172,56 +179,15 @@ if __name__ == "__main__":
     """
     print(text_training)
 
-    # Set up Comet
-    record_experiment = False
-    if record_experiment:
-        experiment_name = f"acinetobacter-train-{str(datetime.now()).replace(' ', '_')}"
-        experiment = Experiment(
-            api_key="rqM9qXHiO7Ai4U2cqj1pS4R2R",
-            project_name="project-2",
-            workspace="mrubio-chavarria",
-        )
-        experiment.set_name(experiment_name)
-        experiment.display()
-
-        # Log training parameters
-        experiment.log_parameters({
-            'algorithm': training_parameters['algorithm'],
-            'n_epochs': training_parameters['n_epochs'],
-            'n_initialisation_epochs': training_parameters['n_initialisation_epochs'],
-            'batch_size': training_parameters['batch_size'],
-            'learning_rate': training_parameters['learning_rate'],
-            'max_learning_rate': training_parameters['max_learning_rate'],
-            'weight_decay': training_parameters['weight_decay'],
-            'momemtum': training_parameters['momemtum'],
-            'optimiser': training_parameters['optimiser'],
-            'sequence_lengths': training_parameters['sequence_lengths'],
-            'scheduler': training_parameters['scheduler']
-        })
-    else:
-        experiment = None
     # Training
-    train(model, train_data, experiment, **training_parameters)
+    train(model, train_data, validation_data, **training_parameters)
     
     # Save the model
     time = str(datetime.now()).replace(' ', '_')
     model_name = f'model_{time}_{experiment_id}.pt'
     model_path = database_dir + '/' + 'saved_models' + '/' + model_name
     torch.save(model.state_dict(), model_path)
-    # experiment.log_model(f'model_{time}', model_path)  #  Large uploading time
 
-    # # test = list(train_data)[0]
-    # # output = model(test['signals'])
-    # # print(output.shape)
-
-    # # # Decode the output
-    # # output_sequences = list(decoder(output, test['fragments']))
-    # # errors = [cer(test['sequences'][i], output_sequences[i]) for i in range(len(test['sequences']))]
-    # # # print(loss_function(output.view(sequence_length, batch_size, -1), test['targets'], sequences_lengths, test['targets_lengths']))
-
-    # Stop recording parameters
-    if record_experiment:
-        experiment.end()
 
     
             
