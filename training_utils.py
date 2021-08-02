@@ -161,6 +161,7 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
                 if batch_id == max_batches:
                     break
             # Clean gradient
+            model = model.to(device)
             model.zero_grad()
             # Move data to device
             target_segments = batch['fragments']
