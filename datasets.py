@@ -107,7 +107,7 @@ class Dataset_ap(Dataset):
     pittii (ap) dataset
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=None):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q7', max_reads=None):
         """
         DESCRIPTION:
         Class constructor.
