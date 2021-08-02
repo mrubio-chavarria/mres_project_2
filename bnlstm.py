@@ -13,7 +13,7 @@ class BatchNormModule(nn.Module):
     https://github.com/jihunchoi/recurrent-batch-normalization-pytorch
     """
     # Methods
-    def __init__(self, num_features, max_length, eps=1e-5, momentum=0.1, affine=True):
+    def __init__(self, num_features, max_length, eps=1e-5, momentum=0.1, affine=True, zero_bias=True):
         """
         DESCRIPTION:
         Class constructor.
@@ -23,6 +23,8 @@ class BatchNormModule(nn.Module):
         :param eps: [float] number to avoid division by 0 in BN formula.
         :param momentum: [float] value to assign in Pytorch's BN formula downwards. 
         :param affine: [bool] parameter to set the parameters as learnable.
+        :param zero_bias: [bool] flag to indicate whether the bias should be initialised as
+        zero or not, default True.
         """
         super().__init__()
         self.num_features = num_features
@@ -30,6 +32,7 @@ class BatchNormModule(nn.Module):
         self.eps = eps
         self.momentum = momentum
         self.affine = affine
+        self.zero_bias = zero_bias
 
         if self.affine:
             self.weight = nn.Parameter(torch.FloatTensor(num_features))
@@ -66,7 +69,7 @@ class BatchNormModule(nn.Module):
             running_var_i.fill_(1)
         if self.affine:
             self.weight.data.uniform_()
-            self.bias.data.zero_()
+            self.bias.data.zero_() if self.zero_bias else self.bias.data.uniform_()
 
     def _check_input_dim(self, input_sequence):
         """
@@ -129,15 +132,16 @@ class LSTMlayer(nn.Module):
         self.hidden_size = hidden_size
         self.layer_index = layer_index
         self.bidirectional = bidirectional
+        self.batch_norm = batch_norm
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = device  # Store for future calculations
         # Define the cell
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
             # Batch normalisation parameters
-            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length)
-            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length)
-            self.bn_c = BatchNormModule(hidden_size, max_length=max_length)
+            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
+            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
+            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
             # Initialise the parameters
             self.bn_ih.reset_parameters()
             self.bn_hh.reset_parameters()
@@ -156,37 +160,31 @@ class LSTMlayer(nn.Module):
             dims = [4 * hidden_size, hidden_size]
             self.weight_hh = self.initialise_matrix(dims, method='identity')
             dims = [4 * hidden_size]
-            self.bias_ih = self.initialise_matrix(dims, method='zeros')
-            self.bias_hh = self.initialise_matrix(dims, method='zeros')
+            self.bias = self.initialise_matrix(dims, method='zeros')
             if self.bidirectional:
                 dims = [4 * hidden_size, input_size]
                 self.weight_ih_reverse = self.initialise_matrix(dims, method='orthogonal')
                 dims = [4 * hidden_size, hidden_size]
                 self.weight_hh_reverse = self.initialise_matrix(dims, method='identity')
                 dims = [4 * hidden_size]
-                self.bias_ih_reverse = self.initialise_matrix(dims, method='zeros')
-                self.bias_hh_reverse = self.initialise_matrix(dims, method='zeros')
+                self.bias_reverse = self.initialise_matrix(dims, method='zeros')
         else:
             # Import
             setattr(self, f'weight_ih', getattr(reference, f'weight_ih_l{layer_index}'))
             setattr(self, f'weight_hh', getattr(reference, f'weight_hh_l{layer_index}'))
-            setattr(self, f'bias_ih', getattr(reference, f'bias_ih_l{layer_index}'))
-            setattr(self, f'bias_hh', getattr(reference, f'bias_hh_l{layer_index}'))
+            setattr(self, f'bias', getattr(reference, f'bias_ih_l{layer_index}') + getattr(reference, f'bias_hh_l{layer_index}'))
             if self.bidirectional:
                 setattr(self, f'weight_ih_reverse', getattr(reference, f'weight_ih_l{layer_index}_reverse'))
                 setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
-                setattr(self, f'bias_ih_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse'))
-                setattr(self, f'bias_hh_reverse', getattr(reference, f'bias_hh_l{layer_index}_reverse'))
+                setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device and format biases dimensions
         self.weight_ih = self.weight_ih.to(device)
         self.weight_hh = self.weight_hh.to(device)
-        self.bias_ih = nn.Parameter(torch.unsqueeze(self.bias_ih.to(device), 1))
-        self.bias_hh = nn.Parameter(torch.unsqueeze(self.bias_hh.to(device), 1))
+        self.bias = nn.Parameter(torch.unsqueeze(self.bias.to(device), 1))
         if self.bidirectional:
             self.weight_ih_reverse = self.weight_ih_reverse.to(device)
             self.weight_hh_reverse = self.weight_hh_reverse.to(device)
-            self.bias_ih_reverse = nn.Parameter(self.bias_ih_reverse.to(device).view(-1, 1))
-            self.bias_hh_reverse = nn.Parameter(self.bias_hh_reverse.to(device).view(-1, 1))
+            self.bias_reverse = nn.Parameter(self.bias_reverse.to(device).view(-1, 1))
 
     def forward(self, sequence, initial_states=None):
         """
@@ -238,15 +236,16 @@ class LSTMlayer(nn.Module):
         """
         hs = [h_0]
         cs = [c_0]
+        batch_norms = [self.bn_hh, self.bn_ih, self.bn_c] if self.batch_norm else []
         if reverse:
             for i in range(sequence.shape[0]-1, -1, -1):
                 time = -i + (sequence.shape[0]-1)
                 h_t, c_t = self.cell(sequence[i].permute(1, 0), hs[-1], cs[-1],
                                     self.weight_ih_reverse, self.weight_hh_reverse,
-                                    self.bias_ih_reverse, self.bias_hh_reverse,
+                                    self.bias_reverse,
                                     # For the reverse case we use the same BN, just 
                                     # revese the sequence
-                                    [self.bn_hh, self.bn_ih, self.bn_c], time)
+                                    batch_norms, time)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.flip(torch.stack(hs[1:], dim=0), dims=(0,)).permute(0, 2, 1)
@@ -256,8 +255,8 @@ class LSTMlayer(nn.Module):
                 time = i
                 # Define the batch normalisations to use
                 h_t, c_t = self.cell(sequence[i, :, :].permute(1, 0), hs[-1], cs[-1], 
-                                    self.weight_ih, self.weight_hh, self.bias_ih,
-                                    self.bias_hh, [self.bn_hh, self.bn_ih, self.bn_c], time)
+                                    self.weight_ih, self.weight_hh, self.bias,
+                                    batch_norms, time)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.stack(hs[1:], dim=0).permute(0, 2, 1)
@@ -364,7 +363,7 @@ class LSTM(nn.Module):
 
 
 # Functions
-def lstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias_ih, bias_hh, *args):
+def lstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, *args):
     """
     DESCRIPTION:
     Function that represents the basic LSTM cell. A function to iterate over 
@@ -384,14 +383,14 @@ def lstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias_ih, bias_hh, *args):
     :return: hidden and cell states associated with this time step (h_t, c_t),
     both with dimensionality: [batch_size, hidden_size, 1].
     """
-    ifgo = weight_hh @ h_t_1 + bias_hh + weight_ih @ x + bias_ih
+    ifgo = weight_hh @ h_t_1 + weight_ih @ x + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
     c_t = torch.sigmoid(f) * c_t_1 + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(c_t)
     return h_t, c_t
 
 
-def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias_ih, bias_hh, batch_norms, time):
+def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time):
     """
     DESCRIPTION:
     Function that represents the LSTM cell with batch normalisation. Adapted
@@ -422,9 +421,8 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias_ih, bias_hh, batch_n
     w_hh_by_h_t_1 = w_hh_by_h_t_1.permute(1, 0)
     w_ih_by_x = weight_ih @ x
     w_ih_by_x = w_ih_by_x.permute(1, 0)
-    batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0)
-    ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + bias_hh + \
-            batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias_ih
+    ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
+            batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
     c_t = torch.sigmoid(f) * c_t_1 + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(batch_norms[2](c_t.permute(1, 0), time)).permute(1, 0)
