@@ -133,6 +133,7 @@ class LSTMlayer(nn.Module):
         self.layer_index = layer_index
         self.bidirectional = bidirectional
         self.batch_norm = batch_norm
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Define the cell
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
