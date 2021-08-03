@@ -344,7 +344,7 @@ class LSTM(nn.Module):
                 self.layers.append(LSTMlayer(self.n_directions * hidden_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
         self.layers = nn.ModuleList(self.layers)
     
-    def forward(self, sequence, initial_states):
+    def forward(self, sequence):
         """
         DESCRIPTION:
         Forward pass.
