@@ -100,8 +100,8 @@ class BatchNormModule(nn.Module):
         if time >= self.max_length:
             time = self.max_length - 1
         # Get the running statistics
-        running_mean = getattr(self, f'running_mean_{time}')
-        running_var = getattr(self, f'running_var_{time}')
+        running_mean = getattr(self, f'running_mean_{time}').to(device)
+        running_var = getattr(self, f'running_var_{time}').to(device)
         # Compute values
         output = nn.functional.batch_norm(
             input=input_sequence, running_mean=running_mean, running_var=running_var,
