@@ -438,8 +438,9 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, 
     w_hh_by_h_t_1 = w_hh_by_h_t_1.permute(1, 0)
     w_ih_by_x = weight_ih @ x
     w_ih_by_x = w_ih_by_x.permute(1, 0)
-    ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
-            batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
+    term1 = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0)
+    term2 = batch_norms[1](w_ih_by_x, time).permute(1, 0)
+    ifgo =  term1 + term2 + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
     c_t = torch.sigmoid(f) * c_t_1 + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(batch_norms[2](c_t.permute(1, 0), time)).permute(1, 0)
