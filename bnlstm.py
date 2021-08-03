@@ -33,7 +33,6 @@ class BatchNormModule(nn.Module):
         self.momentum = momentum
         self.affine = affine
         self.zero_bias = zero_bias 
-        # self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
         if self.affine:
             self.weight = nn.Parameter(torch.FloatTensor(num_features))#.to(self.device)
@@ -94,6 +93,7 @@ class BatchNormModule(nn.Module):
         [batch_size, input_size] The input size of this function depending on
         the instatiation, not the network input size.
         """
+        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Check that the dimensions coincide
         self._check_input_dim(input_sequence)
         # If the time exceeds the limit, set those values in the last slot8
@@ -105,7 +105,7 @@ class BatchNormModule(nn.Module):
         # Compute values
         output = nn.functional.batch_norm(
             input=input_sequence, running_mean=running_mean, running_var=running_var,
-            weight=self.weight, bias=self.bias, training=self.training,
+            weight=self.weight.to(device), bias=self.bias.to(device), training=self.training,
             momentum=self.momentum, eps=self.eps)
         return output
 
