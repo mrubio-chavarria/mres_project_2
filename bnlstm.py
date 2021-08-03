@@ -135,23 +135,21 @@ class LSTMlayer(nn.Module):
         self.layer_index = layer_index
         self.bidirectional = bidirectional
         self.batch_norm = batch_norm
-        # self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Define the cell
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
             # Batch normalisation parameters
-            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)#.to(self.device)
-            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)#.to(self.device)
-            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)#.to(self.device)
+            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
+            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
             # Initialise the parameters
             self.bn_ih.reset_parameters()
             self.bn_hh.reset_parameters()
             self.bn_c.reset_parameters()
-            self.bn_ih.bias.data.fill_(0)#.to(self.device)
-            self.bn_hh.bias.data.fill_(0)#.to(self.device)
-            self.bn_ih.weight.data.fill_(gamma)#.to(self.device)
-            self.bn_hh.weight.data.fill_(gamma)#.to(self.device)
-            self.bn_c.weight.data.fill_(gamma)#.to(self.device)
+            self.bn_ih.bias.data.fill_(0)
+            self.bn_hh.bias.data.fill_(0)
+            self.bn_ih.weight.data.fill_(gamma)
+            self.bn_hh.weight.data.fill_(gamma)
+            self.bn_c.weight.data.fill_(gamma)
 
         # Import or create the matrices
         if reference is None:
@@ -179,13 +177,13 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
                 setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device and format biases dimensions
-        self.weight_ih = self.weight_ih#.to(self.device)
-        self.weight_hh = self.weight_hh#.to(self.device)
-        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1))#.to(self.device)
+        self.weight_ih = self.weight_ih.cuda
+        self.weight_hh = self.weight_hh
+        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1))
         if self.bidirectional:
-            self.weight_ih_reverse = self.weight_ih_reverse#.to(self.device)
-            self.weight_hh_reverse = self.weight_hh_reverse#.to(self.device)
-            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1))#.to(self.device)
+            self.weight_ih_reverse = self.weight_ih_reverse
+            self.weight_hh_reverse = self.weight_hh_reverse
+            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1))
 
     def forward(self, sequence, initial_states=None):
         """
@@ -201,24 +199,24 @@ class LSTMlayer(nn.Module):
         dimensionality: [n_directions, batch_size, hidden_size] (the code follows when possible
         the Pytorch convention, with num_layers==1).
         """
-        sequence = sequence#.to(self.device)
+
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
-            c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+            h_0 = torch.zeros(self.hidden_size, sequence.shape[1]).cuda()
+            c_0 = torch.zeros(self.hidden_size, sequence.shape[1]).cuda()
         else:
             h_0, c_0 = initial_states
-        h_0 = h_0#.to(self.device)
-        c_0 = c_0#.to(self.device)
+        h_0 = h_0
+        c_0 = c_0
         # Forward pass
         h_f, c_f = self.sequence_pass(sequence, h_0, c_0, reverse=False)
-        h_f = h_f#.to(self.device)
-        c_f = c_f#.to(self.device)
+        h_f = h_f
+        c_f = c_f
         if self.bidirectional:
             # Backward pass
             h_b, c_b = self.sequence_pass(sequence, h_0, c_0, reverse=True)
-            h_b = h_b#.to(self.device)
-            c_b = c_b#.to(self.device)
+            h_b = h_b
+            c_b = c_b
             # Concat both
             h = torch.cat((h_f, h_b), dim=2)
             c = torch.cat((c_f, c_b), dim=2)
