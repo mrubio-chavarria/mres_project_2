@@ -179,16 +179,12 @@ class LSTMlayer(nn.Module):
                 weight_hh_reverse = getattr(reference, f'weight_hh_l{layer_index}_reverse')
                 bias_reverse = torch.unsqueeze(getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'), 1)
         # Register weights and biases
-        self.weights = nn.ParameterDict({
-            'weight_ih': weight_ih,
-            'weight_hh': weight_hh,
-            'weight_ih_reverse': weight_ih_reverse,
-            'weight_hh_reverse': weight_hh_reverse
-        })
-        self.biases = nn.ParameterDict({
-            'bias': bias,
-            'bias_reverse': bias_reverse
-        })
+        self.weight_ih = nn.Parameter(weight_ih)
+        self.weight_hh = nn.Parameter(weight_hh)
+        self.weight_ih_reverse = nn.Parameter(weight_ih_reverse)
+        self.weight_hh_reverse = nn.Parameter(weight_hh_reverse)
+        self.bias = nn.Parameter(bias)
+        self.bias_reverse = nn.Parameter(bias_reverse)
 
     def forward(self, sequence, initial_states=None):
         """
@@ -250,8 +246,8 @@ class LSTMlayer(nn.Module):
                 time = -i + (sequence.shape[0]-1)
                 h_t, c_t = self.cell(sequence[i].permute(1, 0), 
                                     hs[-1], cs[-1],
-                                    self.weights['weight_ih_reverse'], self.weights['weight_hh_reverse'],
-                                    self.biases['bias_reverse'],
+                                    self.weight_ih_reverse, self.weight_hh_reverse,
+                                    self.bias_reverse,
                                     # For the reverse case we use the same BN, just 
                                     # revese the sequence
                                     batch_norms, time)
@@ -265,8 +261,8 @@ class LSTMlayer(nn.Module):
                 # Define the batch normalisations to use
                 h_t, c_t = self.cell(sequence[i, :, :].permute(1, 0), 
                                     hs[-1], cs[-1], 
-                                    self.weights['weight_ih'], self.weights['weight_hh'],
-                                    self.biases['bias'],
+                                    self.weight_ih, self.weight_hh,
+                                    self.bias,
                                     batch_norms, time)
                 hs.append(h_t)
                 cs.append(c_t)
