@@ -135,6 +135,7 @@ class LSTMlayer(nn.Module):
         self.layer_index = layer_index
         self.bidirectional = bidirectional
         self.batch_norm = batch_norm
+        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Define the cell
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
@@ -177,14 +178,19 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'weight_ih_reverse', getattr(reference, f'weight_ih_l{layer_index}_reverse'))
                 setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
                 setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
+
         # Send weights to device and format biases dimensions
-        self.weight_ih = self.weight_ih
-        self.weight_hh = self.weight_hh
-        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1))
+        self.weight_ih = self.weight_ih.to(self.device)
+        self.weight_hh = self.weight_hh.to(self.device)
+        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1)).to(self.device)
         if self.bidirectional:
-            self.weight_ih_reverse = self.weight_ih_reverse
-            self.weight_hh_reverse = self.weight_hh_reverse
-            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1))
+            self.weight_ih_reverse = self.weight_ih_reverse.to(self.device)
+            self.weight_hh_reverse = self.weight_hh_reverse.to(self.device)
+            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1)).to(self.device)
+        if batch_norm:
+            self.bn_ih = self.bn_ih.to(self.device)
+            self.bn_hh = self.bn_hh.to(self.device)
+            self.bn_c = self.bn_c.to(self.device)
 
     def forward(self, sequence, initial_states=None):
         """
@@ -203,8 +209,8 @@ class LSTMlayer(nn.Module):
 
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
-            c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+            h_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
+            c_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
         else:
             h_0, c_0 = initial_states
         h_0 = h_0
@@ -252,7 +258,7 @@ class LSTMlayer(nn.Module):
                                     self.bias_reverse,
                                     # For the reverse case we use the same BN, just 
                                     # revese the sequence
-                                    batch_norms, time)
+                                    batch_norms, time, self.device)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.flip(torch.stack(hs[1:], dim=0), dims=(0,)).permute(0, 2, 1)
@@ -263,7 +269,7 @@ class LSTMlayer(nn.Module):
                 # Define the batch normalisations to use
                 h_t, c_t = self.cell(sequence[i, :, :].permute(1, 0), hs[-1], cs[-1], 
                                     self.weight_ih, self.weight_hh, self.bias,
-                                    batch_norms, time)
+                                    batch_norms, time, self.device)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.stack(hs[1:], dim=0).permute(0, 2, 1)
@@ -398,7 +404,7 @@ def lstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, *args):
     return h_t, c_t
 
 
-def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time):
+def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, device):
     """
     DESCRIPTION:
     Function that represents the LSTM cell with batch normalisation. Adapted
@@ -422,16 +428,16 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time):
     :param batch_norms: [list] vector to store the torch.BatchNorm1d that 
     we will apply, one per transformation and direction.
     :param time: [int] position in the sequence of the item computed.
+    :param device: [torch.device] object to manually send the tensors to device.
     :return: hidden and cell states associated with this time step (h_t, c_t),
     both with dimensionality: [hidden_size, batch_size].
     """
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    w_hh_by_h_t_1 = weight_hh.to(device) @ h_t_1.to(device)
+    w_hh_by_h_t_1 = weight_hh @ h_t_1.to(device)
     w_hh_by_h_t_1 = w_hh_by_h_t_1.permute(1, 0)
-    w_ih_by_x = weight_ih.to(device) @ x
+    w_ih_by_x = weight_ih @ x
     w_ih_by_x = w_ih_by_x.permute(1, 0)
     ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
-            batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias.to(device)
+            batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
     c_t = torch.sigmoid(f) * c_t_1.to(device) + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(batch_norms[2](c_t.permute(1, 0), time)).permute(1, 0)
