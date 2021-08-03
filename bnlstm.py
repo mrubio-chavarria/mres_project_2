@@ -33,20 +33,20 @@ class BatchNormModule(nn.Module):
         self.momentum = momentum
         self.affine = affine
         self.zero_bias = zero_bias 
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+        # self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
         if self.affine:
-            self.weight = nn.Parameter(torch.FloatTensor(num_features)).to(self.device)
-            self.bias = nn.Parameter(torch.FloatTensor(num_features)).to(self.device)
+            self.weight = nn.Parameter(torch.FloatTensor(num_features))#.to(self.device)
+            self.bias = nn.Parameter(torch.FloatTensor(num_features))#.to(self.device)
         else:
             self.register_parameter('weight', None)
             self.register_parameter('bias', None)
         for i in range(max_length):
             self.register_buffer(
-                f'running_mean_{i}', torch.zeros(num_features).to(self.device)
+                f'running_mean_{i}', torch.zeros(num_features)#.to(self.device)
             )
             self.register_buffer(
-                f'running_var_{i}', torch.zeros(num_features).to(self.device)
+                f'running_var_{i}', torch.zeros(num_features)#.to(self.device)
             )
 
         self.reset_parameters()
@@ -201,7 +201,7 @@ class LSTMlayer(nn.Module):
         dimensionality: [n_directions, batch_size, hidden_size] (the code follows when possible
         the Pytorch convention, with num_layers==1).
         """
-        sequence = sequence.to(self.device)
+        sequence = sequence#.to(self.device)
         # Initialise hidden and cell states
         if initial_states is None:
             h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
