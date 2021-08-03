@@ -1,7 +1,7 @@
 #!/home/mario/anaconda3/envs/project2_venv/bin python
 
 import torch
-from torch import device, nn
+from torch import nn
 from torch.nn import init
 
 # Classes
@@ -35,17 +35,17 @@ class BatchNormModule(nn.Module):
         self.zero_bias = zero_bias 
 
         if self.affine:
-            self.weight = nn.Parameter(torch.FloatTensor(num_features))#.to(self.device)
-            self.bias = nn.Parameter(torch.FloatTensor(num_features))#.to(self.device)
+            self.weight = nn.Parameter(torch.FloatTensor(num_features))
+            self.bias = nn.Parameter(torch.FloatTensor(num_features))
         else:
             self.register_parameter('weight', None)
             self.register_parameter('bias', None)
         for i in range(max_length):
             self.register_buffer(
-                f'running_mean_{i}', torch.zeros(num_features)#.to(self.device)
+                f'running_mean_{i}', torch.zeros(num_features)
             )
             self.register_buffer(
-                f'running_var_{i}', torch.zeros(num_features)#.to(self.device)
+                f'running_var_{i}', torch.zeros(num_features)
             )
 
         self.reset_parameters()
@@ -93,19 +93,18 @@ class BatchNormModule(nn.Module):
         [batch_size, input_size] The input size of this function depending on
         the instatiation, not the network input size.
         """
-        device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Check that the dimensions coincide
         self._check_input_dim(input_sequence)
         # If the time exceeds the limit, set those values in the last slot8
         if time >= self.max_length:
             time = self.max_length - 1
         # Get the running statistics
-        running_mean = getattr(self, f'running_mean_{time}').to(device)
-        running_var = getattr(self, f'running_var_{time}').to(device)
+        running_mean = getattr(self, f'running_mean_{time}')
+        running_var = getattr(self, f'running_var_{time}')
         # Compute values
         output = nn.functional.batch_norm(
             input=input_sequence, running_mean=running_mean, running_var=running_var,
-            weight=self.weight.to(device), bias=self.bias.to(device), training=self.training,
+            weight=self.weight, bias=self.bias, training=self.training,
             momentum=self.momentum, eps=self.eps)
         return output
 
@@ -135,62 +134,61 @@ class LSTMlayer(nn.Module):
         self.layer_index = layer_index
         self.bidirectional = bidirectional
         self.batch_norm = batch_norm
-        self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
         # Define the cell
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
-            # Batch normalisation parameters
-            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
-            self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
+            # Create the batch norms
+            bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
+            bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
+            bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
             # Initialise the parameters
-            self.bn_ih.reset_parameters()
-            self.bn_hh.reset_parameters()
-            self.bn_c.reset_parameters()
-            self.bn_ih.bias.data.fill_(0)
-            self.bn_hh.bias.data.fill_(0)
-            self.bn_ih.weight.data.fill_(gamma)
-            self.bn_hh.weight.data.fill_(gamma)
-            self.bn_c.weight.data.fill_(gamma)
+            bn_ih.reset_parameters()
+            bn_hh.reset_parameters()
+            bn_c.reset_parameters()
+            bn_ih.bias.data.fill_(0)
+            bn_hh.bias.data.fill_(0)
+            bn_ih.weight.data.fill_(gamma)
+            bn_hh.weight.data.fill_(gamma)
+            bn_c.weight.data.fill_(gamma)
+            # Register the batch norms
+            self.batch_norms = nn.ModuleList([bn_hh, bn_ih, bn_c])
 
-        # Import or create the matrices
+        # Import or create the weights and biases
         if reference is None:
             # Create
             dims = [4 * hidden_size, input_size]
-            self.weight_ih = self.initialise_matrix(dims, method='orthogonal')
+            weight_ih = self.initialise_matrix(dims, method='orthogonal')
             dims = [4 * hidden_size, hidden_size]
-            self.weight_hh = self.initialise_matrix(dims, method='identity')
+            weight_hh = self.initialise_matrix(dims, method='identity')
             dims = [4 * hidden_size]
-            self.bias = self.initialise_matrix(dims, method='zeros')
+            bias = self.initialise_matrix(dims, method='zeros')
             if self.bidirectional:
                 dims = [4 * hidden_size, input_size]
-                self.weight_ih_reverse = self.initialise_matrix(dims, method='orthogonal')
+                weight_ih_reverse = self.initialise_matrix(dims, method='orthogonal')
                 dims = [4 * hidden_size, hidden_size]
-                self.weight_hh_reverse = self.initialise_matrix(dims, method='identity')
+                weight_hh_reverse = self.initialise_matrix(dims, method='identity')
                 dims = [4 * hidden_size]
-                self.bias_reverse = self.initialise_matrix(dims, method='zeros')
+                bias_reverse = self.initialise_matrix(dims, method='zeros')
         else:
             # Import
-            setattr(self, f'weight_ih', getattr(reference, f'weight_ih_l{layer_index}'))
-            setattr(self, f'weight_hh', getattr(reference, f'weight_hh_l{layer_index}'))
-            setattr(self, f'bias', getattr(reference, f'bias_ih_l{layer_index}') + getattr(reference, f'bias_hh_l{layer_index}'))
+            weight_ih = getattr(reference, f'weight_ih_l{layer_index}')
+            weight_hh = getattr(reference, f'weight_hh_l{layer_index}')
+            bias = torch.unsqueeze(getattr(reference, f'bias_ih_l{layer_index}') + getattr(reference, f'bias_hh_l{layer_index}'), 1)
             if self.bidirectional:
-                setattr(self, f'weight_ih_reverse', getattr(reference, f'weight_ih_l{layer_index}_reverse'))
-                setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
-                setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
-
-        # Send weights to device and format biases dimensions
-        self.weight_ih = self.weight_ih.to(self.device)
-        self.weight_hh = self.weight_hh.to(self.device)
-        self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1)).to(self.device)
-        if self.bidirectional:
-            self.weight_ih_reverse = self.weight_ih_reverse.to(self.device)
-            self.weight_hh_reverse = self.weight_hh_reverse.to(self.device)
-            self.bias_reverse = nn.Parameter(self.bias_reverse.view(-1, 1)).to(self.device)
-        if batch_norm:
-            self.bn_ih = self.bn_ih.to(self.device)
-            self.bn_hh = self.bn_hh.to(self.device)
-            self.bn_c = self.bn_c.to(self.device)
+                weight_ih_reverse = getattr(reference, f'weight_ih_l{layer_index}_reverse')
+                weight_hh_reverse = getattr(reference, f'weight_hh_l{layer_index}_reverse')
+                bias_reverse = torch.unsqueeze(getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'), 1)
+        # Register weights and biases
+        self.weights = nn.ParameterDict({
+            'weight_ih': weight_ih,
+            'weight_hh': weight_hh,
+            'weight_ih_reverse': weight_ih_reverse,
+            'weight_hh_reverse': weight_hh_reverse
+        })
+        self.biases = nn.ParameterDict({
+            'bias': bias,
+            'bias_reverse': bias_reverse
+        })
 
     def forward(self, sequence, initial_states=None):
         """
@@ -206,15 +204,12 @@ class LSTMlayer(nn.Module):
         dimensionality: [n_directions, batch_size, hidden_size] (the code follows when possible
         the Pytorch convention, with num_layers==1).
         """
-
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
-            c_0 = torch.zeros(self.hidden_size, sequence.shape[1]).to(self.device)
+            h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+            c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
         else:
             h_0, c_0 = initial_states
-        h_0 = h_0
-        c_0 = c_0
         # Forward pass
         h_f, c_f = self.sequence_pass(sequence, h_0, c_0, reverse=False)
         h_f = h_f
@@ -249,16 +244,17 @@ class LSTMlayer(nn.Module):
         """
         hs = [h_0]
         cs = [c_0]
-        batch_norms = [self.bn_hh, self.bn_ih, self.bn_c] if self.batch_norm else []
+        batch_norms = self.batch_norms if self.batch_norm else []
         if reverse:
             for i in range(sequence.shape[0]-1, -1, -1):
                 time = -i + (sequence.shape[0]-1)
-                h_t, c_t = self.cell(sequence[i].permute(1, 0), hs[-1], cs[-1],
-                                    self.weight_ih_reverse, self.weight_hh_reverse,
-                                    self.bias_reverse,
+                h_t, c_t = self.cell(sequence[i].permute(1, 0), 
+                                    hs[-1], cs[-1],
+                                    self.weights['weight_ih_reverse'], self.weights['weight_hh_reverse'],
+                                    self.biases['bias_reverse'],
                                     # For the reverse case we use the same BN, just 
                                     # revese the sequence
-                                    batch_norms, time, self.device)
+                                    batch_norms, time)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.flip(torch.stack(hs[1:], dim=0), dims=(0,)).permute(0, 2, 1)
@@ -267,9 +263,11 @@ class LSTMlayer(nn.Module):
             for i in range(sequence.shape[0]):
                 time = i
                 # Define the batch normalisations to use
-                h_t, c_t = self.cell(sequence[i, :, :].permute(1, 0), hs[-1], cs[-1], 
-                                    self.weight_ih, self.weight_hh, self.bias,
-                                    batch_norms, time, self.device)
+                h_t, c_t = self.cell(sequence[i, :, :].permute(1, 0), 
+                                    hs[-1], cs[-1], 
+                                    self.weights['weight_ih'], self.weights['weight_hh'],
+                                    self.biases['bias'],
+                                    batch_norms, time)
                 hs.append(h_t)
                 cs.append(c_t)
             h = torch.stack(hs[1:], dim=0).permute(0, 2, 1)
@@ -336,13 +334,14 @@ class LSTM(nn.Module):
         self.num_layers = num_layers
         self.batch_first = batch_first
         self.n_directions = 2 if bidirectional else 1
-        # Create the layers
+        # Create layers
         self.layers = []
         for i in range(self.num_layers):
             if i == 0:
                 self.layers.append(LSTMlayer(input_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
             else:
                 self.layers.append(LSTMlayer(self.n_directions * hidden_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
+        self.layers = nn.ModuleList(self.layers)
     
     def forward(self, sequence):
         """
@@ -360,11 +359,14 @@ class LSTM(nn.Module):
         # Correct for the batch_first
         if self.batch_first:
             sequence = sequence.permute(1, 0, 2)
+        # Set initial parameters
         h_n = []
         c_n = []
         output = sequence
+        h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+        c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
         for layer in self.layers:
-            output, (h_t, c_t) = layer(output)
+            output, (h_t, c_t) = layer(output, (h_0, c_0))
             h_n.append(h_t)
             c_n.append(c_t)
         h_n = torch.stack(h_n, dim=0).view(self.n_directions * self.num_layers, -1, self.hidden_size)
@@ -404,7 +406,7 @@ def lstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, *args):
     return h_t, c_t
 
 
-def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, device):
+def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, *args):
     """
     DESCRIPTION:
     Function that represents the LSTM cell with batch normalisation. Adapted
@@ -428,18 +430,17 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, 
     :param batch_norms: [list] vector to store the torch.BatchNorm1d that 
     we will apply, one per transformation and direction.
     :param time: [int] position in the sequence of the item computed.
-    :param device: [torch.device] object to manually send the tensors to device.
     :return: hidden and cell states associated with this time step (h_t, c_t),
     both with dimensionality: [hidden_size, batch_size].
     """
-    w_hh_by_h_t_1 = weight_hh @ h_t_1.to(device)
+    w_hh_by_h_t_1 = weight_hh @ h_t_1
     w_hh_by_h_t_1 = w_hh_by_h_t_1.permute(1, 0)
     w_ih_by_x = weight_ih @ x
     w_ih_by_x = w_ih_by_x.permute(1, 0)
     ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
             batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
-    c_t = torch.sigmoid(f) * c_t_1.to(device) + torch.sigmoid(i) * torch.tanh(g)
+    c_t = torch.sigmoid(f) * c_t_1 + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(batch_norms[2](c_t.permute(1, 0), time)).permute(1, 0)
     return h_t, c_t
 
