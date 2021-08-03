@@ -139,6 +139,7 @@ class LSTMlayer(nn.Module):
         self.cell = bnlstm_cell if batch_norm else lstm_cell
         if batch_norm:
             # Batch normalisation parameters
+            self.bn_ih = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
             self.bn_hh = BatchNormModule(4 * hidden_size, max_length=max_length, zero_bias=True)
             self.bn_c = BatchNormModule(hidden_size, max_length=max_length, zero_bias=True)
             # Initialise the parameters
