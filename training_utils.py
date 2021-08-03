@@ -168,7 +168,7 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
             targets_lengths = torch.Tensor(batch['targets_lengths']).type(torch.int16).to(device)
             batch, target = batch['signals'].to(device), batch['targets'].to(device)
             print(batch)
-            print(batch['sequences'].shape)
+            print(batch.shape)
             raise OSError
             # All the sequences in a batch are of the same length
             sequences_lengths = torch.Tensor(tuple([batch.shape[-1]] * batch.shape[0])).type(torch.int16).to(device)
