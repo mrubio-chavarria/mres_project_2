@@ -161,14 +161,14 @@ class LSTMlayer(nn.Module):
             dims = [4 * hidden_size, hidden_size]
             weight_hh = self.initialise_matrix(dims, method='identity')
             dims = [4 * hidden_size]
-            bias = self.initialise_matrix(dims, method='zeros')
+            bias = torch.unsqueeze(self.initialise_matrix(dims, method='zeros'), 1)
             if self.bidirectional:
                 dims = [4 * hidden_size, input_size]
                 weight_ih_reverse = self.initialise_matrix(dims, method='orthogonal')
                 dims = [4 * hidden_size, hidden_size]
                 weight_hh_reverse = self.initialise_matrix(dims, method='identity')
                 dims = [4 * hidden_size]
-                bias_reverse = self.initialise_matrix(dims, method='zeros')
+                bias_reverse = torch.unsqueeze(self.initialise_matrix(dims, method='zeros'), 1)
         else:
             # Import
             weight_ih = getattr(reference, f'weight_ih_l{layer_index}')
