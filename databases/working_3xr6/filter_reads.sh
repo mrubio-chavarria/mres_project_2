@@ -1,13 +1,14 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=8:mem=96gb
 #PBS -lwalltime=12:00:00
-#PBS -J 1-3
 
 module load anaconda3/personal
 
 source activate project2_venv 
 
 cd $HOME/project_2/databases/working_3xr6
+
+PBS_ARRAY_INDEX=1
 
 flowcell=flowcell$PBS_ARRAY_INDEX
 

@@ -178,7 +178,7 @@ class LSTMlayer(nn.Module):
                 setattr(self, f'weight_hh_reverse', getattr(reference, f'weight_hh_l{layer_index}_reverse'))
                 setattr(self, f'bias_reverse', getattr(reference, f'bias_ih_l{layer_index}_reverse') + getattr(reference, f'bias_hh_l{layer_index}_reverse'))
         # Send weights to device and format biases dimensions
-        self.weight_ih = self.weight_ih.cuda
+        self.weight_ih = self.weight_ih
         self.weight_hh = self.weight_hh
         self.bias = nn.Parameter(torch.unsqueeze(self.bias, 1))
         if self.bidirectional:
@@ -425,10 +425,10 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time):
     :return: hidden and cell states associated with this time step (h_t, c_t),
     both with dimensionality: [hidden_size, batch_size].
     """
-    device = torch.device('cuda:0')
+    device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
     w_hh_by_h_t_1 = weight_hh.to(device) @ h_t_1.to(device)
     w_hh_by_h_t_1 = w_hh_by_h_t_1.permute(1, 0)
-    w_ih_by_x = weight_ih.to(device) @ x.to(device)
+    w_ih_by_x = weight_ih.to(device) @ x
     w_ih_by_x = w_ih_by_x.permute(1, 0)
     ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
             batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
