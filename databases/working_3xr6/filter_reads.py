@@ -59,7 +59,7 @@ if __name__ == "__main__":
     q_score_threshold = 7.0
     filtered_reads = []
     subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
-    single_read_files = [(it, filtered_reads_ids[:]) for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
+    single_read_files = [(it, filtered_reads_ids) for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
     reference_file = workdir + '/' + 'reference.fasta'
     print('Filter the selected reads')
     print('Number of reads:', len(single_read_files))
