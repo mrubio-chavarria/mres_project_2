@@ -308,11 +308,12 @@ class LSTM(nn.Module):
     Final LSTM module built on the previous ones.
     """
     # Methods
-    def __init__(self, input_size, hidden_size, num_layers, batch_first=False, reference=None, bidirectional=False, batch_norm=False, gamma=0.1):
+    def __init__(self, input_size, hidden_size, batch_size, num_layers, batch_first=False, reference=None, bidirectional=False, batch_norm=False, gamma=0.1):
         """
         Class constructor.
         :param input_size: [int] dimensionality of every item in the input sequence.
         :param hidden_size: [int] dimensionality of every sequence item in the hidden space.
+        :param batch_size: [int] number of samples in the batch.
         :param batch_first: [bool] if True, the input should be
         [batch_size, sequence_length, n_features], otherwise 
         [sequence_length, batch_size, n_features]
@@ -327,9 +328,13 @@ class LSTM(nn.Module):
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
+        self.batch_size = batch_size
         self.num_layers = num_layers
         self.batch_first = batch_first
         self.n_directions = 2 if bidirectional else 1
+        # Initial cell states
+        self.register_buffer('h_0', torch.zeros(self.hidden_size, self.batch_size))
+        self.register_buffer('c_0', torch.zeros(self.hidden_size, self.batch_size))
         # Create layers
         self.layers = []
         for i in range(self.num_layers):
@@ -339,13 +344,15 @@ class LSTM(nn.Module):
                 self.layers.append(LSTMlayer(self.n_directions * hidden_size, hidden_size, i, reference, bidirectional, batch_norm, gamma))
         self.layers = nn.ModuleList(self.layers)
     
-    def forward(self, sequence):
+    def forward(self, sequence, initial_states):
         """
         DESCRIPTION:
         Forward pass.
         :param sequence: [torch.Tensor] sequence to feed the network. Dimensionality:
         [sequence_length, batch_size, input_size] or [batch_size, sequence_length, input_size]
         if bach_first == True.
+        :param initial_states: [tuple] (h_0, c_0), the initial hidden and cell states.
+        Both with the dimensionality: [directions * number_of_layers, batch_size, hidden_size].
         :return: the of torch.nn.LSTM. [torch.Tensor] the hidden state of the last layer,
         dimensionality: [sequence_length, batch_size, number_of_directions*hidden_size] or 
         [batch_size, sequence_length, number_of_directions*hidden_size] if batch_first == True.
@@ -359,10 +366,8 @@ class LSTM(nn.Module):
         h_n = []
         c_n = []
         output = sequence
-        h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
-        c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
         for layer in self.layers:
-            output, (h_t, c_t) = layer(output, (h_0, c_0))
+            output, (h_t, c_t) = layer(output, (self.h_0, self.c_0))
             h_n.append(h_t)
             c_n.append(c_t)
         h_n = torch.stack(h_n, dim=0).view(self.n_directions * self.num_layers, -1, self.hidden_size)
