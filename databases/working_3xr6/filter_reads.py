@@ -61,10 +61,10 @@ if __name__ == "__main__":
     print('Flowcell:', flowcell)
     print('***************************************************************************************')
     label = 'Q7_'
-    # Read the IDs list
-    filtered_reads_ids_file = open(workdir + '/' + 'filtered_reads.tsv')
-    filtered_reads_ids = [file_id[0] for file_id in csv.reader(filtered_reads_ids_file, delimiter='\t') if file_id[0] != 'read_id']
-    filtered_reads_ids_file.close()
+    # # Read the IDs list
+    # filtered_reads_ids_file = open(workdir + '/' + 'filtered_reads.tsv')
+    # filtered_reads_ids = [file_id[0] for file_id in csv.reader(filtered_reads_ids_file, delimiter='\t') if file_id[0] != 'read_id']
+    # filtered_reads_ids_file.close()
     # Read files with the signals
     reads_folder = workdir + '/' + 'reads' + '/' + flowcell
     single_reads_folder = reads_folder + '/' + 'single'
