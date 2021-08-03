@@ -54,7 +54,7 @@ if __name__ == "__main__":
     filtered_reads_ids = [file_id[0] for file_id in csv.reader(filtered_reads_ids_file, delimiter='\t') if file_id[0] != 'read_id']
     filtered_reads_ids_file.close()
     # Read files with the signals
-    reads_folder = workdir + '/' + 'train_reads' + '/' + flowcell
+    reads_folder = workdir + '/' + 'reads' + '/' + flowcell
     single_reads_folder = reads_folder + '/' + 'single'
     q_score_threshold = 7.0
     filtered_reads = []
