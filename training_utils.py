@@ -146,7 +146,7 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
     batch_size = kwargs.get('batch_size')
     # sequences_lengths = tuple([sequence_length] * batch_size)
     log_softmax = nn.LogSoftmax(dim=2).to(device)
-    loss_function = FocalCTCLoss(blank=4).to(device)
+    # loss_function = FocalCTCLoss(blank=4).to(device)
     loss_function = nn.CTCLoss(blank=4).to(device)
     initialisation_loss_function = nn.CrossEntropyLoss().to(device)
     initialisation_epochs = range(kwargs.get('n_initialisation_epochs', 1))
@@ -161,15 +161,14 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
                 if batch_id == max_batches:
                     break
             # Clean gradient
-            model = model.to(device)
             model.zero_grad()
             # Move data to device
             target_segments = batch['fragments']
             target_sequences = batch['sequences']
-            targets_lengths = batch['targets_lengths']
+            targets_lengths = torch.Tensor(batch['targets_lengths']).type(torch.int16).to(device)
             batch, target = batch['signals'].to(device), batch['targets'].to(device)
             # All the sequences in a batch are of the same length
-            sequences_lengths = tuple([batch.shape[-1]] * batch.shape[0])  
+            sequences_lengths = torch.Tensor(tuple([batch.shape[-1]] * batch.shape[0])).type(torch.int16).to(device)
             if batch.shape[0] != batch_size:
                 continue
             # Forward pass
@@ -321,8 +320,8 @@ def train(model, train_data, validation_data, algorithm='single', **kwargs):
         launch_training(model, train_data, validation_data, device, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
-        model = nn.DataParallel(model)
-        model = model.to(device)
+        model = model.cuda()
+        model = nn.DataParallel(model, list(range(torch.cuda.device_count()))).cuda()
         model.train()
         # Start training
         launch_training(model, train_data, validation_data, device, **kwargs)
