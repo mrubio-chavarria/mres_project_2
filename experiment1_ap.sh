@@ -1,12 +1,13 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=12:mem=72gb:ngpus=3
 #PBS -lwalltime=24:00:00
-#PBS -J 1-11
 
 
 # Load dependencies
 module load anaconda3/personal
 source activate project2_venv
+
+PBS_ARRAY_INDEX=1
 
 # Check GPUs
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
