@@ -77,54 +77,43 @@ if __name__ == "__main__":
     workdir = sys.argv[1]
     flowcell = sys.argv[2]
     
-    # workdir = f'/home/mario/Projects/project_2/databases/working_ap'
-    # n_jobs = 45
+    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
     # flowcell = 'flowcell3'
-    # job_index = 3
 
-    if workdir.endswith('ap'):
-        # Filter files below the q score threshold
-        print('***************************************************************************************')
-        print('Filter the reads')
-        print('Flowcell:', flowcell)
-        print('***************************************************************************************')
-        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
-        single_reads_folder = reads_folder + '/' + 'single'
-        q_score_threshold = 7.0
-        filtered_reads = []
-        single_read_files = [single_reads_folder + '/' + file for file in os.listdir(single_reads_folder)]
-        
-        reference_file = workdir + '/' + 'reference.fasta'
+    # Filter files below the q score threshold
+    print('***************************************************************************************')
+    print('Filter the reads')
+    print('Flowcell:', flowcell)
+    print('***************************************************************************************')
+    label = 'Q7'
+    # Read files with the signals
+    reads_folder = workdir + '/' + 'train_reads' + '/' + flowcell
+    single_reads_folder = reads_folder + '/' + 'single'
+    q_score_threshold = 7.0
+    filtered_reads = []
+    subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
+    single_read_files = [it for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
+    reference_file = workdir + '/' + 'reference.fasta'
+    # Read the IDs list
+    filtered_reads_ids_file = open(workdir + '/' + 'filtered_reads.tsv')
+    filtered_reads_ids = [file_id[0] for file_id in csv.reader(filtered_reads_ids_file, delimiter='\t') if file_id[0] != 'read_id']
+    filtered_reads_ids_file.close()
+    print('Filter the selected reads')
+    print('Number of reads:', len(single_read_files))
+    # Filter the files
+    for read_file in single_read_files:
+        try:
+            fast5_data = h5py.File(read_file, 'r')
+        except OSError:
+            # Corrupted file
+            continue
+        read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
+        if read_id in filtered_reads_ids:
+            filename = read_file.split('/')[-1]
+            new_filename = single_reads_folder + '/' + label + filename
+            os.rename(read_file, new_filename)
+    print('High-quality reads marked')            
 
-        print('Filter the selected reads')
-        print('Number of reads:', len(single_read_files))
-        print('Reads filenames:')
-        [print(read.split('/')[-1]+'\n') for read in single_read_files]
-        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
-        print('High-quality reads marked')
-    elif workdir.endswith('3xr6'):
-        # Filter files below the q score threshold
-        print('***************************************************************************************')
-        print('Filter the reads')
-        print('Flowcell:', flowcell)
-        print('***************************************************************************************')
-        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
-        single_reads_folder = reads_folder + '/' + 'single'
-        q_score_threshold = 7.0
-        filtered_reads = []
-        subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
-        single_read_files = [it for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
-        print()
-        
-        reference_file = workdir + '/' + 'reference.fasta'
-
-        print('Filter the selected reads')
-        print('Number of reads:', len(single_read_files))
-        # print('Reads filenames:')
-        # [print(read.split('/')[-1]+'\n') for read in single_read_files]
-        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
-        print('High-quality reads marked')            
-    
 
     
     
