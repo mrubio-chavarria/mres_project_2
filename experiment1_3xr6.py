@@ -58,7 +58,7 @@ if __name__ == "__main__":
     It is not the same.
     """
     # Set cuda devices visible
-    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1].split(',')[0]
+    os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
     database_dir = sys.argv[2]
@@ -76,15 +76,15 @@ if __name__ == "__main__":
     shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
-    train_max_reads = 2000  # Select all the reads
-    train_max_batches = 500
+    train_max_reads = 20#2000  # Select all the reads
+    train_max_batches = 5#500
     train_max_windows = int(train_max_batches * batch_size)
     train_folder = database_dir + '/' + 'train_reads'
     
     # Load the test dataset
     validation_window_sizes = [300]
-    validation_max_windows = 3 * batch_size # Controls test dataset size: 3 epoch
-    validation_max_reads = 200  # Select all the reads
+    validation_max_windows = 1 * batch_size # Controls test dataset size: 3 epoch
+    validation_max_reads = 20  # Select all the reads
     validation_folder = database_dir + '/' + 'validation_reads'
     
     # Load dataset
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 5,
+        'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
