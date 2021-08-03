@@ -203,8 +203,8 @@ class LSTMlayer(nn.Module):
 
         # Initialise hidden and cell states
         if initial_states is None:
-            h_0 = torch.zeros(self.hidden_size, sequence.shape[1]).cuda()
-            c_0 = torch.zeros(self.hidden_size, sequence.shape[1]).cuda()
+            h_0 = torch.zeros(self.hidden_size, sequence.shape[1])
+            c_0 = torch.zeros(self.hidden_size, sequence.shape[1])
         else:
             h_0, c_0 = initial_states
         h_0 = h_0
@@ -433,7 +433,7 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time):
     ifgo = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0) + \
             batch_norms[1](w_ih_by_x, time).permute(1, 0) + bias
     i, f, g, o = torch.split(ifgo, int(weight_ih.shape[0] / 4), dim=0)
-    c_t = torch.sigmoid(f) * c_t_1.cuda() + torch.sigmoid(i) * torch.tanh(g)
+    c_t = torch.sigmoid(f) * c_t_1.to(device) + torch.sigmoid(i) * torch.tanh(g)
     h_t = torch.sigmoid(o) * torch.tanh(batch_norms[2](c_t.permute(1, 0), time)).permute(1, 0)
     return h_t, c_t
 
