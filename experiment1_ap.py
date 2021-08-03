@@ -98,11 +98,6 @@ if __name__ == "__main__":
 
     train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
     validation_data = CustomisedDataLoader(dataset=validation_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
-    validation_data = DataLoader(validation_dataset_300, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_text2int_fn)
-
-    print(list(train_data)[0]['sequences'])
-    print(len(list(train_data)[0]['sequences']))
-    raise OSError
 
     # Model
     # Parameters
