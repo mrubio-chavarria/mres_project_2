@@ -23,65 +23,106 @@ import csv
 
 
 # Functions
-def filter_reads(pair):
-    read_file, reference_file, threshold = pair
-    try:
-        fast5_data = h5py.File(read_file, 'r')
-        read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
-        # Set parameters for resquiggling
-        aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
-        seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
-        std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
-        # Extract data from FAST5
-        mean_q_score = resquiggle.map_read(fast5_data, aligner, std_ref).mean_q_score
-        if mean_q_score >= threshold:
-            filename = read_file.split('/')[-1]
-            subfolder = '/'.join(read_file.split('/')[:-1])
-            new_filename = subfolder + '/' + label + filename
-            print('Read renamed:', new_filename)
-            os.rename(read_file, new_filename)
-    except tombo_helper.TomboError:
-        pass
-    except OSError:
-        pass
+def filter_reads(read_files, reference_file,  q_score_threshold, workdir, new_way=False):
+    """
+    DESCRIPTION:
+    A function to filter the reads based on their q score. 
+    :param reference_file: [str] route to the reference file to align.
+    :param q_score_threshold: [float] the value to filter.
+    """
+    label = f'Q{int(q_score_threshold)}_' 
+    # Label to distinguish the good reads
+    if new_way:
+        # Load list
+        read_ids_file = open(workdir + '/' + 'filtered_reads.tsv')
+        read_ids = [read[0] for read in csv.reader(read_ids_file, delimiter='\t')][1::]
+        read_ids_file.close()
+        for read_file in read_files:
+            try:
+                fast5_data = h5py.File(read_file, 'r')
+            except OSError:
+                # File badly parsed or corrupted
+                continue
+            read_id = fast5_data['Raw']['Reads'][list(fast5_data['Raw']['Reads'].keys())[0]].attrs['read_id'].decode('UTF-8')
+            if read_id in read_ids:
+                reads_folder = '/'.join(read_file.split('/')[:-1])
+                filename = read_file.split('/')[-1]
+                new_filename = reads_folder + '/' + label + filename
+                os.rename(read_file, new_filename)
+    else:
+        for read_file in read_files:
+            fast5_data = h5py.File(read_file, 'r')
+            # Set parameters for resquiggling
+            aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
+            seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
+            std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
+            # Extract data from FAST5
+            try:
+                map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
+            except tombo_helper.TomboError:
+                # Avoid reads lacking alignment (very poor quality)
+                continue
+            # Filter reads based on q score for quality
+            if map_results.mean_q_score >= q_score_threshold:
+                # If it is of good quality, rename the file
+                filename = read_file.split('/')[-1]
+                reads_folder = '/'.join(read_file.split('/')[:-1])
+                if label[:-1] in filename.split('_'):
+                    new_filename = reads_folder + '/' + label + filename.split('_')[-1]
+                else:
+                    new_filename = reads_folder + '/' + label + filename
+                os.rename(read_file, new_filename)
 
-    
 
 if __name__ == "__main__":
     
-    workdir = sys.argv[1]
-    flowcell = sys.argv[2]
+    # workdir = sys.argv[1]
+    # flowcell = sys.argv[2]
     
-    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    # flowcell = 'flowcell3'
+    workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    flowcell = 'flowcell3'
+    job_index = 3
 
-    # Filter files below the q score threshold
-    print('***************************************************************************************')
-    print('Filter the reads')
-    print('Flowcell:', flowcell)
-    print('***************************************************************************************')
-    label = 'Q7_'
-    # # Read the IDs list
-    # filtered_reads_ids_file = open(workdir + '/' + 'filtered_reads.tsv')
-    # filtered_reads_ids = [file_id[0] for file_id in csv.reader(filtered_reads_ids_file, delimiter='\t') if file_id[0] != 'read_id']
-    # filtered_reads_ids_file.close()
-    # Read files with the signals
-    reads_folder = workdir + '/' + 'reads' + '/' + flowcell
-    single_reads_folder = reads_folder + '/' + 'single'
-    q_score_threshold = 7.0
-    filtered_reads = []
-    subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
-    reference_file = workdir + '/' + 'reference.fasta'
-    single_read_files = tuple((it, reference_file, q_score_threshold) for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl)
-    reference_file = workdir + '/' + 'reference.fasta'
-    print('Filter the selected reads')
-    print('Number of reads:', len(single_read_files))
-    # Filter the files
-    with Pool(4) as p:
-        p.map(filter_reads, single_read_files)
-    print('High-quality reads marked')            
+    if workdir.endswith('ap'):
+        # Filter files below the q score threshold
+        print('***************************************************************************************')
+        print('Filter the reads')
+        print('Flowcell:', flowcell)
+        print('***************************************************************************************')
+        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
+        single_reads_folder = reads_folder + '/' + 'single'
+        q_score_threshold = 7.0
+        filtered_reads = []
+        single_read_files = [single_reads_folder + '/' + file for file in os.listdir(single_reads_folder)]
+        
+        reference_file = workdir + '/' + 'reference.fasta'
 
-
+        print('Filter the selected reads')
+        print('Number of reads:', len(single_read_files))
+        print('Reads filenames:')
+        [print(read.split('/')[-1]+'\n') for read in single_read_files]
+        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
+        print('High-quality reads marked')
+    elif workdir.endswith('3xr6'):
+        # Filter files below the q score threshold
+        print('***************************************************************************************')
+        print('Filter the reads')
+        print('Flowcell:', flowcell)
+        print('***************************************************************************************')
+        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
+        single_reads_folder = reads_folder + '/' + 'single'
+        q_score_threshold = 7.0
+        filtered_reads = []
+        subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
+        single_read_files = [it for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
+        print()
+        reference_file = workdir + '/' + 'reference.fasta'
+        print('Filter the selected reads')
+        print('Number of reads:', len(single_read_files))
+        # print('Reads filenames:')
+        # [print(read.split('/')[-1]+'\n') for read in single_read_files]
+        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
+        print('High-quality reads marked') 
     
     
 
