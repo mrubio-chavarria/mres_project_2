@@ -401,7 +401,7 @@ class LSTM_module(nn.Module):
                                   torch.zeros(1, batch_size, hidden_size))
         # LSTM layers
         if batch_norm:
-            self.model = LSTM(input_size, hidden_size, n_layers, batch_first=batch_first,
+            self.model = LSTM(input_size, hidden_size, batch_size, n_layers, batch_first=batch_first,
                 bidirectional=bidirectional, batch_norm=True, gamma=gamma)
         else:
             self.model = nn.LSTM(input_size, hidden_size, num_layers=n_layers,
