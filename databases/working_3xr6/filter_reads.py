@@ -81,13 +81,13 @@ def filter_reads(read_files, reference_file,  q_score_threshold, workdir, new_wa
 
 if __name__ == "__main__":
     
-    # workdir = sys.argv[1]
-    # flowcell = sys.argv[2]
+    workdir = sys.argv[1]
+    flowcell = sys.argv[2]
     
-    workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    flowcell = 'flowcell3'
+    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    # flowcell = 'flowcell3'
     
-    for flowcell in ['flowcell2']:
+    for flowcell in [flowcell]:
         if workdir.endswith('ap'):
             # Filter files below the q score threshold
             print('***************************************************************************************')
