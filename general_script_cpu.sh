@@ -8,6 +8,6 @@ module load anaconda3/personal
 
 source activate project2_venv
 
-cd $HOME/project_2/databases/working_3xr6
+cd $HOME/project_2/databases/working_3xr6/reads
 
 tar -xf flowcell$PBS_ARRAY_INDEX.tar.gz
