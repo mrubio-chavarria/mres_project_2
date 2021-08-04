@@ -10,4 +10,5 @@ source activate project2_venv
 
 cd $HOME/project_2/databases/working_3xr6/reads
 
+rm -r flowcell3
 tar -xf flowcell3.tar.gz
