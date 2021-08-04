@@ -334,7 +334,7 @@ class LSTM(nn.Module):
         self.batch_first = batch_first
         self.n_directions = 2 if bidirectional else 1
         # Initial cell states
-        self.effective_batch_size = self.batch_size / len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
+        self.effective_batch_size = int(self.batch_size / len(os.environ['CUDA_VISIBLE_DEVICES'].split(',')))
         self.register_buffer('h_0', torch.zeros(self.hidden_size, self.effective_batch_size))
         self.register_buffer('c_0', torch.zeros(self.hidden_size, self.effective_batch_size))
         # Create layers
