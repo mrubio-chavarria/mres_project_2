@@ -51,78 +51,83 @@ def filter_reads(read_files, reference_file,  q_score_threshold, workdir, new_wa
                 os.rename(read_file, new_filename)
     else:
         for read_file in read_files:
-            fast5_data = h5py.File(read_file, 'r')
-            # Set parameters for resquiggling
-            aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
-            seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
-            std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
-            # Extract data from FAST5
             try:
-                map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
-            except tombo_helper.TomboError:
-                # Avoid reads lacking alignment (very poor quality)
-                continue
-            # Filter reads based on q score for quality
-            if map_results.mean_q_score >= q_score_threshold:
-                # If it is of good quality, rename the file
-                filename = read_file.split('/')[-1]
-                reads_folder = '/'.join(read_file.split('/')[:-1])
-                if label[:-1] in filename.split('_'):
-                    new_filename = reads_folder + '/' + label + filename.split('_')[-1]
-                else:
-                    new_filename = reads_folder + '/' + label + filename
-                os.rename(read_file, new_filename)
+                fast5_data = h5py.File(read_file, 'r')
+                # Set parameters for resquiggling
+                aligner = mappy.Aligner(reference_file, preset=str('map-ont'), best_n=1)
+                seq_samp_type = tombo_helper.get_seq_sample_type(fast5_data)
+                std_ref = tombo_stats.TomboModel(seq_samp_type=seq_samp_type)
+                # Extract data from FAST5
+                try:
+                    map_results = resquiggle.map_read(fast5_data, aligner, std_ref)
+                except tombo_helper.TomboError:
+                    # Avoid reads lacking alignment (very poor quality)
+                    continue
+                # Filter reads based on q score for quality
+                if map_results.mean_q_score >= q_score_threshold:
+                    # If it is of good quality, rename the file
+                    filename = read_file.split('/')[-1]
+                    reads_folder = '/'.join(read_file.split('/')[:-1])
+                    if label[:-1] in filename.split('_'):
+                        new_filename = reads_folder + '/' + label + filename.split('_')[-1]
+                    else:
+                        new_filename = reads_folder + '/' + label + filename
+                    os.rename(read_file, new_filename)
+            except:
+                # Corrupted file
+                pass
+            
 
 
 if __name__ == "__main__":
     
-    workdir = sys.argv[1]
-    flowcell = sys.argv[2]
+    # workdir = sys.argv[1]
+    # flowcell = sys.argv[2]
     
-    # workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
-    # flowcell = 'flowcell3'
-    # job_index = 3
+    workdir = f'/home/mario/Projects/project_2/databases/working_3xr6'
+    flowcell = 'flowcell3'
+    
+    for flowcell in ['flowcell2']:
+        if workdir.endswith('ap'):
+            # Filter files below the q score threshold
+            print('***************************************************************************************')
+            print('Filter the reads')
+            print('Flowcell:', flowcell)
+            print('***************************************************************************************')
+            reads_folder = workdir + '/' + 'reads' + '/' + flowcell
+            single_reads_folder = reads_folder + '/' + 'single'
+            q_score_threshold = 7.0
+            filtered_reads = []
+            single_read_files = [single_reads_folder + '/' + file for file in os.listdir(single_reads_folder)]
+            
+            reference_file = workdir + '/' + 'reference.fasta'
 
-    if workdir.endswith('ap'):
-        # Filter files below the q score threshold
-        print('***************************************************************************************')
-        print('Filter the reads')
-        print('Flowcell:', flowcell)
-        print('***************************************************************************************')
-        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
-        single_reads_folder = reads_folder + '/' + 'single'
-        q_score_threshold = 7.0
-        filtered_reads = []
-        single_read_files = [single_reads_folder + '/' + file for file in os.listdir(single_reads_folder)]
-        
-        reference_file = workdir + '/' + 'reference.fasta'
-
-        print('Filter the selected reads')
-        print('Number of reads:', len(single_read_files))
-        print('Reads filenames:')
-        [print(read.split('/')[-1]+'\n') for read in single_read_files]
-        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
-        print('High-quality reads marked')
-    elif workdir.endswith('3xr6'):
-        # Filter files below the q score threshold
-        print('***************************************************************************************')
-        print('Filter the reads')
-        print('Flowcell:', flowcell)
-        print('***************************************************************************************')
-        reads_folder = workdir + '/' + 'reads' + '/' + flowcell
-        single_reads_folder = reads_folder + '/' + 'single'
-        q_score_threshold = 7.0
-        filtered_reads = []
-        subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) if not subfolder.endswith('index') and not subfolder.endswith('txt')]
-        single_read_files = [it for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
-        print()
-        reference_file = workdir + '/' + 'reference.fasta'
-        print('Filter the selected reads')
-        print('Number of reads:', len(single_read_files))
-        # print('Reads filenames:')
-        # [print(read.split('/')[-1]+'\n') for read in single_read_files]
-        filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
-        print('High-quality reads marked') 
+            print('Filter the selected reads')
+            print('Number of reads:', len(single_read_files))
+            print('Reads filenames:')
+            [print(read.split('/')[-1]+'\n') for read in single_read_files]
+            filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
+            print('High-quality reads marked')
+        elif workdir.endswith('3xr6'):
+            # Filter files below the q score threshold
+            print('***************************************************************************************')
+            print('Filter the reads')
+            print('Flowcell:', flowcell)
+            print('***************************************************************************************')
+            reads_folder = workdir + '/' + 'reads' + '/' + flowcell
+            single_reads_folder = reads_folder + '/' + 'single'
+            q_score_threshold = 7.0
+            filtered_reads = []
+            subfolders = [single_reads_folder + '/' + subfolder for subfolder in os.listdir(single_reads_folder) 
+                if not subfolder.endswith('index') and not subfolder.endswith('txt') and not subfolder.endswith('gz')]
+            single_read_files = [it for sl in [[folder + '/' + file for file in os.listdir(folder)] for folder in subfolders] for it in sl]
+            reference_file = workdir + '/' + 'reference.fasta'
+            print('Filter the selected reads')
+            print('Number of reads:', len(single_read_files))
+            # print('Reads filenames:')
+            # [print(read.split('/')[-1]+'\n') for read in single_read_files]
+            filter_reads(single_read_files, reference_file, q_score_threshold, workdir)
+            print('High-quality reads marked') 
     
     
 
