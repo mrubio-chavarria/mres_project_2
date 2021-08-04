@@ -7,6 +7,6 @@ module load anaconda3/personal
 
 source activate project2_venv
 
-cd $HOME/project_2
+cd $HOME/project_2/databases/working_3xr6
 
-y | conda install pandas
+tar -xf flowcell1.tar.gz
