@@ -1,5 +1,6 @@
 #!/home/mario/anaconda3/envs/project2_venv/bin python
 
+import os
 import torch
 from torch import nn
 from torch.nn import init
@@ -333,8 +334,9 @@ class LSTM(nn.Module):
         self.batch_first = batch_first
         self.n_directions = 2 if bidirectional else 1
         # Initial cell states
-        self.register_buffer('h_0', torch.zeros(self.hidden_size, self.batch_size))
-        self.register_buffer('c_0', torch.zeros(self.hidden_size, self.batch_size))
+        self.effective_batch_size = self.batch_size / len(os.environ['CUDA_VISIBLE_DEVICES'].split(','))
+        self.register_buffer('h_0', torch.zeros(self.hidden_size, self.effective_batch_size))
+        self.register_buffer('c_0', torch.zeros(self.hidden_size, self.effective_batch_size))
         # Create layers
         self.layers = []
         for i in range(self.num_layers):
@@ -440,9 +442,6 @@ def bnlstm_cell(x, h_t_1, c_t_1, weight_ih, weight_hh, bias, batch_norms, time, 
     w_ih_by_x = w_ih_by_x.permute(1, 0)
     term1 = batch_norms[0](w_hh_by_h_t_1, time).permute(1, 0)
     term2 = batch_norms[1](w_ih_by_x, time).permute(1, 0)
-    print(weight_hh.shape)
-    print(weight_ih.shape)
-    print(x.shape)
     print(term1.shape)
     print(term2.shape)
     print(bias.shape)
