@@ -76,7 +76,7 @@ if __name__ == "__main__":
     shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
-    train_max_reads = 2000  # Select all the reads
+    train_max_reads = 400  # Select all the reads
     train_max_batches = 500
     train_max_windows = int(train_max_batches * batch_size)
     train_folder = database_dir + '/' + 'train_reads'
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     # Load the test dataset
     validation_window_sizes = [300]
     validation_max_windows = 5 * batch_size # Controls test dataset size: 3 epoch
-    validation_max_reads = 20 # Select all the reads
+    validation_max_reads = 10 # Select all the reads
     validation_folder = database_dir + '/' + 'validation_reads'
     
     # Load dataset
