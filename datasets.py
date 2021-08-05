@@ -107,7 +107,7 @@ class Dataset_ap(Dataset):
     pittii (ap) dataset
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q7', max_reads=None):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q7', max_reads=None, validation=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -119,6 +119,8 @@ class Dataset_ap(Dataset):
         dataset.
         :param flowcell: [str] a param to specify if only one flowcell should be analysed.
         If None, all the flowcells are loaded. It should of the form 'flowcellX'.
+        :param validation: [bool] flag to control the taken reads depending on if the dataset
+        is for validation or not.    
         """
         # Helper function
         def file_hq_filter(file):
@@ -155,7 +157,8 @@ class Dataset_ap(Dataset):
         # Limit the number of reads
         if max_reads is not None:
             if len(self.read_files) >= max_reads:
-                self.read_files = random.sample(self.read_files, max_reads)
+                # self.read_files = random.sample(self.read_files, max_reads)
+                self.read_files = self.read_files[-max_reads:] if validation else self.read_files[0:max_reads]
         # Load windows
         self.windows = load_windows(self.read_files, self.reference, self.window_size, bandwidth=24000)
         # Reduce the dataset if needed
@@ -197,7 +200,7 @@ class Dataset_3xr6(Dataset):
     Dataset to load and prepare the data in the 3xr6 dataset. 
     """
     # Methods
-    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=None):
+    def __init__(self, reads_folder='reads', reference_file='reference.fasta', window_size=300, max_number_windows=None, flowcell=None, hq_value='Q20', max_reads=None, validation=False):
         """
         DESCRIPTION:
         Class constructor.
@@ -207,7 +210,9 @@ class Dataset_3xr6(Dataset):
         :param window_size: [int] size in which the reads should be sliced. 
         :param max_number_wndows: [int] parameter to artificially decrease the size of the 
         dataset.
-        :param flowcell: [str] a param to specify if only one flowcell should be analysed.        
+        :param flowcell: [str] a param to specify if only one flowcell should be analysed.
+        :param validation: [bool] flag to control the taken reads depending on if the dataset
+        is for validation or not.        
         """
         # Helper function
         def file_hq_filter(file):
@@ -249,7 +254,8 @@ class Dataset_3xr6(Dataset):
         # Limit the number of reads
         if max_reads is not None:
             if len(self.read_files) >= max_reads:
-                self.read_files = random.sample(self.read_files, max_reads)
+                # self.read_files = random.sample(self.read_files, max_reads)
+                self.read_files = self.read_files[-max_reads:] if validation else self.read_files[0:max_reads]
         # Load windows
         self.windows = load_windows(self.read_files, self.reference, self.window_size)
         # Reduce the dataset if needed
