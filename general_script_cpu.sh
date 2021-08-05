@@ -6,9 +6,9 @@
 # Load dependencies
 module load anaconda3/personal
 
-source activate project2_venv
+source activate nanopolish_venv
 
-cd $HOME/project_2/databases/working_3xr6/reads
+cd $HOME/project_2
 
-rm -r flowcell3
-tar -xf flowcell3.tar.gz
+python3 statistics/move_3xr6_reads.py $HOME
+
