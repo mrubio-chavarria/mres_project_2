@@ -76,7 +76,7 @@ if __name__ == "__main__":
     shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
-    train_max_reads = 667  # Select all the reads
+    train_max_reads = 668  # Select all the reads
     train_max_batches = 500
     train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder = database_dir + '/' + 'train_reads'
@@ -89,9 +89,9 @@ if __name__ == "__main__":
     validation_folder = database_dir + '/' + 'validation_reads'
     
     # Load dataset
-    train_dataset_200 = Dataset_ap(train_folder, reference_file, train_window_sizes[0], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
-    train_dataset_400 = Dataset_ap(train_folder, reference_file, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
-    train_dataset_1000 = Dataset_ap(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    train_dataset_200 = Dataset_ap(train_folder, reference_file, train_window_sizes[0], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=0)
+    train_dataset_400 = Dataset_ap(train_folder, reference_file, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=1)
+    train_dataset_1000 = Dataset_ap(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=2)
     train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
     validation_dataset_300 = Dataset_ap(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads, validation=True)
