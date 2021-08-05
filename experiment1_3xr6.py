@@ -76,14 +76,15 @@ if __name__ == "__main__":
     shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
-    train_max_reads = 400  # Select all the reads
+    train_max_reads = 667  # Select all the reads
     train_max_batches = 500
-    train_max_windows = int(train_max_batches * batch_size)
+    train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder = database_dir + '/' + 'train_reads'
     
     # Load the test dataset
     validation_window_sizes = [300]
-    validation_max_windows = 1 * batch_size # Controls test dataset size: 3 epoch
+    validation_max_batches = 5
+    validation_max_windows = int(validation_max_batches * (batch_size + 1))  # Controls test dataset size: 3 epoch
     validation_max_reads = 20  # Select all the reads
     validation_folder = database_dir + '/' + 'validation_reads'
     
@@ -93,7 +94,7 @@ if __name__ == "__main__":
     train_dataset_1000 = Dataset_3xr6(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads)
     train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
-    validation_dataset_300 = Dataset_3xr6(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads)
+    validation_dataset_300 = Dataset_3xr6(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads, validation=True)
     validation_dataset = CombinedDataset(validation_dataset_300)
 
     train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
