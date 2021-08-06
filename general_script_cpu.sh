@@ -10,6 +10,5 @@ source activate nanopolish_venv
 
 cd $HOME/project_2
 
-# python3 statistics/move_3xr6_reads.py $HOME
+python3 statistics/move_3xr6_reads.py $HOME
 
-cp -R databases/working_3xr6/reads/flowcell$PBS_ARRAY_INDEX nanopolish/working_3xr6/reads/flowcell$PBS_ARRAY_INDEX
