@@ -2,6 +2,7 @@
 import os
 import sys
 from shutil import copy
+from uuid import uuid4
 
 home = sys.argv[1]
 
@@ -20,8 +21,10 @@ for flowcell in ['flowcell1', 'flowcell2', 'flowcell3']:
         for idx, file in enumerate(os.listdir(subfolder)):
             if file.endswith('fast5'):
                 old_file = subfolder + '/' + file
-                new_file = base_folder + '/' + flowcell + '_' + subfolder.split('/')[-1] + '_' + str(idx) + '_' + file
+                new_file = base_folder + '/' + str(uuid4()) + '_' + file
                 try:
+                    print(f'New file: {new_file}')
+                    print(f'Old file: {old_file}')
                     copy(old_file, new_file)
                 except FileNotFoundError as e:
                     print(e)
