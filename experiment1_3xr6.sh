@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=16:mem=96gb:ngpus=4
 #PBS -lwalltime=24:00:00
-#PBS -J 1-11
+#PBS -J 1-1
 
 
 # Load dependencies
