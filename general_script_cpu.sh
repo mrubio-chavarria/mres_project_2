@@ -10,5 +10,8 @@ source activate nanopolish_venv
 
 cd $HOME/project_2
 
-python3 statistics/move_3xr6_reads.py $HOME
+# python3 statistics/move_3xr6_reads.py $HOME
 
+cd databases/working_3xr6
+
+rm -R *_old
