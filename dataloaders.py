@@ -7,6 +7,7 @@ This file contains wrappers and variations on DataLoader.
 
 # Libraries
 import os
+from random import shuffle
 import torch
 import numpy as np
 from torch.utils.data import Dataset
@@ -40,14 +41,15 @@ class CustomisedDataLoader:
     DESCRIPTION:
     """
     # Methods
-    def __init__(self, dataset, batch_size, sampler, collate_fn):
+    def __init__(self, dataset, batch_size, sampler, collate_fn, shuffle):
         self.dataset = dataset
         self.batch_size = batch_size
         self.sampler = sampler
         self.collate_fn = collate_fn
+        self.shuffle = shuffle
 
     def __iter__(self):
-        sampled_data = self.sampler(self.dataset, self.batch_size)
+        sampled_data = self.sampler(self.dataset, self.batch_size, shuffle=self.shuffle)
         for batch in sampled_data:
             if not batch:
                 raise StopIteration

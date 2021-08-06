@@ -97,9 +97,8 @@ if __name__ == "__main__":
     validation_dataset_300 = Dataset_3xr6(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads, validation=True)
     validation_dataset = CombinedDataset(validation_dataset_300)
 
-    train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
-    validation_data = CustomisedDataLoader(dataset=validation_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn)
-    validation_data = DataLoader(validation_dataset_300, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_text2int_fn)
+    train_data = CustomisedDataLoader(dataset=train_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
+    validation_data = CustomisedDataLoader(dataset=validation_dataset, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
 
     # Model
     # Parameters
