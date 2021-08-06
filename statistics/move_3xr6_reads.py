@@ -31,6 +31,9 @@ for flowcell in ['flowcell1', 'flowcell2', 'flowcell3']:
                 except FileNotFoundError as e:
                     print(e)
                     continue
+                except PermissionError as e:
+                    print(e)
+                    continue
 
 
 
