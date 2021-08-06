@@ -9,5 +9,7 @@ source activate nanopolish_venv
 
 cd $HOME/project_2
 
+rm -r nanopolish/working_3xr6/reads/*
+
 python3 statistics/move_3xr6_reads.py $HOME
 
