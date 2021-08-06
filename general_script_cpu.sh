@@ -12,6 +12,6 @@ cd $HOME/project_2
 
 # python3 statistics/move_3xr6_reads.py $HOME
 
-cd databases/working_3xr6
+cd databases/working_3xr6/reads
 
 rm -R *_old
