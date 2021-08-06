@@ -8,12 +8,14 @@ home = sys.argv[1]
 
 workdir = home + "/project_2"
 
+original_database = workdir + '/' + 'databases' + '/' + 'working_3xr6' + '/' + 'reads'
+
 base_folder = workdir + "/nanopolish/working_3xr6/reads"
 
 
 for flowcell in ['flowcell1', 'flowcell2', 'flowcell3']:
     print(f'Processing {flowcell}')
-    folder = base_folder + '/' + flowcell
+    folder = original_database + '/' + flowcell + '/' + 'single'
     for idx1, subfolder in enumerate(os.listdir(folder)):
         if subfolder.endswith('txt') or subfolder.endswith('index'):
             continue
