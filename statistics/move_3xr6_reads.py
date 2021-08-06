@@ -5,13 +5,13 @@ from shutil import copy
 
 home = sys.argv[1]
 
-route = home + "/project_2/nanopolish/working_3xr6/reads"
+workdir = home + "/project_2"
 
-new_route = home + "/project_2/nanopolish/working_3xr6/reads"
+new_route = workdir + "/nanopolish/working_3xr6"
 
 
 for flowcell in ['flowcell1', 'flowcell2', 'flowcell3']:
-    folder = route + '/' + flowcell
+    folder = workdir + '/databases/working_3xr6/reads' + '/' + flowcell + '/' + 'single'
     for subfolder in os.listdir(folder):
         if subfolder.endswith('txt') or subfolder.endswith('index'):
             continue
