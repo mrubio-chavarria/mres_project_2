@@ -23,7 +23,8 @@ for flowcell in ['flowcell1', 'flowcell2', 'flowcell3']:
                 new_file = new_route + '/' + flowcell + '_' + subfolder + '_' + str(idx) + '_' + file
                 try:
                     copy(old_file, new_file)
-                except FileNotFoundError:
+                except FileNotFoundError as e:
+                    print(e)
                     print(f'File {old_file} not found')
                     continue
 
