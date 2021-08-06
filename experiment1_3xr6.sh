@@ -1,7 +1,6 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=8:mem=48gb:ngpus=2
 #PBS -lwalltime=24:00:00
-#PBS -J 1-1
 
 
 # Load dependencies
@@ -12,6 +11,7 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
+PBS_ARRAY_INDEX=1
 echo "Array job ID: $PBS_ARRAY_INDEX"
 
 # Launch script
