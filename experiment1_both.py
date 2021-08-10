@@ -78,7 +78,7 @@ if __name__ == "__main__":
     shuffle = True
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
-    train_max_reads = None  # Select all the reads
+    train_max_reads = 1000  # Select all the reads
     train_max_batches = 10000
     train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder_ap = database_dir_ap + '/' + 'train_reads'
