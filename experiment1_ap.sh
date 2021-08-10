@@ -8,6 +8,7 @@ module load anaconda3/personal
 source activate project2_venv
 
 # Check GPUs
+CUDA_VISIBLE_DEVICES=1
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
