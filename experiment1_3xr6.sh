@@ -1,7 +1,6 @@
 #!/bin/bash
 #PBS -lselect=1:ncpus=4:mem=4gb
 #PBS -lwalltime=24:00:00
-PBS_ARRAY_INDEX=1
 
 # Load dependencies
 module load anaconda3/personal
@@ -11,6 +10,7 @@ source activate project2_venv
 echo "Available GPUs: $CUDA_VISIBLE_DEVICES"
 
 # Check array index
+PBS_ARRAY_INDEX=1
 echo "Array job ID: $PBS_ARRAY_INDEX"
 
 # Launch script
