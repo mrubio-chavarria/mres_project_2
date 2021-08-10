@@ -94,8 +94,6 @@ if __name__ == "__main__":
     train_dataset_1000 = Dataset_ap(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=2)
     train_dataset = CombinedDataset(train_dataset_200, train_dataset_400, train_dataset_1000)
 
-    print('DATASET SIZE:', str(len(train_dataset_1000)))
-
     validation_dataset_300 = Dataset_ap(validation_folder, reference_file, validation_window_sizes[0], validation_max_windows, hq_value='Q7', max_reads=train_max_reads, validation=True)
     validation_dataset = CombinedDataset(validation_dataset_300)
 
