@@ -78,7 +78,7 @@ if __name__ == "__main__":
     train_window_sizes = [200, 400, 1000]
     train_max_reads = None  # Select all the reads
     train_max_batches = None#2500
-    train_max_windows = int(train_max_batches * (batch_size + 1))
+    train_max_windows = None#int(train_max_batches * (batch_size + 1))
     train_folder = database_dir + '/' + 'train_reads'
     
     # Load the test dataset
