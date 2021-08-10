@@ -61,16 +61,18 @@ if __name__ == "__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = sys.argv[1]
 
     # Project directory
-    database_dir = sys.argv[2]
+    database_dir_ap = sys.argv[2]
+    database_dir_3xr6 = sys.argv[3]
 
     # Storage file
-    file_manual_record = sys.argv[3]
+    file_manual_record = sys.argv[4]
 
     # Storage file
-    gamma_value = (float(int(sys.argv[4])) - 1) / 10
+    gamma_value = (float(int(sys.argv[5])) - 1) / 10
 
     # Set fast5 and reference
-    reference_file = database_dir + '/' + 'reference.fasta'
+    reference_file_ap = database_dir_ap + '/' + 'reference.fasta'
+    reference_file_3xr6 = database_dir_3xr6 + '/' + 'reference.fasta'
 
     batch_size = 32
     shuffle = True
@@ -79,20 +81,22 @@ if __name__ == "__main__":
     train_max_reads = None  # Select all the reads
     train_max_batches = 10000
     train_max_windows = int(train_max_batches * (batch_size + 1))
-    train_folder = database_dir + '/' + 'train_reads'
+    train_folder_ap = database_dir_ap + '/' + 'train_reads'
+    train_folder_3xr6 = database_dir_3xr6 + '/' + 'train_reads'
     
     # Load the test dataset
     validation_window_sizes = [300]
     validation_max_batches = 5
     validation_max_windows = int(validation_max_batches * (batch_size + 1) / 2)  # Controls test dataset size: 3 epoch
     validation_max_reads = 2000  # Select all the reads
-    validation_folder = database_dir + '/' + 'validation_reads'
+    validation_folder_ap = database_dir_ap + '/' + 'validation_reads'
+    validation_folder_3xr6 = database_dir_3xr6 + '/' + 'validation_reads'
     
     # Load dataset
-    train_dataset_200_1 = Dataset_3xr6(train_folder, reference_file, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
-    train_dataset_400 = Dataset_ap(train_folder, reference_file, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=1)
-    train_dataset_1000 = Dataset_3xr6(train_folder, reference_file, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=2)
-    train_dataset_200_2 = Dataset_ap(train_folder, reference_file, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
+    train_dataset_200_1 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
+    train_dataset_400 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=1)
+    train_dataset_1000 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=2)
+    train_dataset_200_2 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
     train_dataset = CombinedDataset(train_dataset_200_1, train_dataset_400, train_dataset_1000, train_dataset_200_2)    
 
     print('SIZES:')

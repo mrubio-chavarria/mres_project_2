@@ -79,8 +79,10 @@ class CombinedDataset(Dataset):
         """
         super().__init__()
         self.datasets = args
-        [setattr(self, f'windows_{dataset.window_size}', dataset.windows) 
-            for dataset in self.datasets]
+        window_sizes = set([dataset.window_size for dataset in self.datasets])
+        [setattr(self, f'windows_{window_size}', []) for window_size in window_sizes]
+        for dataset in self.datasets:
+            getattr(self, f'windows_{dataset.window_size}').extend(dataset.windows)
 
     def __len__(self):
         """
