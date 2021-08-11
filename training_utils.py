@@ -7,6 +7,7 @@ experiment scripts.
 """
 
 # Libraries
+import os
 from losses import FocalCTCLoss
 import torch
 from torch import log_softmax, nn
@@ -88,6 +89,8 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
     :param train_data: [iter] the data organised in batches ready to train.
     :param test_data: [iter] the data organised in batches ready to test.
     :param device: [torch.device] device to move the data into.
+    :return: [dict] state dicts with the information to resume training when
+    needed.
     """
     # Helper functions
     def record_in_file(train_loss_values, train_avgcer_values, test_loss_values, test_avgcer_values):
@@ -129,6 +132,11 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
                                         momentum=kwargs.get('momemtum', 0))
     else:
         raise ValueError('Invalid optimiser selected')
+
+    # Import optimiser from previous inferences if available
+    if kwargs.get('checkpoint', None) is not None:
+        optimiser.load_state_dict(kwargs.get('checkpoint', None)['optimiser_state_dict'])
+
     # Max number of batches
     print('Optimiser:', optimiser)
     max_batches = kwargs.get('max_batches', None)
@@ -155,7 +163,12 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
     train_avgcer = []
     test_loss = []
     test_avgcer = []
-    for epoch in range(kwargs.get('n_epochs', 5)):
+    # Restart epochs number from previous inferences if selected
+    previous_epoch = 0
+    if kwargs.get('checkpoint', None) is not None:
+        previous_epoch = kwargs.get('checkpoint', None)['epoch']
+        loss = kwargs.get('checkpoint', None)['loss']
+    for epoch in range(previous_epoch, kwargs.get('n_epochs', 5) + previous_epoch):
         for batch_id, batch in enumerate(train_data):
             if max_batches is not None:
                 if batch_id == max_batches:
@@ -232,6 +245,14 @@ def launch_training(model, train_data, validation_data, device, **kwargs):
             scheduler.step()
     # Manual record in file
     record_in_file(train_loss, train_avgcer, test_loss, test_avgcer)
+    # Build and return new checkpoint
+    return {
+        'epoch': epoch + 1,
+        'loss': loss,
+        'model_state_dict': model.state_dict(),
+        'optimiser_state_dict': optimiser.state_dict()
+    }
+
         
 
 def test(model, test_data, loss_function, error_function, loss_type='CTCLoss', **kwargs):
@@ -304,6 +325,8 @@ def train(model, train_data, validation_data, algorithm='single', **kwargs):
     :param validation_data: [iter] validation data organised in batches.
     :param algorithm: [str] the type of algorithm to use for batch parallelisation.
     If single, there is no parallelisation. Alternative, DataParallel.
+    :return: [dict] state dicts with the information to resume training when
+    needed.
     """
     # Compute training time
     t = TicToc()
@@ -317,16 +340,17 @@ def train(model, train_data, validation_data, algorithm='single', **kwargs):
         model = model.to(device)
         model.train()
         # Start training
-        launch_training(model, train_data, validation_data, device, **kwargs)
+        checkpoint = launch_training(model, train_data, validation_data, device, **kwargs)
     elif algorithm == 'DataParallel':
         # Prepare model and data
         model = model.cuda()
         model = nn.DataParallel(model, list(range(torch.cuda.device_count()))).cuda()
         model.train()
         # Start training
-        launch_training(model, train_data, validation_data, device, **kwargs)
+        checkpoint = launch_training(model, train_data, validation_data, device, **kwargs)
     else:
         raise ValueError('Invalid training method')
     print('************************************************************')
     t.toc('TRAINING TIME: ')
     print('************************************************************')
+    return checkpoint
