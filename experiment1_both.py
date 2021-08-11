@@ -85,7 +85,7 @@ if __name__ == "__main__":
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
     train_max_reads = 1000  # Select all the reads
-    train_max_batches = 10000
+    train_max_batches = 100
     train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder_ap = database_dir_ap + '/' + 'train_reads'
     train_folder_3xr6 = database_dir_3xr6 + '/' + 'train_reads'
@@ -99,9 +99,10 @@ if __name__ == "__main__":
     validation_folder_3xr6 = database_dir_3xr6 + '/' + 'validation_reads'
     
     # Load dataset
-    train_dataset_200_1 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
+    # 3xr6 does not have max reads
+    train_dataset_200_1 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=None, index=0)
     train_dataset_400 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=1)
-    train_dataset_1000 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=2)
+    train_dataset_1000 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=None, index=2)
     train_dataset_200_2 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
     train_dataset = CombinedDataset(train_dataset_200_1, train_dataset_400, train_dataset_1000, train_dataset_200_2)    
 
@@ -203,7 +204,9 @@ if __name__ == "__main__":
     # Training
     checkpoint = train(model, train_data, validation_data, **training_parameters)
     
-    database_dir_both = '/'.join(database_dir_ap.split('/')[::-1].append('working_both'))
+    route_pieces = database_dir_ap.split('/')[::-1]
+    route_pieces.append('working_both')
+    database_dir_both = '/'.join(route_pieces)
     # Save the model
     if old_checkpoint is None:
         count = 0
