@@ -72,6 +72,12 @@ if __name__ == "__main__":
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
 
+    # Load previous session if available
+    old_checkpoint = None
+    if len(sys.argv) == 6:
+        checkpoint_path = sys.argv[5]
+        old_checkpoint = torch.load(checkpoint_path)
+
     batch_size = 32
     shuffle = True
     # Load the train dataset
@@ -129,7 +135,9 @@ if __name__ == "__main__":
     
     # Create the model
     model = Network(TCN_parameters, LSTM_parameters, decoder_parameters)  
-
+    if old_checkpoint is not None:
+        model.load_state_dict(old_checkpoint['model_state_dict'])
+    
     # Training parameters
     training_parameters = {
         'algorithm': 'DataParallel',
@@ -148,7 +156,8 @@ if __name__ == "__main__":
         'max_batches': train_max_batches,
         'n_labels': decoder_parameters['output_size'],
         'shuffle': shuffle,
-        'file_manual_record': file_manual_record
+        'file_manual_record': file_manual_record,
+        'checkpoint': old_checkpoint
     }
 
     # Generate experiment ID
@@ -185,13 +194,20 @@ if __name__ == "__main__":
     print(text_training)
 
     # Training
-    train(model, train_data, validation_data, **training_parameters)
+    checkpoint = train(model, train_data, validation_data, **training_parameters)
     
     # Save the model
-    time = str(datetime.now()).replace(' ', '_')
-    model_name = f'model_{time}_{experiment_id}.pt'
-    model_path = database_dir + '/' + 'saved_models' + '/' + model_name
-    torch.save(model.state_dict(), model_path)
+    if old_checkpoint is None:
+        count = 0
+        time = str(datetime.now()).replace(' ', '_')
+        model_name = f'{count}_model_{time}_{experiment_id}.pt'
+        model_path = database_dir + '/' + 'saved_models' + '/' + model_name
+    else:
+        model_name = checkpoint_path.split('/')[-1]
+        count = int(model_name.split('_')[0]) + 1
+        model_name = f'{count}_' + '_'.join(model_name.split('_')[1::])
+        model_path = database_dir + '/' + 'saved_models' + '/' + model_name
+    torch.save(checkpoint, model_path)
 
 
     
