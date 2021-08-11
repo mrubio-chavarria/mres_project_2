@@ -47,14 +47,16 @@ class CustomisedDataLoader:
         self.sampler = sampler
         self.collate_fn = collate_fn
         self.shuffle = shuffle
+        self.sampled_data = self.sampler(self.dataset, self.batch_size, shuffle=self.shuffle)
 
     def __iter__(self):
-        sampled_data = self.sampler(self.dataset, self.batch_size, shuffle=self.shuffle)
-        for batch in sampled_data:
+        for batch in self.sampled_data:
             if not batch:
                 raise StopIteration
             yield self.collate_fn(batch)
 
     def __next__(self):
         return next(iter(self))
+        
+
 
