@@ -78,7 +78,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 6:
         print('LOADED CHECKPOINT')
         checkpoint_path = sys.argv[5]
-        old_checkpoint = {key[7::]: value for key, value in torch.load(checkpoint_path).items()}
+        old_checkpoint = torch.load(checkpoint_path)
+        old_checkpoint['model_state_dict'] = {key[7::]: value for key, value in old_checkpoint['model_state_dict'].items()}
     else:
         print('NOT LOADED CHECKPOINT')
     
