@@ -77,15 +77,18 @@ if __name__ == "__main__":
     # Load previous session if available
     old_checkpoint = None
     if len(sys.argv) == 7:
+        print('LOADED CHECKPOINT')
         checkpoint_path = sys.argv[6]
         old_checkpoint = torch.load(checkpoint_path)
+    else:
+        print('NOT LOADED CHECKPOINT')
 
     batch_size = 32
     shuffle = True
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
     train_max_reads = 1000  # Select all the reads
-    train_max_batches = 100
+    train_max_batches = 50
     train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder_ap = database_dir_ap + '/' + 'train_reads'
     train_folder_3xr6 = database_dir_3xr6 + '/' + 'train_reads'
@@ -150,7 +153,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 2,
+        'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
@@ -204,7 +207,7 @@ if __name__ == "__main__":
     # Training
     checkpoint = train(model, train_data, validation_data, **training_parameters)
     
-    route_pieces = database_dir_ap.split('/')[::-1]
+    route_pieces = database_dir_ap.split('/')[:-1:]
     route_pieces.append('working_both')
     database_dir_both = '/'.join(route_pieces)
     # Save the model
@@ -218,7 +221,13 @@ if __name__ == "__main__":
         count = int(model_name.split('_')[0]) + 1
         model_name = f'{count}_' + '_'.join(model_name.split('_')[1::])
         model_path = database_dir_both + '/' + 'saved_models' + '/' + model_name
+    print('****************************************************************')
+    print('CHECKPOINT:', checkpoint)
+    print('****************************************************************')
     torch.save(checkpoint, model_path)
+    print('****************************************************************')
+    print('MODEL SAVED IN:', model_path)
+    print('****************************************************************')
 
 
     

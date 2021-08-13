@@ -75,15 +75,18 @@ if __name__ == "__main__":
     # Load previous session if available
     old_checkpoint = None
     if len(sys.argv) == 6:
+        print('LOADED CHECKPOINT')
         checkpoint_path = sys.argv[5]
         old_checkpoint = torch.load(checkpoint_path)
+    else:
+        print('NOT LOADED CHECKPOINT')
 
     batch_size = 32
     shuffle = True
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
     train_max_reads = None  # Select all the reads
-    train_max_batches = 100
+    train_max_batches = 50
     train_max_windows = int(train_max_batches * (batch_size + 1))
     train_folder = database_dir + '/' + 'train_reads'
     
@@ -142,7 +145,7 @@ if __name__ == "__main__":
     training_parameters = {
         'algorithm': 'DataParallel',
         'n_processes': 1,
-        'n_epochs': 2,
+        'n_epochs': 1,
         'n_initialisation_epochs': 0,
         'batch_size': batch_size,
         'learning_rate': 0.001,
@@ -164,11 +167,11 @@ if __name__ == "__main__":
     experiment_id = str(uuid4())
     # Print ID
     print('****************************************************************')
-    print(f'EXPERIMENT ID: {experiment_id}')
+    print('EXPERIMENT ID:', experiment_id)
     print('****************************************************************')
 
     # Print model architecture
-    print('Model: ')
+    print('Model:')
     print(model)
 
     # Print training parameters
@@ -207,5 +210,11 @@ if __name__ == "__main__":
         count = int(model_name.split('_')[0]) + 1
         model_name = f'{count}_' + '_'.join(model_name.split('_')[1::])
         model_path = database_dir + '/' + 'saved_models' + '/' + model_name
+    print('****************************************************************')
+    print('CHECKPOINT:', checkpoint)
+    print('****************************************************************')
     torch.save(checkpoint, model_path)
+    print('****************************************************************')
+    print('MODEL SAVED IN:', model_path)
+    print('****************************************************************')
 
