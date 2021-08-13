@@ -80,7 +80,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 7:
         print('LOADED CHECKPOINT')
         checkpoint_path = sys.argv[6]
-        old_checkpoint = torch.load(checkpoint_path)
+        old_checkpoint = {key[7::]: value for key, value in torch.load(checkpoint_path).items()}
     else:
         print('NOT LOADED CHECKPOINT')
 
