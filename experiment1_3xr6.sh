@@ -15,4 +15,4 @@ echo "Array job ID: $PBS_ARRAY_INDEX"
 
 # Launch script
 echo "Launch script"
-python3 $HOME/project_2/experiment1_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/complete_3xr6_exp1_gamma_2.tsv $PBS_ARRAY_INDEX
+python3 $HOME/project_2/experiment1_3xr6.py $CUDA_VISIBLE_DEVICES $HOME/project_2/databases/working_3xr6 $HOME/project_2/complete_3xr6_exp1_gamma_$PBS_ARRAY_INDEX.tsv $PBS_ARRAY_INDEX $HOME/project_2/databases/working_3xr6/saved_models/0_model_2021-08-13_11:11:59.867111_867f9919-c4d9-4ec2-9d7e-6a6cba1eaf01.pt
