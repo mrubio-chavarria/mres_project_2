@@ -74,6 +74,7 @@ if __name__ == "__main__":
 
     # Load previous session if available
     old_checkpoint = None
+    checkpoint_path = None
     if len(sys.argv) == 6:
         print('LOADED CHECKPOINT')
         checkpoint_path = sys.argv[5]
@@ -211,7 +212,7 @@ if __name__ == "__main__":
         model_name = f'{count}_' + '_'.join(model_name.split('_')[1::])
         model_path = database_dir + '/' + 'saved_models' + '/' + model_name
     print('****************************************************************')
-    print('CHECKPOINT:', checkpoint)
+    print('CHECKPOINT:', checkpoint_path)
     print('****************************************************************')
     torch.save(checkpoint, model_path)
     print('****************************************************************')
