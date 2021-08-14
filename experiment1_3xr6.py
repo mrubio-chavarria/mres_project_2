@@ -84,7 +84,7 @@ if __name__ == "__main__":
         print('NOT LOADED CHECKPOINT')
 
     batch_size = 32
-    shuffle = True
+    shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
     train_max_reads = None  # Select all the reads

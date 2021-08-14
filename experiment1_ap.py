@@ -85,7 +85,7 @@ if __name__ == "__main__":
     
 
     batch_size = 32
-    shuffle = True
+    shuffle = False
     # Load the train dataset
     train_window_sizes = [200, 400, 1000]
     train_max_reads = 668  # Select all the reads
