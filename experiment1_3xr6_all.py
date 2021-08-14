@@ -67,7 +67,7 @@ if __name__ == "__main__":
     file_manual_record = sys.argv[3]
 
     # Storage file
-    gamma_value = (float(int(sys.argv[4])) - 1) / 10
+    gamma_value = 0.0#(float(int(sys.argv[4])) - 1) / 10
 
     # Set fast5 and reference
     reference_file = database_dir + '/' + 'reference.fasta'
