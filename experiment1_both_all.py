@@ -107,10 +107,10 @@ if __name__ == "__main__":
     
     # Load dataset
     # 3xr6 does not have max reads
-    train_dataset_200_1 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=None, index=0)
+    train_dataset_200_1 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[0], None, hq_value='Q7', max_reads=None, index=0)
     train_dataset_400 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[1], train_max_windows, hq_value='Q7', max_reads=train_max_reads, index=1)
     train_dataset_1000 = Dataset_3xr6(train_folder_3xr6, reference_file_3xr6, train_window_sizes[2], train_max_windows, hq_value='Q7', max_reads=None, index=2)
-    train_dataset_200_2 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[0], int(train_max_windows / 2), hq_value='Q7', max_reads=train_max_reads, index=0)
+    train_dataset_200_2 = Dataset_ap(train_folder_ap, reference_file_ap, train_window_sizes[0], None, hq_value='Q7', max_reads=train_max_reads, index=0)
     train_dataset = CombinedDataset(train_dataset_200_1, train_dataset_400, train_dataset_1000, train_dataset_200_2)    
 
 
