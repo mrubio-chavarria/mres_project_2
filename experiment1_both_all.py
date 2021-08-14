@@ -92,7 +92,7 @@ if __name__ == "__main__":
     train_max_reads = 1000  # Select all the reads
     train_max_batches = 10000
     train_max_batches = None
-    train_max_windows = int(train_max_batches * (batch_size + 1))
+    # train_max_windows = int(train_max_batches * (batch_size + 1))
     train_max_windows = None
     train_folder_ap = database_dir_ap + '/' + 'train_reads'
     train_folder_3xr6 = database_dir_3xr6 + '/' + 'train_reads'
