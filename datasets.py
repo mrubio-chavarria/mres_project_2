@@ -550,6 +550,8 @@ def load_windows(read_files, reference_file, window_size=300, bandwidth=6000, re
         # Window the resquiggle signal
         file_windows = window_resquiggle(segs, genome_seq, norm_signal, window_size)
         total_windows.extend(file_windows)
+    # Shuffle the windows from all the reads
+    random.shuffle(total_windows)
     print('-------------------------------------------------')
     print('Skipped reads:', str(skipped_reads))
     print('-------------------------------------------------')
