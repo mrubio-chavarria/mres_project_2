@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=32:mem=192gb:ngpus=8
+#PBS -lselect=1:ncpus=24:mem=144gb:ngpus=6
 #PBS -lwalltime=24:00:00
 PBS_ARRAY_INDEX=3
 
