@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -lselect=1:ncpus=4:mem=24gb:ngpus=1
+#PBS -lselect=1:ncpus=16:mem=96gb:ngpus=4
 #PBS -lwalltime=06:00:00
 PBS_ARRAY_INDEX="MODEL STUDY"
 
