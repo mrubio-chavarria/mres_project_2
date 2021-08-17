@@ -38,6 +38,7 @@ class CustomisedSampler(torch.utils.data.Sampler):
     def __iter__(self):
         # Detect the number of datasets
         datasets = [attr for attr in dir(self.dataset) if attr.startswith('windows')]
+        print(datasets)
         datasets = list(sorted(datasets, key=lambda x: int(x.split('_')[1])))
         # Create the list to iterate
         batches_by_dataset = []

@@ -147,20 +147,20 @@ if __name__ == "__main__":
     # AP
     reference_file_ap = "/rds/general/user/mr820/home/project_2/databases/working_ap/reference.fasta"
     validation_folder_ap = "/rds/general/user/mr820/home/project_2/databases/working_ap/validation_reads"
-    windows_300_test_dataset_ap = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 500, hq_value='Q7', max_reads=3, index=0, validation=False)
+    windows_300_1 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 500, hq_value='Q7', max_reads=3, index=0, validation=False)
     # 3xr6
     reference_file_3xr6 = "/rds/general/user/mr820/home/project_2/databases/working_3xr6/reference.fasta"
     validation_folder_3xr6 = "/rds/general/user/mr820/home/project_2/databases/working_3xr6/validation_reads"
-    windows_300_test_dataset_3xr6 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 500, hq_value='Q7', max_reads=300, validation=False)
+    windows_300_2 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 500, hq_value='Q7', max_reads=300, validation=False)
     # Both
-    windows_300_test_dataset_both_1 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 250, hq_value='Q7', max_reads=300, index=0)
-    windows_300_test_dataset_both_2 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 250, hq_value='Q7', max_reads=3, index=0)
-    windows_300_test_dataset_both = CombinedDataset(windows_300_test_dataset_both_1, windows_300_test_dataset_both_2)
+    windows_300_3 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 250, hq_value='Q7', max_reads=300, index=0)
+    windows_300_4 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 250, hq_value='Q7', max_reads=3, index=0)
+    windows_300_5 = CombinedDataset(windows_300_3, windows_300_4)
 
     shuffle = False
-    test_data_ap = CustomisedDataLoader(dataset=windows_300_test_dataset_ap, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
-    test_data_3xr6 = CustomisedDataLoader(dataset=windows_300_test_dataset_3xr6, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
-    test_data_both = CustomisedDataLoader(dataset=windows_300_test_dataset_both, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
+    test_data_ap = CustomisedDataLoader(dataset=windows_300_1, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
+    test_data_3xr6 = CustomisedDataLoader(dataset=windows_300_2, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
+    test_data_both = CustomisedDataLoader(dataset=windows_300_5, batch_size=batch_size, sampler=CustomisedSampler, collate_fn=collate_text2int_fn, shuffle=shuffle)
 
     # Set models for testing
     model_ap.eval()
