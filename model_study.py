@@ -147,16 +147,16 @@ if __name__ == "__main__":
     # AP
     reference_file_ap = "/rds/general/user/mr820/home/project_2/databases/working_ap/reference.fasta"
     validation_folder_ap = "/rds/general/user/mr820/home/project_2/databases/working_ap/validation_reads"
-    windows_300_1 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 500, hq_value='Q7', max_reads=3, index=0, validation=False)
+    windows_300_1 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 5000, hq_value='Q7', max_reads=3, index=0, validation=False)
     dataset_ap = CombinedDataset(windows_300_1)
     # 3xr6
     reference_file_3xr6 = "/rds/general/user/mr820/home/project_2/databases/working_3xr6/reference.fasta"
     validation_folder_3xr6 = "/rds/general/user/mr820/home/project_2/databases/working_3xr6/validation_reads"
-    windows_300_2 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 500, hq_value='Q7', max_reads=300, validation=False)
+    windows_300_2 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 5000, hq_value='Q7', max_reads=300, validation=False)
     dataset_3xr6 = CombinedDataset(windows_300_2)
     # Both
-    windows_300_3 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 250, hq_value='Q7', max_reads=300, index=0)
-    windows_300_4 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 250, hq_value='Q7', max_reads=3, index=0)
+    windows_300_3 = Dataset_3xr6(validation_folder_3xr6, reference_file_3xr6, 300, 2500, hq_value='Q7', max_reads=300, index=0)
+    windows_300_4 = Dataset_ap(validation_folder_ap, reference_file_ap, 300, 2500, hq_value='Q7', max_reads=30, index=0)
     dataset_both = CombinedDataset(windows_300_3, windows_300_4)
 
     shuffle = False
