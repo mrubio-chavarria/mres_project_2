@@ -449,4 +449,4 @@ if __name__ == "__main__":
         'model': models
     }
     file = "/rds/general/user/mr820/home/project_2/test_data.tsv"
-    pd.DataFrame.from_dict(data).to_csv(file, sep='\t', header=False)
+    pd.DataFrame.from_dict(data).to_csv(file, sep='\t', header=True)
