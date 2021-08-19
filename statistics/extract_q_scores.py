@@ -61,8 +61,11 @@ def extract_q_score(read_files, reference_file, workdir, n_processes=2):
 
 if __name__ == "__main__":
     
-    workdir = sys.argv[1]
-    n_processes = int(sys.argv[2])
+    # workdir = sys.argv[1]
+    # n_processes = int(sys.argv[2])
+
+    workdir = "/home/mario/Projects/project_2/databases/working_3xr6"
+    n_processes = 4
 
     if workdir.endswith('ap'):
         flowcells = ['flowcell1', 'flowcell2', 'flowcell3', 'flowcell4']
